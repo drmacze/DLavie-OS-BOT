@@ -1,0 +1,6 @@
+- [DLavie OS v2.0 architecture](dlavie-os-v2.md) — Multi-bot WA platform with token, RBAC, monitoring, plugin, auto-fix. Engine never crashes.
+- [Supabase integration pattern](supabase-pattern.md) — Use local mode fallback if Supabase unconfigured. RLS policies for all tables.
+- [AI fallback order](ai-fallback-order.md) — Default order: grok,gemini,chatgpt. Owner confirms before applying fix.
+- [Token engine model](token-engine.md) — Free 5K tokens, rate limit 100/10min, feature-based costs, referral bonus.
+- [Website integration config](website-integration.md) — REST API port 8080, WebSocket /ws, Supabase realtime, JWT auth.
+- [WhatsApp Baileys reconnect](baileys-reconnect.md) — 5s reconnect delay, 428/405 = session conflict with another device.

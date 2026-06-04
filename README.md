@@ -1,142 +1,179 @@
-# DLavie OS Bot
+# DLavie OS Bot v2.0
 
-WhatsApp Multi-Device Bot dengan **Pairing Code Only** (tanpa QR Code) dan sistem **DLavie Auto-Fix**.
+WhatsApp Multi-Device Bot Control Platform dengan **Multi-Bot Control**, **Token System**, **Monitoring**, dan **Website Integration**.
 
-## Cara Deploy ke Replit
+## Fitur
 
-### 1. Import ke Replit
-1. Buka Replit.
-2. Klik **+ Create Repl**.
-3. Pilih **Import from GitHub**.
-4. Masukkan repo: `https://github.com/drmacze/DLavie-OS-BOT`.
-5. Klik **Import**.
+### Core Multi-Bot Control
+- Hubungkan banyak bot WhatsApp ke DLavie OS
+- Centralized Command Relay ke semua bot
+- Bot Health Score (0-100)
+- Bulk Command Execution
+- Bot Grouping & Management
+- Real-time Heartbeat Monitoring
 
-### 2. Tambah Environment Variables / Secrets
-Tambahkan minimal:
+### Token System
+- 5,000 free tokens untuk akun baru
+- Rate limit: 100 tokens / 10 menit
+- Feature-based cost system
+- Token History & Heatmap
+- Low Token Warning
+- Referral Bonus
 
-| Key | Contoh Value |
-|---|---|
-| `BOT_NUMBER` | `6285725483343` |
-| `OWNER_NUMBER` | `62882007437216` |
-| `BOT_NAME` | `DLavie OS` |
+### Security & Permission
+- Role System (Owner 100, Admin 80, User 50, Guest 10)
+- Command Authentication
+- Temporary Access Token
+- Audit Log lengkap
+- Stealth Mode
+- Emergency Lockdown
 
-Untuk DLavie Auto-Fix dan fallback AI opsional:
+### Monitoring & Diagnostics
+- Smart Error Aggregator
+- Plugin Health Monitor
+- Performance Profiler
+- Auto Diagnostic Report
+- Real-time Log Streaming
+- Anomaly Detection
+- Memory & CPU Monitor
 
-| Key | Fungsi |
-|---|---|
-| `DLAVIE_STARTUP_REPAIR` | `true` agar auto-fix deterministic jalan saat startup |
-| `DLAVIE_AI_AUTOFIX` | `true` untuk mengaktifkan fallback AI otomatis |
-| `DLAVIE_AUTOFIX_INSTALL_MISSING` | `true` untuk mengizinkan install dependency allowlist otomatis |
-| `DLAVIE_AI_ORDER` | Urutan provider, contoh `gemini,chatgpt,grok` |
-| `GEMINI_API_KEY` | API key Gemini |
-| `OPENAI_API_KEY` atau `CHATGPT_API_KEY` | API key ChatGPT/OpenAI |
-| `GROK_API_KEY` atau `XAI_API_KEY` | API key Grok/xAI |
+### Automation
+- Scheduled Task System
+- Cron-based scheduling
+- Auto Plugin Update
+- Rollback support
+- Task History
 
-> Jangan commit API key ke GitHub. Simpan API key di Replit Secrets.
+### Plugin System
+- Plugin Marketplace
+- One-Click Install
+- Version Control
+- Dependency Resolver
+- Health Score
+- Sandbox Mode
+- Hot Reload
 
-### 3. Jalankan Bot
+### Auto-Fix System
+- Rule-based deterministic fix
+- AI Fallback (Grok, Gemini, ChatGPT)
+- Owner confirmation sebelum apply
+- Toggle on/off
+- Graceful error handling
+
+### Website Integration
+- REST API (Express)
+- WebSocket Real-time
+- Supabase Database
+- JWT Authentication
+- Webhook Events
+- Full documentation
+
+## Instalasi
+
 ```bash
 npm install
 npm start
 ```
 
-Pairing code akan muncul di console. Copy kode tersebut lalu pairing di WhatsApp HP kamu.
+## Environment Variables
 
----
-
-## DLavie Auto-Fix
-
-Sistem ini memiliki dua lapisan:
-
-### 1. Deterministic Auto-Fix tanpa AI dan tanpa API key
-
-Auto-fix ini bisa berjalan tanpa API key karena memakai rule/pola error yang sudah ditentukan.
-
-Yang bisa diperbaiki/dikenali:
-
-- Membuat folder penting jika hilang: `commands`, `logs`, `tmp`, `src`.
-- Memperbaiki `package.json` dasar jika rusak atau kurang script.
-- Menambahkan script `doctor` dan `autofix` ke `package.json`.
-- Mengenali error missing module.
-- Mengenali error folder command hilang.
-- Mengenali error session WhatsApp logout/network/session corrupt ringan.
-- Mengenali error permission dan port dipakai.
-- Membuat laporan ke `logs/dlavie-autofix-report.json` saat mode apply.
-
-Batas jujurnya: **non-AI auto-fix tidak aman untuk menebak patch bug logika kompleks**. Kalau error-nya syntax atau logic bug yang perlu memahami project, sistem akan memberi rekomendasi atau meneruskan ke AI fallback.
-
-### 2. Fallback AI opsional
-
-Fallback AI bisa memakai:
-
-- Gemini: `GEMINI_API_KEY`
-- ChatGPT/OpenAI: `OPENAI_API_KEY` atau `CHATGPT_API_KEY`
-- Grok/xAI: `GROK_API_KEY` atau `XAI_API_KEY`
-
-Aktifkan otomatis dengan:
+Salin `.env.example` ke `.env` dan isi:
 
 ```env
-DLAVIE_AI_AUTOFIX=true
-DLAVIE_AI_ORDER=gemini,chatgpt,grok
+BOT_NUMBER=6285725483343
+OWNER_NUMBER=62882007437216
+BOT_NAME=DLavie OS
+
+# Supabase
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# API
+API_PORT=8080
+JWT_SECRET=your-secret
+
+# AI (opsional)
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+GROK_API_KEY=
 ```
 
-Jika Gemini gagal, sistem mencoba ChatGPT. Jika ChatGPT gagal, sistem mencoba Grok.
+## Command WhatsApp
 
----
+| Command | Role | Fungsi |
+|---|---|---|
+| `!menu` | Guest | Menu utama |
+| `!halo` | Guest | Greeting |
+| `!ping` | Guest | Status check |
+| `!info` | Guest | System info |
+| `!token` | User | Token management |
+| `!bot` | User | Multi-bot control |
+| `!plugin` | User | Plugin management |
+| `!monitor` | User | Monitoring |
+| `!owner` | Owner | Owner commands |
+| `!status` | Owner | Full system status |
+| `!lockdown` | Owner | Emergency lockdown |
+| `!stealth` | Owner | Stealth mode |
+| `!audit` | Owner | Audit logs |
+| `!broadcast` | Owner | Broadcast message |
+| `!schedule` | Owner | Scheduled tasks |
+| `!fix` | Owner | Auto-fix system |
 
-## Command WhatsApp Owner
+## API Endpoints
 
-| Command | Fungsi |
-|---|---|
-| `!fix help` | Lihat bantuan Auto-Fix |
-| `!fix check` | Cek masalah tanpa mengubah file |
-| `!fix apply` | Perbaiki masalah deterministik yang aman |
-| `!fix install <module>` | Install dependency yang ada di allowlist |
-| `!fix ai <error/log>` | Minta analisis fallback AI |
-| `!fix full <error/log>` | Jalankan deterministic fix + fallback AI |
+| Method | Endpoint | Auth |
+|---|---|---|
+| GET | `/api/health` | Optional |
+| GET | `/api/status` | Required |
+| GET | `/api/bots` | Required |
+| GET | `/api/bots/:token` | Required |
+| POST | `/api/bots/:token/relay` | Required |
+| GET | `/api/tokens/:userId` | Required |
+| GET | `/api/monitoring/health` | Required |
+| GET | `/api/monitoring/errors` | Required |
+| GET | `/api/plugins` | Required |
+| POST | `/api/auth/login` | None |
 
-Contoh:
+## WebSocket
 
-```text
-!fix check
-!fix apply
-!fix ai Error: Cannot find module 'dotenv'
-!fix full SyntaxError: Unexpected token
+```javascript
+const ws = new WebSocket('ws://your-domain:8081/ws');
+ws.on('open', () => {
+  ws.send(JSON.stringify({ subscribe: 'bot.updates' }));
+});
 ```
 
----
+## Supabase Setup
 
-## Command Terminal / Replit Shell
+1. Buat project di Supabase
+2. Jalankan schema dari `config/supabase-schema.sql`
+3. Aktifkan Realtime untuk tables
+4. Isi environment variables
 
-```bash
-npm run doctor
-npm run autofix
-node scripts/dlavie-autofix.js --apply
-node scripts/dlavie-autofix.js --ai "paste error di sini"
+## Website Integration
+
+Lihat `config/website-integration.md` untuk panduan lengkap.
+
+## Arsitektur
+
+```
+DLavie OS Bot
+├── Core Engine (orchestrator)
+├── Database (Supabase)
+├── API Server (Express + WebSocket)
+├── WhatsApp Bot (Baileys)
+├── Multi-Bot Manager
+├── Token Engine
+├── Permission System
+├── Health Monitor
+├── Error Aggregator
+├── Plugin Manager
+├── Task Scheduler
+├── Auto-Fix Controller
+└── Webhook Manager
 ```
 
-Untuk membaca error dari pipe:
+## License
 
-```bash
-node index.js 2>&1 | node scripts/dlavie-autofix.js --ai
-```
-
----
-
-## Menambah Fitur Baru
-
-Buat file baru di folder `commands/`.
-
-Contoh:
-
-```js
-// commands/menu.js
-module.exports = {
-  name: 'menu',
-  execute: async (sock, msg, args, config) => {
-    await sock.sendMessage(msg.key.remoteJid, { text: 'Menu coming soon...' });
-  }
-};
-```
-
-Command loader membaca command `.js` di folder `commands/`. Jika command error saat dieksekusi, DLavie Auto-Fix akan menangkap error agar bot tidak langsung crash.
+Private - DLavie OS
