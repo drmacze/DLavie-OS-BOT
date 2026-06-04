@@ -99,8 +99,8 @@ async function connectToWhatsApp() {
     getMessage: async () => undefined,
   });
 
-  const commands = loadCommands();
-  log.info(`${commands.size} command(s) dimuat.`);
+  // Mutable ref so dev commands (!reload, !update) can hot-swap the map
+  const commandsRef = { map: loadCommands() };
 
   let pairingCodeSent = false;
 
@@ -174,7 +174,7 @@ async function connectToWhatsApp() {
 
   sock.ev.on('messages.upsert', async (m) => {
     try {
-      await handleMessage(sock, m, commands, config, contactPhoneMap);
+      await handleMessage(sock, m, commandsRef, config, contactPhoneMap);
     } catch (err) {
       log.error('Error saat memproses pesan:', err.message);
     }

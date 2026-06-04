@@ -2,33 +2,36 @@ const fs   = require('fs');
 const path = require('path');
 const log  = require('./logger');
 
-function loadCommands() {
-  const commands = new Map();
-  const dir = path.join(__dirname, '..', 'commands');
+const COMMANDS_DIR = path.join(__dirname, '..', 'commands');
 
-  if (!fs.existsSync(dir)) {
+function loadCommands() {
+  const map = new Map();
+
+  if (!fs.existsSync(COMMANDS_DIR)) {
     log.warn('Folder commands/ tidak ditemukan.');
-    return commands;
+    return map;
   }
 
-  for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.js'))) {
+  for (const file of fs.readdirSync(COMMANDS_DIR).filter(f => f.endsWith('.js'))) {
+    const fullPath = path.join(COMMANDS_DIR, file);
     try {
-      delete require.cache[require.resolve(path.join(dir, file))];
-      const cmd = require(path.join(dir, file));
+      delete require.cache[require.resolve(fullPath)];
+      const cmd = require(fullPath);
       if (cmd.name && typeof cmd.execute === 'function') {
-        commands.set(cmd.name.toLowerCase(), cmd);
+        map.set(cmd.name.toLowerCase(), cmd);
         if (Array.isArray(cmd.aliases)) {
-          for (const alias of cmd.aliases) commands.set(alias.toLowerCase(), cmd);
+          for (const alias of cmd.aliases) map.set(alias.toLowerCase(), cmd);
         }
       } else {
-        log.warn(`Command ${file} tidak memiliki 'name' atau 'execute'.`);
+        log.warn(`Command ${file}: tidak punya 'name' atau 'execute'.`);
       }
     } catch (err) {
-      log.error(`Gagal memuat command ${file}:`, err.message);
+      log.error(`Gagal load command ${file}:`, err.message);
     }
   }
 
-  return commands;
+  log.info(`${map.size} command(s) dimuat dari ${COMMANDS_DIR}`);
+  return map;
 }
 
 function extractMessageText(msg) {
@@ -51,30 +54,21 @@ function extractMessageText(msg) {
   );
 }
 
-/**
- * Ambil nomor pengirim dari pesan.
- * Mendukung format JID biasa (@s.whatsapp.net), multi-device (:X@),
- * dan WhatsApp LID (@lid) — resolve ke nomor HP lewat contactPhoneMap.
- */
 function getSender(msg, contactPhoneMap = new Map()) {
-  const jid      = msg.key.remoteJid ?? '';
-  const isGroup  = jid.endsWith('@g.us');
-  const rawPart  = isGroup
+  const jid     = msg.key.remoteJid ?? '';
+  const isGroup = jid.endsWith('@g.us');
+  const rawPart = isGroup
     ? (msg.key.participant ?? msg.participant ?? '')
     : jid;
 
-  // Strip domain & device suffix  →  bisa berupa nomor HP atau LID
-  const rawId = rawPart.split('@')[0].split(':')[0];
+  const rawId   = rawPart.split('@')[0].split(':')[0];
+  const sender  = contactPhoneMap.get(rawId) ?? rawId;
 
-  // Coba resolve LID ke nomor HP lewat contact map
-  const resolved = contactPhoneMap.get(rawId) ?? rawId;
-
-  log.debug(`getSender: raw="${rawId}" resolved="${resolved}" isGroup=${isGroup}`);
-
-  return { jid, isGroup, sender: resolved, rawId };
+  log.debug(`getSender: raw="${rawId}" resolved="${sender}" isGroup=${isGroup}`);
+  return { jid, isGroup, sender, rawId };
 }
 
-async function handleMessage(sock, m, commands, config, contactPhoneMap = new Map()) {
+async function handleMessage(sock, m, commandsRef, config, contactPhoneMap = new Map()) {
   const msg = m.messages?.[0];
   if (!msg || msg.key.fromMe || m.type !== 'notify') return;
   if (msg.key.remoteJid === 'status@broadcast') return;
@@ -85,22 +79,39 @@ async function handleMessage(sock, m, commands, config, contactPhoneMap = new Ma
   const prefix = config.prefix ?? '!';
   if (!text.startsWith(prefix)) return;
 
-  const body    = text.slice(prefix.length).trim();
-  const args    = body.split(/\s+/);
-  const cmdName = args.shift().toLowerCase();
+  // body = everything after the prefix (preserves newlines for !addcmd)
+  const body    = text.slice(prefix.length);
+  const firstNL = body.indexOf('\n');
+  const firstLine = (firstNL === -1 ? body : body.slice(0, firstNL)).trim();
+  const restBody  = firstNL === -1 ? '' : body.slice(firstNL + 1);
+
+  const parts   = firstLine.split(/\s+/);
+  const cmdName = parts[0].toLowerCase();
+  const args    = parts.slice(1);
+
+  const commands = commandsRef.map;
   if (!commands.has(cmdName)) return;
 
   const { jid, isGroup, sender, rawId } = getSender(msg, contactPhoneMap);
-
   const isOwner = sender === config.ownerNumber;
-  log.info(`[CMD] sender=${sender} rawId=${rawId} owner=${isOwner} → ${prefix}${cmdName}${args.length ? ' ' + args.join(' ') : ''}`);
+
+  log.info(`[CMD] sender=${sender} owner=${isOwner} → ${prefix}${cmdName}${args.length ? ' ' + args.join(' ') : ''}`);
+
+  const ctx = {
+    jid, isGroup, sender, rawId, isOwner,
+    body: restBody,       // raw multi-line body after command name line
+    args,                 // words on same line as command
+    commandsRef,          // mutable reference → allows hot-reload from commands
+  };
 
   try {
-    await commands.get(cmdName).execute(sock, msg, args, config, { jid, isGroup, sender, isOwner });
+    await commands.get(cmdName).execute(sock, msg, args, config, ctx);
   } catch (err) {
-    log.error(`Error eksekusi command '${cmdName}':`, err.message);
+    log.error(`Error eksekusi '${cmdName}':`, err.message);
     try {
-      await sock.sendMessage(jid, { text: `⚠️ Error saat menjalankan command _${cmdName}_.\n${err.message}` });
+      await sock.sendMessage(jid, {
+        text: `⚠️ Error menjalankan _${cmdName}_:\n${err.message}`,
+      });
     } catch (_) {}
   }
 }
