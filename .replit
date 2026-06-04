@@ -1,0 +1,6 @@
+run = "npm start"
+
+[env]
+BOT_NUMBER = "6285725483343"
+OWNER_NUMBER = "62882007437216"
+BOT_NAME = "DLavie OS"
