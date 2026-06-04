@@ -9,7 +9,8 @@
     "api": "node src/api/server.js",
     "web": "node web/server.js",
     "doctor": "node scripts/dlavie-autofix.js",
-    "autofix": "node scripts/dlavie-autofix.js --apply"
+    "autofix": "node scripts/dlavie-autofix.js --apply",
+    "safety:check": "node scripts/safety-check.js"
   },
   "engines": {
     "node": ">=18"
