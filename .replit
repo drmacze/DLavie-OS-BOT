@@ -3,6 +3,7 @@
 run = "npm start"
 
 hidden = ["node_modules", "auth_info_baileys", ".config"]
+modules = ["nodejs-20"]
 
 [env]
 BOT_NUMBER = ""
@@ -14,3 +15,29 @@ channel = "stable-24_05"
 
 [gitHubImport]
 requiredFiles = [".replit", "replit.nix", "package.json"]
+
+[agent]
+expertMode = true
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "DLavie WA Bot"
+
+[[workflows.workflow]]
+name = "DLavie WA Bot"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm start"
+
+[workflows.workflow.metadata]
+outputType = "console"
