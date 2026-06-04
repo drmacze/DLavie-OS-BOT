@@ -123,6 +123,32 @@ async function connectToWhatsApp() {
       log.info(`Nomor bot  : ${config.botNumber}`);
       log.info(`Nomor owner: ${config.ownerNumber}`);
       log.info(`Prefix     : ${config.prefix}`);
+
+      // Resolve owner phone number → actual WA JID/LID via server query
+      setTimeout(async () => {
+        try {
+          const results = await sock.onWhatsApp(config.ownerNumber);
+          log.info(`onWhatsApp result: ${JSON.stringify(results)}`);
+          if (Array.isArray(results)) {
+            for (const r of results) {
+              if (!r.exists) continue;
+              // r.jid might be "62882007437216@s.whatsapp.net" or "202538360029327@lid"
+              const jidId = extractPhone(r.jid);
+              contactPhoneMap.set(jidId, config.ownerNumber);
+              log.info(`Owner mapped: "${jidId}" → "${config.ownerNumber}"`);
+
+              // Some Baileys versions expose r.lid separately
+              if (r.lid) {
+                const lidId = extractPhone(r.lid);
+                contactPhoneMap.set(lidId, config.ownerNumber);
+                log.info(`Owner LID mapped: "${lidId}" → "${config.ownerNumber}"`);
+              }
+            }
+          }
+        } catch (e) {
+          log.warn('onWhatsApp query gagal:', e.message);
+        }
+      }, 3000);
     }
 
     if (connection === 'close') {
