@@ -28,15 +28,25 @@ class PluginManager {
   }
 
   async loadInstalled() {
-    if (await fs.pathExists(INSTALLED_FILE)) {
-      try {
-        const data = await fs.readJson(INSTALLED_FILE);
-        for (const [id, info] of Object.entries(data)) {
-          this.installed.set(id, info);
-        }
-      } catch (err) {
-        console.warn('[DLAVIE][PLUGIN] Failed to load installed plugins:', err.message);
+    try {
+      await fs.ensureDir(PLUGINS_DIR);
+      // Buat file jika belum ada atau kosong
+      if (!(await fs.pathExists(INSTALLED_FILE))) {
+        await fs.writeJson(INSTALLED_FILE, {});
+        return;
       }
+      const raw = (await fs.readFile(INSTALLED_FILE, 'utf8')).trim();
+      if (!raw || raw === '') {
+        await fs.writeJson(INSTALLED_FILE, {});
+        return;
+      }
+      const data = JSON.parse(raw);
+      for (const [id, info] of Object.entries(data || {})) {
+        this.installed.set(id, info);
+      }
+    } catch (err) {
+      console.warn('[DLAVIE][PLUGIN] Resetting corrupted plugins file:', err.message);
+      try { await fs.writeJson(INSTALLED_FILE, {}); } catch (_) {}
     }
   }
 
