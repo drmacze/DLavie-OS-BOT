@@ -69,6 +69,14 @@ async function boot() {
     }
   }
 
+  // Start Web Dashboard
+  try {
+    const { startWebServer } = require('./web/server');
+    startWebServer();
+  } catch (err) {
+    console.error('[DLAVIE][MAIN] Web dashboard failed to start:', err.message);
+  }
+
   // Connect WhatsApp bot
   const { connectToWhatsApp } = require('./src/bot');
   await connectToWhatsApp();

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="navbar-brand"><span>⚡</span><span>DLavie<span style="color:var(--primary-l)"> OS</span></span></a>
+  <div class="navbar-actions" style="margin-left:auto">
+    <span id="user-name" style="color:var(--text-2);font-size:0.88rem"></span>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">Menu Utama</div>
+    <a href="/dashboard" class="sidebar-item" data-page="dashboard"><span class="icon">📊</span>Dashboard</a>
+    <a href="/bots"      class="sidebar-item" data-page="bots"><span class="icon">🤖</span>Bot Manager</a>
+    <a href="/tokens"    class="sidebar-item" data-page="tokens"><span class="icon">🪙</span>Token & Topup</a>
+    <div class="sidebar-section">Pengaturan</div>
+    <a href="/settings"  class="sidebar-item active" data-page="settings"><span class="icon">⚙️</span>Settings</a>
+    <a href="/pricing"   class="sidebar-item" data-page="pricing"><span class="icon">💳</span>Upgrade Plan</a>
+  </aside>
+
+  <main class="main-content">
+    <div class="mb-24">
+      <h2>Profile & Settings</h2>
+      <p style="margin-top:4px;font-size:0.875rem">Kelola profil dan keamanan akun kamu</p>
+    </div>
+
+    <div class="grid-2" style="align-items:start;gap:24px">
+      <!-- PROFILE FORM -->
+      <div class="card">
+        <h4 style="margin-bottom:20px">👤 Informasi Profil</h4>
+        <form id="settings-form">
+          <div class="form-group">
+            <label class="form-label">Nama Lengkap</label>
+            <input id="settings-name" type="text" class="form-input" placeholder="Nama kamu">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input id="settings-email" type="email" class="form-input" placeholder="email@kamu.com" disabled style="opacity:0.5;cursor:not-allowed">
+            <div class="form-hint">Email tidak bisa diubah</div>
+          </div>
+          <hr class="divider">
+          <h4 style="margin-bottom:16px">🔒 Ganti Password</h4>
+          <div class="form-group">
+            <label class="form-label">Password Sekarang</label>
+            <input id="settings-current-pass" type="password" class="form-input" placeholder="••••••••" autocomplete="current-password">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password Baru</label>
+            <input id="settings-new-pass" type="password" class="form-input" placeholder="Min. 8 karakter" autocomplete="new-password">
+            <div class="form-hint">Kosongkan jika tidak ingin ganti password</div>
+          </div>
+          <button type="submit" id="settings-save-btn" class="btn btn-primary btn-full">Simpan Perubahan</button>
+        </form>
+      </div>
+
+      <!-- ACCESS KEY & ACCOUNT INFO -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card">
+          <h4 style="margin-bottom:12px">🔑 Access Key Bot</h4>
+          <p style="font-size:0.875rem;color:var(--text-2);margin-bottom:16px">
+            Access key ini unik per akun kamu. Digunakan untuk mengotentikasi bot kamu ke API DLavie OS.
+          </p>
+          <div id="access-key-display" style="font-family:var(--font-mono);font-size:0.78rem;background:var(--bg-2);padding:12px;border-radius:8px;border:1px solid var(--border-dim);color:var(--primary-l);word-break:break-all">
+            Login ke bot untuk mendapatkan access key
+          </div>
+          <button class="btn btn-secondary btn-sm mt-8" onclick="loadAccessKey()">🔄 Refresh</button>
+        </div>
+
+        <div class="card">
+          <h4 style="margin-bottom:12px">📦 Informasi Akun</h4>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:0.875rem">
+            <div class="flex justify-between">
+              <span class="dimmed">Plan Aktif</span>
+              <span id="info-plan" class="badge badge-primary">FREE</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="dimmed">Token Tersedia</span>
+              <span id="info-tokens" style="font-weight:600">—</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="dimmed">Tanggal Daftar</span>
+              <span id="info-created">—</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="dimmed">Login Terakhir</span>
+              <span id="info-lastlogin">—</span>
+            </div>
+          </div>
+          <hr class="divider">
+          <a href="/pricing" class="btn btn-outline btn-full btn-sm">⚡ Upgrade Plan</a>
+        </div>
+
+        <div class="card" style="border-color:rgba(239,68,68,0.2)">
+          <h4 style="margin-bottom:8px;color:var(--error)">⚠️ Zona Berbahaya</h4>
+          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:12px">
+            Logout dari semua sesi akan memutus koneksi bot dari DLavie OS.
+          </p>
+          <button class="btn btn-danger btn-sm" onclick="confirmLogoutAll()">Logout dari Semua Sesi</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.guardDashboard()) return;
+  setEl('user-name', Auth.user?.name || '');
+  initSettings();
+
+  // Load account info
+  try {
+    const data = await API.get('/api/auth/me');
+    const u = data.user;
+    setEl('info-plan', (u.plan || 'free').toUpperCase());
+    setEl('info-tokens', fmtNumber(u.tokens));
+    setEl('info-created', u.createdAt ? fmtDate(u.createdAt) : '—');
+    setEl('info-lastlogin', u.lastLogin ? fmtTime(u.lastLogin) : 'Baru pertama kali');
+
+    const planEl = document.getElementById('info-plan');
+    if (planEl) {
+      planEl.className = 'badge ' + (u.plan === 'pro' || u.plan === 'enterprise' ? 'badge-success' : 'badge-primary');
+    }
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+async function loadAccessKey() {
+  try {
+    const data = await API.get('/api/bot/sessions');
+    const el = document.getElementById('access-key-display');
+    if (!el) return;
+    if (data.sessions?.length) {
+      el.textContent = data.sessions[0].accessKey || '(no key)';
+    } else {
+      el.textContent = 'Belum ada sesi aktif. Login ke bot terlebih dahulu dengan !login KODE.';
+    }
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+function confirmLogoutAll() {
+  if (!confirm('Yakin ingin logout dari semua sesi? Bot kamu akan terputus dari DLavie OS.')) return;
+  Auth.clear();
+  window.location.href = '/login';
+}
+</script>
+</body>
+</html>

@@ -1,5 +1,9 @@
 try { require('dotenv').config(); } catch { /* dotenv optional */ }
 
+// Merge DLavieConfig.js jika ada
+let userConfig = {};
+try { userConfig = require('../DLavieConfig'); } catch (_) {}
+
 const config = {
   // === Bot Identity ===
   botNumber: process.env.BOT_NUMBER || '',

@@ -7,6 +7,7 @@
     "start": "node index.js",
     "dev": "node index.js",
     "api": "node src/api/server.js",
+    "web": "node web/server.js",
     "doctor": "node scripts/dlavie-autofix.js",
     "autofix": "node scripts/dlavie-autofix.js --apply"
   },

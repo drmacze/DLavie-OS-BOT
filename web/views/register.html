@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card" style="max-width:460px">
+    <div class="auth-logo">
+      <a href="/" style="color:inherit;text-decoration:none">
+        <div class="logo-text">⚡ DLavie<span style="color:var(--primary-l)"> OS</span></div>
+        <div class="sub">WhatsApp Multi-Bot Control</div>
+      </a>
+    </div>
+    <div class="auth-title">Buat Akun Gratis</div>
+    <div class="auth-sub">Mulai dengan 5.000 token gratis. Tidak perlu kartu kredit.</div>
+
+    <div id="register-error" class="form-error mb-16"></div>
+
+    <form id="register-form">
+      <div class="form-group">
+        <label class="form-label">Nama Lengkap</label>
+        <input name="fullname" type="text" class="form-input" placeholder="Nama kamu" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input name="email" type="email" class="form-input" placeholder="nama@email.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input name="password" type="password" class="form-input" placeholder="Min. 8 karakter" required autocomplete="new-password">
+        <div class="form-hint">Minimal 8 karakter</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Konfirmasi Password</label>
+        <input name="confirm" type="password" class="form-input" placeholder="Ulangi password" required autocomplete="new-password">
+      </div>
+      <button type="submit" id="register-btn" class="btn btn-primary btn-full btn-lg" style="margin-top:8px">
+        Daftar Sekarang — Gratis
+      </button>
+    </form>
+
+    <div style="margin-top:16px;font-size:0.78rem;color:var(--text-3);text-align:center">
+      Dengan mendaftar, kamu setuju dengan Syarat & Ketentuan DLavie OS
+    </div>
+
+    <div class="auth-divider">atau</div>
+
+    <div class="text-center" style="font-size:0.875rem;color:var(--text-2)">
+      Sudah punya akun?
+      <a href="/login" style="color:var(--primary-l);font-weight:600;margin-left:4px">Login →</a>
+    </div>
+  </div>
+</div>
+<script src="/js/app.js"></script>
+</body>
+</html>

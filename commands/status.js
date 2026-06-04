@@ -15,11 +15,12 @@ function isOwner(msg, config) {
 
 module.exports = {
   name: 'status',
-  aliases: ['system', 'dashboard'],
+  aliases: ['system', 'sys'],
   description: 'Full system status',
-  execute: async (sock, msg, args, config) => {
+  execute: async (sock, msg, args, config, ctx = {}) => {
+    const safeSend = ctx.safeSend || ((j, m) => sock.sendMessage(j, m));
     if (!isOwner(msg, config)) {
-      await sock.sendMessage(msg.key.remoteJid, { text: 'Owner only.' });
+      await safeSend(msg.key.remoteJid, { text: '🔒 Command ini khusus Owner.' });
       return;
     }
 
@@ -83,6 +84,6 @@ ${Object.entries(status.systems || {}).map(([k, v]) => {
 }).join('\n')}
 `.trim();
 
-    await sock.sendMessage(msg.key.remoteJid, { text });
+    await safeSend(msg.key.remoteJid, { text });
   }
 };

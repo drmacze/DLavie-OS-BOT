@@ -1,50 +1,93 @@
-const { FEATURE_COSTS } = require('../src/token/tokenEngine');
+/**
+ * DLavie OS — !menu command
+ * Hanya bisa dilihat setelah login (!login KODE)
+ */
+
+const { getWebAuth } = require('../src/auth/webAuth');
+const { getEngine }  = require('../src/core/engine');
 
 module.exports = {
   name: 'menu',
-  aliases: ['help', 'start'],
-  description: 'Show DLavie OS menu',
-  execute: async (sock, msg, args, config) => {
-    const text = `
-*DLAVIE OS - Control Panel*
+  aliases: ['help', 'm'],
+  description: 'Tampilkan menu DLavie OS',
 
-*Basic Commands*
-!menu - Show this menu
-!halo - Greeting
-!ping - Check bot status
-!info - System info
-!help - Command help
+  execute: async (sock, msg, args, config, ctx = {}) => {
+    const jid      = msg.key.remoteJid;
+    const userId   = (msg.key.participant || jid || '').replace(/@[a-z.]+$/, '').replace(/\D/g, '');
+    const safeSend = ctx.safeSend || ((j, m) => sock.sendMessage(j, m));
+    const webAuth  = getWebAuth();
+    const prefix   = config.botPrefix || config.bot?.prefix || '!';
+    const session  = webAuth.getSession(userId);
+    const plan     = (session?.plan || 'free').toUpperCase();
+    const isOwner  = webAuth.isOwner(userId, config.ownerNumber || config.bot?.ownerNumber);
+    const isAdmin  = ['admin'].includes(session?.role);
 
-*User Commands*
-!token balance - Check token balance
-!token history - Token history
-!bot connect - Connect your bot
-!bot status - Bot status
-!plugin list - List plugins
-!plugin search - Search plugins
+    const isQueue  = ['FREE', 'STARTER'].includes(plan);
 
-*Admin Commands*
-!bot relay <command> - Relay to bot
-!broadcast <msg> - Broadcast
-!monitor health - Health check
-!plugin install - Install plugin
-!user list - List users
-!token give - Give tokens
+    const tokenEng = getEngine().getSystem('token');
+    let balance = '—';
+    try {
+      if (tokenEng) balance = (tokenEng.getBalance?.(userId) || 0).toLocaleString('id-ID');
+    } catch (_) {}
 
-*Owner Commands*
-!owner - Owner info
-!status - Full status
-!lockdown - Emergency lockdown
-!stealth - Stealth mode
-!audit - Audit logs
-!fix - Auto-fix system
+    // ─── Banner ───
+    let text = `╔══════════════════════════════╗
+║   ⚡  *DLavie OS*  ⚡        ║
+║  WhatsApp Multi-Bot Control  ║
+╚══════════════════════════════╝
 
-*Token System*
-Free tokens: 5,000
-Rate limit: 100/10min
+👤 *${session?.email || userId}*
+📦 Plan: *${plan}*  🪙 Token: *${balance}*
+${isQueue ? '⏳ Kamu menggunakan *antrian* (queue)\n💡 Upgrade ke Pro → bypass antrian!' : '⚡ Priority Access — NO queue!'}
 
-Powered by DLavie OS v2.0
-`.trim();
-    await sock.sendMessage(msg.key.remoteJid, { text });
+━━━━━━━━━━━━━━━━━━━━━━━━
+📋 *COMMAND UTAMA*
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔑 *Autentikasi*
+\`${prefix}login KODE\`  — Login dengan kode dari web
+\`${prefix}logout\`      — Logout dari DLavie OS
+
+🤖 *Bot Management*
+\`${prefix}connect\`     — Hubungkan bot user kamu
+\`${prefix}relay\`       — Kirim command ke bot user
+\`${prefix}monitor\`     — Monitor semua bot & sistem
+
+⚙️ *Fitur Utama*
+\`${prefix}shell\`       — Eksekusi shell command *
+\`${prefix}plugin\`      — Plugin marketplace & install
+\`${prefix}fix\`         — Auto-fix error (AI-powered)
+\`${prefix}schedule\`    — Kelola scheduled tasks
+\`${prefix}token\`       — Cek & kelola token
+
+📊 *Info & Status*
+\`${prefix}status\`      — Status sistem DLavie OS
+\`${prefix}info\`        — Info bot & server
+\`${prefix}ping\`        — Cek koneksi bot`;
+
+    // Owner/Admin commands
+    if (isOwner || isAdmin) {
+      text += `\n\n👑 *OWNER / ADMIN*
+\`${prefix}user\`        — Kelola user & RBAC
+\`${prefix}audit\`       — Audit log aktivitas
+\`${prefix}broadcast\`   — Broadcast ke semua user
+\`${prefix}lockdown\`    — Emergency lockdown
+\`${prefix}stealth\`     — Stealth mode
+\`${prefix}config\`      — Lihat konfigurasi`;
+    }
+
+    text += `
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+💡 *TIPS*
+• \`${prefix}command help\` untuk detail tiap command
+• *) Fitur Pro/Enterprise only
+• Token refill otomatis 100/10 menit
+
+🌐 Dashboard: ${config.web?.dashboardUrl || config.website?.dashboardUrl || 'Lihat di web DLavie OS'}
+
+DLavie OS v${config.bot?.version || '2.0.0'} • Anti-Ban Active`;
+
+    await safeSend(jid, { text });
   }
 };

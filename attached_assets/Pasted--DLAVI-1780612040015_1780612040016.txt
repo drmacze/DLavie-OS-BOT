@@ -1,0 +1,170 @@
+================================================================================
+              DLAVIE OS - WHATSAPP BOT
+              FULL FEATURE PLAN + PENJELASAN LENGKAP
+              Multi Bot Control Platform
+================================================================================
+
+Dibuat: 5 Juni 2026
+Fokus: WhatsApp Bot (Website akan dibahas terpisah)
+Database: Supabase
+
+================================================================================
+                           BAB 1: VISI & KONSEP
+================================================================================
+
+VISI UTAMA:
+DLavie OS adalah platform yang berfungsi sebagai **Pusat Kontrol (Control Panel)** 
+untuk bot WhatsApp milik banyak user. 
+
+User bisa menghubungkan bot WhatsApp mereka ke DLavie OS, lalu mengontrol, 
+memantau, dan mengelola bot tersebut melalui WhatsApp Bot atau Website — 
+tanpa perlu membuka GitHub atau VPS.
+
+Tujuan:
+- Menjadi platform Multi Bot Control yang eksklusif
+- Memberikan fitur canggih yang jarang ada di bot biasa
+- Sistem monetisasi menggunakan Token (bukan AI)
+- Mendukung user yang menjalankan bot sendiri maupun yang pakai hosting DLavie
+
+================================================================================
+                         BAB 2: ARSITEKTUR SISTEM
+================================================================================
+
+Komponen Utama:
+- DLavie Website → Dashboard, Topup, Monitoring
+- DLavie Bot (WhatsApp) → Kontrol cepat via chat
+- Core Backend + API
+- Supabase (Database & Auth)
+- Token Engine
+
+Cara Kerja Koneksi:
+User membuat Connection Token di website → Memasukkan token ke bot mereka → 
+Bot user mengirim data ke DLavie OS → DLavie bisa mengirim perintah kontrol.
+
+Penting: Setelah bot user terkoneksi, DLavie Bot tidak menerima chat dari bot 
+user tersebut (kecuali chat langsung ke DLavie Bot).
+
+================================================================================
+                    BAB 3: SISTEM TOKEN (MONETISASI)
+================================================================================
+
+Konsep:
+Token adalah "bahan bakar" untuk menggunakan fitur di DLavie OS. Semakin 
+kompleks fitur yang dipakai, semakin banyak token yang dikonsumsi.
+
+Contoh:
+- Chat biasa          = 1 token
+- Update bot          = 50–80 token
+- Generate plugin     = 100 token
+- Auto Fix pakai AI   = 150 token
+
+Aturan:
+- Akun baru dapat 5.000 free token
+- Reset otomatis 100 token per 10 menit
+- Topup hanya lewat Website
+- Ada Token History, Low Token Warning, dan Token Heatmap
+
+================================================================================
+                    BAB 4: SISTEM LOGIN & PERMISSION
+================================================================================
+
+Role:
+- Owner (Level 100) → Full access
+- Admin (Level 80)  → Hampir full access
+- User (Level 50)   → Fitur normal
+- Guest (Level 10)  → Fitur publik
+
+Fitur Keamanan:
+- Command Authentication (konfirmasi untuk command sensitif)
+- Temporary Access Token
+- Audit Log lengkap
+- Stealth Mode & Emergency Lockdown
+
+================================================================================
+              BAB 5: FITUR UTAMA + PENJELASAN
+================================================================================
+
+1. Centralized Command Relay
+User bisa mengontrol bot mereka lewat DLavie Bot dengan format:
+`.mybot restart`, `.mybot update`, `.mybot plugin list`
+Manfaat: Kontrol cepat tanpa buka website.
+
+2. Bot Health Score
+Setiap bot diberi skor 0–100 berdasarkan error, uptime, dan performa. 
+Semakin tinggi skor = semakin sehat botnya.
+
+3. Plugin Health Monitor
+DLavie memantau plugin user. Jika ada plugin yang sering error, DLavie akan 
+memberikan warning dan saran perbaikan.
+
+4. Smart Error Aggregator
+Mengumpulkan error dari semua bot user dan mengelompokkannya. Bisa mendeteksi 
+error yang sering muncul di banyak bot sekaligus.
+
+5. Hybrid Auto Fix
+Sistem perbaikan otomatis:
+- Pertama coba perbaiki dengan aturan (Rule-Based)
+- Jika gagal, gunakan AI (Grok) untuk memberikan saran
+- User harus approve sebelum perubahan diterapkan
+
+6. Remote File Manager
+Bisa melihat, mengedit, dan upload file ke bot user secara remote (dengan 
+sistem persetujuan).
+
+7. Scheduled Task
+User bisa menjadwalkan perintah otomatis (contoh: restart setiap malam).
+
+8. Token Usage Heatmap
+Menampilkan data visual jam berapa user paling banyak menggunakan token.
+
+================================================================================
+                    BAB 6: KATEGORI FITUR CANGGIH
+================================================================================
+
+Core Multi Bot Control
+Centralized Command Relay, Bot Health Score, Multi-Bot Dashboard, Bulk Command, 
+Bot Grouping, Remote Restart & Update, Bot Twin, Cross-Bot Command, dll.
+
+Monitoring & Diagnostics
+Smart Error Aggregator, Plugin Health Monitor, Performance Profiler, Auto 
+Diagnostic Report, Error Pattern Detection, Real-time Log, Anomaly Detection.
+
+Automation & Intelligence
+Scheduled Task, Auto Plugin Update, Self-Healing Suggestion, Auto Rollback, 
+Workflow Automation, Predictive Maintenance.
+
+Plugin Management
+Plugin Marketplace, One-Click Install, Plugin Health Score, Hot Reload, 
+Plugin Sandbox, Custom Plugin Builder.
+
+Security
+Role-Based Access, Command Permission Matrix, Temporary Token, Audit Log, 
+Two-Factor Command, Stealth Mode, Emergency Lockdown.
+
+Token System
+Usage-Based Token, Token Heatmap, Low Token Warning, Referral Bonus, Token 
+History.
+
+Advanced Features
+Bot Reputation Score, Incident Management, Knowledge Base per Bot, Command 
+Replay, Cross-Bot Learning.
+
+================================================================================
+                              PENUTUP
+================================================================================
+
+Ini adalah versi lengkap dengan penjelasan fitur utama DLavie OS Bot 
+(WhatsApp) per 5 Juni 2026.
+
+Fokus utama:
+- Multi Bot Control
+- Sistem Token
+- Monitoring & Automation
+- Fitur Eksklusif & Canggih
+- Keamanan
+
+Website akan dirancang terpisah.
+
+================================================================================
+                    END OF DOCUMENT
+================================================================================
