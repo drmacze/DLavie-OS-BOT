@@ -35,11 +35,24 @@ function saveLidMap(map) {
 
 /**
  * Add a new LID → phone entry to both the in-memory map and disk.
- * Returns true if this was a new/changed entry.
+ *
+ * Safety rules (never allow a bad entry to overwrite a good one):
+ *   1. Skip if lid === phone (mapping a value to itself adds no info).
+ *   2. Skip if the key already has a DIFFERENT resolved phone stored
+ *      (i.e., don't overwrite "lid→realPhone" with "lid→lid").
  */
 function setLid(map, lid, phone) {
   if (!lid || !phone) return false;
-  if (map.get(lid) === phone) return false; // already stored, skip write
+  if (lid === phone) return false;                 // self-mapping, skip
+  if (map.get(lid) === phone) return false;        // already correct, skip
+
+  const existing = map.get(lid);
+  if (existing && existing !== lid && existing !== phone) {
+    // Already mapped to a different real phone — do not overwrite
+    log.debug(`LID store: skip overwrite "${lid}" (existing="${existing}", new="${phone}")`);
+    return false;
+  }
+
   map.set(lid, phone);
   saveLidMap(map);
   log.info(`LID store updated: "${lid}" → "${phone}"`);

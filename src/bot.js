@@ -48,8 +48,15 @@ async function resolveOwnerLid(sock) {
 function upsertContacts(contacts) {
   for (const c of contacts) {
     if (!c || !c.id) continue;
+
+    // Only treat as a real phone-number JID — skip @lid type contacts entirely
+    const isPhoneJid = c.id.endsWith('@s.whatsapp.net') || c.id.endsWith('@c.us');
+    if (!isPhoneJid) continue;
+
     const phone = extractPhone(c.id);
     if (phone) setLid(contactPhoneMap, phone, phone);
+
+    // If this contact also has a LID, map that LID → real phone number
     if (c.lid) {
       const lid = extractPhone(c.lid);
       if (lid && phone) setLid(contactPhoneMap, lid, phone);
