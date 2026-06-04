@@ -3,8 +3,6 @@ const pino = require('pino');
 const config = require('./config');
 const { loadCommands, handleMessage } = require('./commandLoader');
 
-let pairingRequested = false;
-
 async function connectToWhatsApp() {
   console.log('[DLAVIE][WA] Starting Dlavie OS Bot connection...');
 
@@ -18,10 +16,8 @@ async function connectToWhatsApp() {
 
   const commands = loadCommands();
 
-  // Request pairing code ONLY ONCE per connection attempt
-  if (!sock.authState.creds.registered && !pairingRequested) {
-    pairingRequested = true;
-
+  // === Request Pairing Code immediately after socket creation (more reliable) ===
+  if (!sock.authState.creds.registered) {
     setTimeout(async () => {
       try {
         const code = await sock.requestPairingCode(config.botNumber);
@@ -30,9 +26,8 @@ async function connectToWhatsApp() {
         console.log('[DLAVIE][WA] Silakan buka WhatsApp di HP \u2192 Perangkat Tertaut \u2192 Tautkan Perangkat, lalu masukkan kode di atas.');
       } catch (err) {
         console.error('[DLAVIE][ERROR] Gagal mendapat pairing code:', err.message);
-        pairingRequested = false; // allow retry
       }
-    }, 2500);
+    }, 3000);
   }
 
   sock.ev.on('connection.update', async (update) => {
@@ -46,7 +41,6 @@ async function connectToWhatsApp() {
 
       if (shouldReconnect) {
         console.log('[DLAVIE][WA] Reconnecting dalam 3 detik...');
-        pairingRequested = false;
         setTimeout(connectToWhatsApp, 3000);
       } else {
         console.log('[DLAVIE][WA] Logged out. Hapus folder auth_info_baileys lalu restart bot.');
@@ -54,7 +48,6 @@ async function connectToWhatsApp() {
     } 
     else if (connection === 'open') {
       console.log(`[DLAVIE][WA] ✅ Bot connected as ${config.botName}!`);
-      pairingRequested = false;
     }
     else if (connection === 'connecting') {
       console.log('[DLAVIE][WA] Connecting to WhatsApp...');
