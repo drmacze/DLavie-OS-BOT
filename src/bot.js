@@ -14,12 +14,37 @@ const log = require('./logger');
 const silentLogger = pino({ level: 'silent' });
 let retryCount = 0;
 
+// LID / JID  →  plain phone number  (e.g. "202538360029327" → "62882007437216")
+const contactPhoneMap = new Map();
+
+function extractPhone(jidStr) {
+  return (jidStr ?? '').split('@')[0].split(':')[0];
+}
+
+function upsertContacts(contacts) {
+  for (const c of contacts) {
+    if (!c || !c.id) continue;
+    const phone = extractPhone(c.id);
+
+    // Map the normal JID to itself (phone → phone)
+    if (phone) contactPhoneMap.set(phone, phone);
+
+    // Map the LID to the phone number
+    if (c.lid) {
+      const lid = extractPhone(c.lid);
+      if (lid && phone) {
+        contactPhoneMap.set(lid, phone);
+        log.debug(`Contact map: ${lid} → ${phone}`);
+      }
+    }
+  }
+}
+
 function getRetryDelay() {
-  const delay = Math.min(
+  return Math.min(
     config.reconnect.initialDelay * Math.pow(config.reconnect.multiplier, retryCount),
     config.reconnect.maxDelay
   );
-  return delay;
 }
 
 async function connectToWhatsApp() {
@@ -55,8 +80,19 @@ async function connectToWhatsApp() {
 
   let pairingCodeSent = false;
 
+  // ── Contact map population ──────────────────────────────────────────────
+  sock.ev.on('contacts.upsert', (contacts) => {
+    upsertContacts(contacts);
+    log.debug(`contacts.upsert: ${contacts.length} kontak diproses.`);
+  });
+
+  sock.ev.on('contacts.update', (updates) => {
+    upsertContacts(updates);
+  });
+
+  // ── Connection lifecycle ────────────────────────────────────────────────
   sock.ev.on('connection.update', async (update) => {
-    const { connection, lastDisconnect, qr } = update;
+    const { connection, lastDisconnect } = update;
 
     if (connection === 'connecting') {
       log.info('Menghubungkan ke WhatsApp...');
@@ -92,8 +128,7 @@ async function connectToWhatsApp() {
     if (connection === 'close') {
       pairingCodeSent = false;
       const code = lastDisconnect?.error?.output?.statusCode;
-      const reason = getDisconnectReason(code);
-      log.warn(`Koneksi ditutup — kode: ${code ?? 'unknown'} (${reason})`);
+      log.warn(`Koneksi ditutup — kode: ${code ?? 'unknown'} (${getDisconnectReason(code)})`);
 
       if (code === DisconnectReason.loggedOut) {
         log.error('Sesi logout! Hapus folder auth_info_baileys lalu restart bot.');
@@ -102,10 +137,7 @@ async function connectToWhatsApp() {
 
       if (code === DisconnectReason.badSession) {
         log.error('Sesi rusak! Menghapus sesi lama dan reconnect...');
-        try {
-          const fs = require('fs');
-          fs.rmSync(config.session.dir, { recursive: true, force: true });
-        } catch (_) {}
+        try { require('fs').rmSync(config.session.dir, { recursive: true, force: true }); } catch (_) {}
         retryCount = 0;
       }
 
@@ -114,21 +146,19 @@ async function connectToWhatsApp() {
       log.info(`Reconnect dalam ${delay / 1000}s... (attempt #${retryCount})`);
       setTimeout(() => connectToWhatsApp().catch(log.error), delay);
     }
+
+    if (update.receivedPendingNotifications) {
+      log.info('Notifikasi pending selesai dimuat.');
+    }
   });
 
   sock.ev.on('creds.update', saveCreds);
 
   sock.ev.on('messages.upsert', async (m) => {
     try {
-      await handleMessage(sock, m, commands, config);
+      await handleMessage(sock, m, commands, config, contactPhoneMap);
     } catch (err) {
       log.error('Error saat memproses pesan:', err.message);
-    }
-  });
-
-  sock.ev.on('connection.update', (update) => {
-    if (update.receivedPendingNotifications) {
-      log.info('Notifikasi pending selesai dimuat.');
     }
   });
 
@@ -137,15 +167,15 @@ async function connectToWhatsApp() {
 
 function getDisconnectReason(code) {
   const map = {
-    [DisconnectReason.connectionClosed]:    'Connection closed',
-    [DisconnectReason.connectionLost]:      'Connection lost',
-    [DisconnectReason.connectionReplaced]:  'Connection replaced by another session',
-    [DisconnectReason.loggedOut]:           'Logged out',
-    [DisconnectReason.badSession]:          'Bad/corrupted session',
-    [DisconnectReason.restartRequired]:     'Restart required',
-    [DisconnectReason.timedOut]:            'Timed out',
-    405:                                    'Method not allowed (rate limit / invalid number)',
-    428:                                    'Connection closed by server',
+    [DisconnectReason.connectionClosed]:   'Connection closed',
+    [DisconnectReason.connectionLost]:     'Connection lost',
+    [DisconnectReason.connectionReplaced]: 'Connection replaced by another session',
+    [DisconnectReason.loggedOut]:          'Logged out',
+    [DisconnectReason.badSession]:         'Bad/corrupted session',
+    [DisconnectReason.restartRequired]:    'Restart required',
+    [DisconnectReason.timedOut]:           'Timed out',
+    405: 'Method not allowed (rate limit / invalid number)',
+    428: 'Connection closed by server',
   };
   return map[code] ?? 'Unknown reason';
 }

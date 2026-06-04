@@ -18,9 +18,7 @@ function loadCommands() {
       if (cmd.name && typeof cmd.execute === 'function') {
         commands.set(cmd.name.toLowerCase(), cmd);
         if (Array.isArray(cmd.aliases)) {
-          for (const alias of cmd.aliases) {
-            commands.set(alias.toLowerCase(), cmd);
-          }
+          for (const alias of cmd.aliases) commands.set(alias.toLowerCase(), cmd);
         }
       } else {
         log.warn(`Command ${file} tidak memiliki 'name' atau 'execute'.`);
@@ -36,34 +34,47 @@ function loadCommands() {
 function extractMessageText(msg) {
   const m = msg.message;
   if (!m) return '';
-
   return (
-    m.conversation                                    ||
-    m.extendedTextMessage?.text                       ||
-    m.imageMessage?.caption                           ||
-    m.videoMessage?.caption                           ||
-    m.documentMessage?.caption                        ||
-    m.buttonsResponseMessage?.selectedButtonId        ||
+    m.conversation                                          ||
+    m.extendedTextMessage?.text                             ||
+    m.imageMessage?.caption                                 ||
+    m.videoMessage?.caption                                 ||
+    m.documentMessage?.caption                              ||
+    m.buttonsResponseMessage?.selectedButtonId              ||
     m.listResponseMessage?.singleSelectReply?.selectedRowId ||
-    m.templateButtonReplyMessage?.selectedId          ||
-    m.ephemeralMessage?.message?.conversation         ||
-    m.ephemeralMessage?.message?.extendedTextMessage?.text ||
-    m.viewOnceMessage?.message?.imageMessage?.caption ||
-    m.viewOnceMessage?.message?.videoMessage?.caption ||
+    m.templateButtonReplyMessage?.selectedId                ||
+    m.ephemeralMessage?.message?.conversation               ||
+    m.ephemeralMessage?.message?.extendedTextMessage?.text  ||
+    m.viewOnceMessage?.message?.imageMessage?.caption       ||
+    m.viewOnceMessage?.message?.videoMessage?.caption       ||
     ''
   );
 }
 
-function getSender(msg) {
-  const jid = msg.key.remoteJid ?? '';
-  const isGroup = jid.endsWith('@g.us');
-  const participant = msg.key.participant ?? msg.participant ?? '';
-  const raw = isGroup ? participant : jid;
-  const sender = raw.split('@')[0].split(':')[0];
-  return { jid, isGroup, sender };
+/**
+ * Ambil nomor pengirim dari pesan.
+ * Mendukung format JID biasa (@s.whatsapp.net), multi-device (:X@),
+ * dan WhatsApp LID (@lid) — resolve ke nomor HP lewat contactPhoneMap.
+ */
+function getSender(msg, contactPhoneMap = new Map()) {
+  const jid      = msg.key.remoteJid ?? '';
+  const isGroup  = jid.endsWith('@g.us');
+  const rawPart  = isGroup
+    ? (msg.key.participant ?? msg.participant ?? '')
+    : jid;
+
+  // Strip domain & device suffix  →  bisa berupa nomor HP atau LID
+  const rawId = rawPart.split('@')[0].split(':')[0];
+
+  // Coba resolve LID ke nomor HP lewat contact map
+  const resolved = contactPhoneMap.get(rawId) ?? rawId;
+
+  log.debug(`getSender: raw="${rawId}" resolved="${resolved}" isGroup=${isGroup}`);
+
+  return { jid, isGroup, sender: resolved, rawId };
 }
 
-async function handleMessage(sock, m, commands, config) {
+async function handleMessage(sock, m, commands, config, contactPhoneMap = new Map()) {
   const msg = m.messages?.[0];
   if (!msg || msg.key.fromMe || m.type !== 'notify') return;
   if (msg.key.remoteJid === 'status@broadcast') return;
@@ -77,15 +88,15 @@ async function handleMessage(sock, m, commands, config) {
   const body    = text.slice(prefix.length).trim();
   const args    = body.split(/\s+/);
   const cmdName = args.shift().toLowerCase();
-
   if (!commands.has(cmdName)) return;
 
-  const { jid, isGroup, sender } = getSender(msg);
+  const { jid, isGroup, sender, rawId } = getSender(msg, contactPhoneMap);
 
-  log.info(`[CMD] ${sender}${isGroup ? ` di grup ${jid}` : ''} → ${prefix}${cmdName} ${args.join(' ')}`);
+  const isOwner = sender === config.ownerNumber;
+  log.info(`[CMD] sender=${sender} rawId=${rawId} owner=${isOwner} → ${prefix}${cmdName}${args.length ? ' ' + args.join(' ') : ''}`);
 
   try {
-    await commands.get(cmdName).execute(sock, msg, args, config, { jid, isGroup, sender });
+    await commands.get(cmdName).execute(sock, msg, args, config, { jid, isGroup, sender, isOwner });
   } catch (err) {
     log.error(`Error eksekusi command '${cmdName}':`, err.message);
     try {

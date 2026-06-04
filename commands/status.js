@@ -2,7 +2,7 @@ module.exports = {
   name: 'status',
   description: 'Cek status bot (owner only)',
   execute: async (sock, msg, args, config, ctx) => {
-    if (ctx.sender !== config.ownerNumber) {
+    if (!ctx.isOwner) {
       return sock.sendMessage(ctx.jid, { text: '⛔ Perintah ini hanya untuk owner.' });
     }
     const uptime = process.uptime();
