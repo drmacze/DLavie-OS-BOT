@@ -1,6 +1,16 @@
+# .replit - DLavie OS WhatsApp Bot
+
 run = "npm start"
 
+hidden = ["node_modules", "auth_info_baileys", ".config"]
+
 [env]
-BOT_NUMBER = "6285725483343"
-OWNER_NUMBER = "62882007437216"
+BOT_NUMBER = ""
+OWNER_NUMBER = ""
 BOT_NAME = "DLavie OS"
+
+[nix]
+channel = "stable-24_05"
+
+[gitHubImport]
+requiredFiles = [".replit", "replit.nix", "package.json"]
