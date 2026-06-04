@@ -1,17 +1,37 @@
-#!/usr/bin/env node
-try { require('dotenv').config(); } catch { /* dotenv optional during auto-repair */ }
+try {
+  require('dotenv').config();
+} catch (err) {
+  // dotenv is optional during auto-repair
+}
 
 const { runDeterministicRepair, formatRepairReport } = require('../src/selfRepair/deterministicRepair');
 const { askAiFallback } = require('../src/selfRepair/aiFallback');
 
 async function readStdinIfPiped() {
   if (process.stdin.isTTY) return '';
+
   return new Promise((resolve) => {
     let data = '';
     process.stdin.setEncoding('utf8');
-    process.stdin.on('data', (chunk) => { data += chunk; });
+    process.stdin.on('data', (chunk) => {
+      data += chunk;
+    });
     process.stdin.on('end', () => resolve(data));
   });
+}
+
+function getCliPayload(args, providerArgIndex) {
+  return args
+    .filter((arg, index) => {
+      if (arg === '--apply') return false;
+      if (arg === '--ai') return false;
+      if (arg === '--install-missing') return false;
+      if (arg === '--provider') return false;
+      if (providerArgIndex >= 0 && index === providerArgIndex + 1) return false;
+      return true;
+    })
+    .join(' ')
+    .trim();
 }
 
 async function main() {
@@ -20,27 +40,34 @@ async function main() {
   const ai = args.includes('--ai');
   const installMissing = args.includes('--install-missing');
   const providerArgIndex = args.indexOf('--provider');
-  const provider = providerArgIndex >= 0 ? args[providerArgIndex + 1] || 'auto' : 'auto';
+  const provider = providerArgIndex >= 0 ? (args[providerArgIndex + 1] || 'auto') : 'auto';
 
-  const errorText = args
-    .filter((arg, index) => {
-      if (arg === '--apply' || arg === '--ai' || arg === '--install-missing') return false;
-      if (arg === '--provider' || index === providerArgIndex + 1) return false;
-      return true;
-    })
-    .join(' ')
-    .trim() || (await readStdinIfPiped()).trim();
+  let errorText = getCliPayload(args, providerArgIndex);
+  if (!errorText) {
+    errorText = (await readStdinIfPiped()).trim();
+  }
 
-  const report = await runDeterministicRepair({ apply, installMissing, errorText, source: 'cli' });
+  const report = await runDeterministicRepair({
+    apply: apply,
+    installMissing: installMissing,
+    errorText: errorText,
+    source: 'cli'
+  });
+
   console.log(formatRepairReport(report));
 
   if (ai && errorText) {
     try {
-      const result = await askAiFallback({ errorText, provider, context: 'CLI scripts/dlavie-autofix.js' });
-      console.log(`\n🤖 AI fallback aktif: ${result.provider}\n`);
+      const result = await askAiFallback({
+        errorText: errorText,
+        provider: provider,
+        context: 'CLI scripts/dlavie-autofix.js'
+      });
+
+      console.log('\n[DLAVIE][AI-FALLBACK] Provider: ' + result.provider + '\n');
       console.log(result.text);
     } catch (err) {
-      console.error(`\n🤖 AI fallback gagal: ${err.message}`);
+      console.error('\n[DLAVIE][AI-FALLBACK][ERROR] ' + err.message);
       process.exitCode = 2;
     }
   }
