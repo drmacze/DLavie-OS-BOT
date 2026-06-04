@@ -1,9 +1,13 @@
-const { makeWASocket, useMultiFileAuthState, DisconnectReason, delay } = require('@whiskeysockets/baileys');
+const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const config = require('./config');
 const { loadCommands, handleMessage } = require('./commandLoader');
 
+let pairingRequested = false;
+
 async function connectToWhatsApp() {
+  console.log('[DLAVIE][WA] Starting Dlavie OS Bot connection...');
+
   const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
 
   const sock = makeWASocket({
@@ -14,34 +18,46 @@ async function connectToWhatsApp() {
 
   const commands = loadCommands();
 
-  if (!sock.authState.creds.registered) {
-    await delay(2000);
-    try {
-      const code = await sock.requestPairingCode(config.botNumber);
-      const formatted = code?.match(/.{1,4}/g)?.join('-') || code;
-      console.log(`\n🔑 PAIRING CODE: ${formatted}\n`);
-    } catch (e) {
-      console.error('Gagal mendapat pairing code:', e.message);
-    }
+  // Request pairing code ONLY ONCE per connection attempt
+  if (!sock.authState.creds.registered && !pairingRequested) {
+    pairingRequested = true;
+
+    setTimeout(async () => {
+      try {
+        const code = await sock.requestPairingCode(config.botNumber);
+        const formatted = code?.match(/.{1,4}/g)?.join('-') || code;
+        console.log(`\n\ud83d\udd11 PAIRING CODE: ${formatted}\n`);
+        console.log('[DLAVIE][WA] Silakan buka WhatsApp di HP \u2192 Perangkat Tertaut \u2192 Tautkan Perangkat, lalu masukkan kode di atas.');
+      } catch (err) {
+        console.error('[DLAVIE][ERROR] Gagal mendapat pairing code:', err.message);
+        pairingRequested = false; // allow retry
+      }
+    }, 2500);
   }
 
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect } = update;
 
     if (connection === 'close') {
-      const reason = lastDisconnect?.error?.output?.statusCode;
-      console.log('Koneksi ditutup, alasan:', reason);
-      const shouldReconnect = reason !== DisconnectReason.loggedOut;
+      const statusCode = lastDisconnect?.error?.output?.statusCode;
+      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+
+      console.log(`[DLAVIE][WA] Koneksi ditutup, alasan: ${statusCode || 'unknown'}`);
+
       if (shouldReconnect) {
-        console.log('Reconnecting dalam 3 detik...');
+        console.log('[DLAVIE][WA] Reconnecting dalam 3 detik...');
+        pairingRequested = false;
         setTimeout(connectToWhatsApp, 3000);
       } else {
-        console.log('Logged out. Hapus folder auth_info_baileys dan restart.');
+        console.log('[DLAVIE][WA] Logged out. Hapus folder auth_info_baileys lalu restart bot.');
       }
-    } else if (connection === 'open') {
-      console.log(`✅ [${config.botName}] Bot connected!`);
-    } else if (connection === 'connecting') {
-      console.log('Menghubungkan ke WhatsApp...');
+    } 
+    else if (connection === 'open') {
+      console.log(`[DLAVIE][WA] ✅ Bot connected as ${config.botName}!`);
+      pairingRequested = false;
+    }
+    else if (connection === 'connecting') {
+      console.log('[DLAVIE][WA] Connecting to WhatsApp...');
     }
   });
 
