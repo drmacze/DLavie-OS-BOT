@@ -10,32 +10,49 @@ const pino = require('pino');
 const config = require('./config');
 const { loadCommands, handleMessage } = require('./commandLoader');
 const log = require('./logger');
+const { loadLidMap, setLid } = require('./lidStore');
 
 const silentLogger = pino({ level: 'silent' });
 let retryCount = 0;
 
-// LID / JID  →  plain phone number  (e.g. "202538360029327" → "62882007437216")
-const contactPhoneMap = new Map();
+// Persistent LID → phone map — loaded from disk on startup, saved on every change
+const contactPhoneMap = loadLidMap();
+
+// Always ensure plain owner phone resolves to itself
+contactPhoneMap.set(config.ownerNumber, config.ownerNumber);
 
 function extractPhone(jidStr) {
   return (jidStr ?? '').split('@')[0].split(':')[0];
+}
+
+/** Resolve owner's phone number to its WhatsApp JID/LID and cache the result. */
+async function resolveOwnerLid(sock) {
+  try {
+    const results = await sock.onWhatsApp(config.ownerNumber);
+    if (!Array.isArray(results)) return;
+    for (const r of results) {
+      if (!r.exists) continue;
+      const jidId = extractPhone(r.jid);
+      setLid(contactPhoneMap, jidId, config.ownerNumber);
+      if (r.lid) {
+        const lidId = extractPhone(r.lid);
+        setLid(contactPhoneMap, lidId, config.ownerNumber);
+      }
+    }
+    log.info(`Owner LID resolve selesai. Map size: ${contactPhoneMap.size}`);
+  } catch (e) {
+    log.warn('onWhatsApp query gagal:', e.message);
+  }
 }
 
 function upsertContacts(contacts) {
   for (const c of contacts) {
     if (!c || !c.id) continue;
     const phone = extractPhone(c.id);
-
-    // Map the normal JID to itself (phone → phone)
-    if (phone) contactPhoneMap.set(phone, phone);
-
-    // Map the LID to the phone number
+    if (phone) setLid(contactPhoneMap, phone, phone);
     if (c.lid) {
       const lid = extractPhone(c.lid);
-      if (lid && phone) {
-        contactPhoneMap.set(lid, phone);
-        log.debug(`Contact map: ${lid} → ${phone}`);
-      }
+      if (lid && phone) setLid(contactPhoneMap, lid, phone);
     }
   }
 }
@@ -80,29 +97,21 @@ async function connectToWhatsApp() {
 
   let pairingCodeSent = false;
 
-  // ── Contact map population ──────────────────────────────────────────────
-  sock.ev.on('contacts.upsert', (contacts) => {
-    upsertContacts(contacts);
-    log.debug(`contacts.upsert: ${contacts.length} kontak diproses.`);
-  });
+  // ── Contact events → update persistent map ──────────────────────────────
+  sock.ev.on('contacts.upsert', upsertContacts);
+  sock.ev.on('contacts.update', upsertContacts);
 
-  sock.ev.on('contacts.update', (updates) => {
-    upsertContacts(updates);
-  });
-
-  // ── Connection lifecycle ────────────────────────────────────────────────
+  // ── Connection lifecycle ─────────────────────────────────────────────────
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect } = update;
 
     if (connection === 'connecting') {
       log.info('Menghubungkan ke WhatsApp...');
-
       if (!sock.authState.creds.registered && !pairingCodeSent) {
         pairingCodeSent = true;
         setTimeout(async () => {
           try {
-            const rawNum = config.botNumber.replace(/[^0-9]/g, '');
-            const code = await sock.requestPairingCode(rawNum);
+            const code = await sock.requestPairingCode(config.botNumber);
             if (!code) throw new Error('Kode kosong diterima dari server');
             const fmt = code.match(/.{1,4}/g)?.join('-') ?? code;
             log.success('\n╔══════════════════════════════╗');
@@ -123,32 +132,9 @@ async function connectToWhatsApp() {
       log.info(`Nomor bot  : ${config.botNumber}`);
       log.info(`Nomor owner: ${config.ownerNumber}`);
       log.info(`Prefix     : ${config.prefix}`);
-
-      // Resolve owner phone number → actual WA JID/LID via server query
-      setTimeout(async () => {
-        try {
-          const results = await sock.onWhatsApp(config.ownerNumber);
-          log.info(`onWhatsApp result: ${JSON.stringify(results)}`);
-          if (Array.isArray(results)) {
-            for (const r of results) {
-              if (!r.exists) continue;
-              // r.jid might be "62882007437216@s.whatsapp.net" or "202538360029327@lid"
-              const jidId = extractPhone(r.jid);
-              contactPhoneMap.set(jidId, config.ownerNumber);
-              log.info(`Owner mapped: "${jidId}" → "${config.ownerNumber}"`);
-
-              // Some Baileys versions expose r.lid separately
-              if (r.lid) {
-                const lidId = extractPhone(r.lid);
-                contactPhoneMap.set(lidId, config.ownerNumber);
-                log.info(`Owner LID mapped: "${lidId}" → "${config.ownerNumber}"`);
-              }
-            }
-          }
-        } catch (e) {
-          log.warn('onWhatsApp query gagal:', e.message);
-        }
-      }, 3000);
+      log.info(`LID map    : ${contactPhoneMap.size} entry (dari disk + runtime)`);
+      // Resolve owner LID immediately — no delay
+      resolveOwnerLid(sock);
     }
 
     if (connection === 'close') {
@@ -160,7 +146,6 @@ async function connectToWhatsApp() {
         log.error('Sesi logout! Hapus folder auth_info_baileys lalu restart bot.');
         return;
       }
-
       if (code === DisconnectReason.badSession) {
         log.error('Sesi rusak! Menghapus sesi lama dan reconnect...');
         try { require('fs').rmSync(config.session.dir, { recursive: true, force: true }); } catch (_) {}
@@ -192,7 +177,7 @@ async function connectToWhatsApp() {
 }
 
 function getDisconnectReason(code) {
-  const map = {
+  const reasons = {
     [DisconnectReason.connectionClosed]:   'Connection closed',
     [DisconnectReason.connectionLost]:     'Connection lost',
     [DisconnectReason.connectionReplaced]: 'Connection replaced by another session',
@@ -203,7 +188,7 @@ function getDisconnectReason(code) {
     405: 'Method not allowed (rate limit / invalid number)',
     428: 'Connection closed by server',
   };
-  return map[code] ?? 'Unknown reason';
+  return reasons[code] ?? 'Unknown reason';
 }
 
 module.exports = { connectToWhatsApp };
