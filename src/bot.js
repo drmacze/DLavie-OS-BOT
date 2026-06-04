@@ -1,70 +1,153 @@
-const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const {
+  makeWASocket,
+  useMultiFileAuthState,
+  DisconnectReason,
+  fetchLatestBaileysVersion,
+  Browsers,
+  makeCacheableSignalKeyStore,
+} = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const config = require('./config');
 const { loadCommands, handleMessage } = require('./commandLoader');
+const log = require('./logger');
 
-let pairingRequested = false;
+const silentLogger = pino({ level: 'silent' });
+let retryCount = 0;
+
+function getRetryDelay() {
+  const delay = Math.min(
+    config.reconnect.initialDelay * Math.pow(config.reconnect.multiplier, retryCount),
+    config.reconnect.maxDelay
+  );
+  return delay;
+}
 
 async function connectToWhatsApp() {
-  console.log('[DLAVIE][WA] Starting Dlavie OS Bot connection...');
+  log.info(`Memulai koneksi... (percobaan ke-${retryCount + 1})`);
 
-  const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
+  const { state, saveCreds } = await useMultiFileAuthState(config.session.dir);
+  const { version, isLatest } = await fetchLatestBaileysVersion();
+  log.info(`Menggunakan WhatsApp Web v${version.join('.')} — isLatest: ${isLatest}`);
 
   const sock = makeWASocket({
-    logger: pino({ level: 'silent' }),
-    auth: state,
+    version,
+    logger: silentLogger,
+    auth: {
+      creds: state.creds,
+      keys: makeCacheableSignalKeyStore(state.keys, silentLogger),
+    },
+    browser: Browsers.ubuntu('Chrome'),
     printQRInTerminal: false,
+    keepAliveIntervalMs: 15000,
+    connectTimeoutMs: 30000,
+    defaultQueryTimeoutMs: 60000,
+    retryRequestDelayMs: 2000,
+    maxMsgRetryCount: 5,
+    fireInitQueries: true,
+    generateHighQualityLinkPreview: true,
+    syncFullHistory: false,
+    markOnlineOnConnect: true,
+    getMessage: async () => undefined,
   });
 
   const commands = loadCommands();
+  log.info(`${commands.size} command(s) dimuat.`);
 
-  // Request pairing code ONLY ONCE per connection attempt
-  if (!sock.authState.creds.registered && !pairingRequested) {
-    pairingRequested = true;
-
-    setTimeout(async () => {
-      try {
-        const code = await sock.requestPairingCode(config.botNumber);
-        const formatted = code?.match(/.{1,4}/g)?.join('-') || code;
-        console.log(`\n\ud83d\udd11 PAIRING CODE: ${formatted}\n`);
-        console.log('[DLAVIE][WA] Silakan buka WhatsApp di HP \u2192 Perangkat Tertaut \u2192 Tautkan Perangkat, lalu masukkan kode di atas.');
-      } catch (err) {
-        console.error('[DLAVIE][ERROR] Gagal mendapat pairing code:', err.message);
-        pairingRequested = false; // allow retry
-      }
-    }, 2500);
-  }
+  let pairingCodeSent = false;
 
   sock.ev.on('connection.update', async (update) => {
-    const { connection, lastDisconnect } = update;
+    const { connection, lastDisconnect, qr } = update;
+
+    if (connection === 'connecting') {
+      log.info('Menghubungkan ke WhatsApp...');
+
+      if (!sock.authState.creds.registered && !pairingCodeSent) {
+        pairingCodeSent = true;
+        setTimeout(async () => {
+          try {
+            const rawNum = config.botNumber.replace(/[^0-9]/g, '');
+            const code = await sock.requestPairingCode(rawNum);
+            if (!code) throw new Error('Kode kosong diterima dari server');
+            const fmt = code.match(/.{1,4}/g)?.join('-') ?? code;
+            log.success('\n╔══════════════════════════════╗');
+            log.success(`║  🔑 PAIRING CODE : ${fmt}  ║`);
+            log.success('╚══════════════════════════════╝');
+            log.info('Cara pairing: WhatsApp/WA Business → ⋮ Menu → Perangkat Tertaut → Tautkan Perangkat → Tautkan dengan nomor telepon → masukkan kode di atas.');
+          } catch (err) {
+            log.error('Gagal request pairing code:', err.message);
+            pairingCodeSent = false;
+          }
+        }, 500);
+      }
+    }
+
+    if (connection === 'open') {
+      retryCount = 0;
+      log.success(`✅ Bot "${config.botName}" berhasil terkoneksi!`);
+      log.info(`Nomor bot  : ${config.botNumber}`);
+      log.info(`Nomor owner: ${config.ownerNumber}`);
+      log.info(`Prefix     : ${config.prefix}`);
+    }
 
     if (connection === 'close') {
-      const statusCode = lastDisconnect?.error?.output?.statusCode;
-      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+      pairingCodeSent = false;
+      const code = lastDisconnect?.error?.output?.statusCode;
+      const reason = getDisconnectReason(code);
+      log.warn(`Koneksi ditutup — kode: ${code ?? 'unknown'} (${reason})`);
 
-      console.log(`[DLAVIE][WA] Koneksi ditutup, alasan: ${statusCode || 'unknown'}`);
-
-      if (shouldReconnect) {
-        console.log('[DLAVIE][WA] Reconnecting dalam 3 detik...');
-        pairingRequested = false;
-        setTimeout(connectToWhatsApp, 3000);
-      } else {
-        console.log('[DLAVIE][WA] Logged out. Hapus folder auth_info_baileys lalu restart bot.');
+      if (code === DisconnectReason.loggedOut) {
+        log.error('Sesi logout! Hapus folder auth_info_baileys lalu restart bot.');
+        return;
       }
-    } 
-    else if (connection === 'open') {
-      console.log(`[DLAVIE][WA] ✅ Bot connected as ${config.botName}!`);
-      pairingRequested = false;
-    }
-    else if (connection === 'connecting') {
-      console.log('[DLAVIE][WA] Connecting to WhatsApp...');
+
+      if (code === DisconnectReason.badSession) {
+        log.error('Sesi rusak! Menghapus sesi lama dan reconnect...');
+        try {
+          const fs = require('fs');
+          fs.rmSync(config.session.dir, { recursive: true, force: true });
+        } catch (_) {}
+        retryCount = 0;
+      }
+
+      retryCount++;
+      const delay = getRetryDelay();
+      log.info(`Reconnect dalam ${delay / 1000}s... (attempt #${retryCount})`);
+      setTimeout(() => connectToWhatsApp().catch(log.error), delay);
     }
   });
 
   sock.ev.on('creds.update', saveCreds);
-  sock.ev.on('messages.upsert', async (m) => handleMessage(sock, m, commands, config));
+
+  sock.ev.on('messages.upsert', async (m) => {
+    try {
+      await handleMessage(sock, m, commands, config);
+    } catch (err) {
+      log.error('Error saat memproses pesan:', err.message);
+    }
+  });
+
+  sock.ev.on('connection.update', (update) => {
+    if (update.receivedPendingNotifications) {
+      log.info('Notifikasi pending selesai dimuat.');
+    }
+  });
 
   return sock;
+}
+
+function getDisconnectReason(code) {
+  const map = {
+    [DisconnectReason.connectionClosed]:    'Connection closed',
+    [DisconnectReason.connectionLost]:      'Connection lost',
+    [DisconnectReason.connectionReplaced]:  'Connection replaced by another session',
+    [DisconnectReason.loggedOut]:           'Logged out',
+    [DisconnectReason.badSession]:          'Bad/corrupted session',
+    [DisconnectReason.restartRequired]:     'Restart required',
+    [DisconnectReason.timedOut]:            'Timed out',
+    405:                                    'Method not allowed (rate limit / invalid number)',
+    428:                                    'Connection closed by server',
+  };
+  return map[code] ?? 'Unknown reason';
 }
 
 module.exports = { connectToWhatsApp };

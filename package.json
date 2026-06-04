@@ -1,14 +1,16 @@
 {
   "name": "dlavie-os-bot",
-  "version": "1.0.0",
-  "description": "DLavie OS - WhatsApp Multi-Device Bot",
+  "version": "2.0.0",
+  "description": "DLavie OS - WhatsApp Multi-Device Bot (Pairing Code)",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.18",
+    "axios": "^1.7.9",
     "dotenv": "^16.5.0",
+    "node-cache": "^5.1.2",
     "pino": "^9.7.0"
   }
 }
