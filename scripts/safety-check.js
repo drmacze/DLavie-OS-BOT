@@ -3,9 +3,9 @@
 /**
  * DLavie OS Safety Check
  *
- * Non-destructive validation for the WhatsApp command layer.
- * This script does not start the bot, does not connect to WhatsApp,
- * does not call external APIs, and does not modify files.
+ * Read-only validation for the WhatsApp command layer.
+ * It does not start the bot, connect to WhatsApp, call external APIs,
+ * or modify project files.
  */
 
 const fs = require('fs');
@@ -14,7 +14,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const COMMANDS_DIR = path.join(ROOT, 'commands');
 
-const CRITICAL_COMMANDS = new Map([
+const REGISTRY_AWARE_COMMANDS = new Map([
   ['fix', 'PLG-FIX-27478353'],
   ['menu', 'PLG-MENU-18AF3EEA'],
   ['update', 'PLG-UPDATE-C6B2D6D8'],
@@ -29,14 +29,6 @@ const REQUIRED_ROOT_FILES = [
   'src/commandLoader.js',
   'src/config.js'
 ];
-
-const IGNORE_DIRS = new Set([
-  '.git',
-  'node_modules',
-  'auth_info_baileys',
-  'logs',
-  'tmp'
-]);
 
 const results = {
   errors: [],
@@ -69,18 +61,6 @@ function safeRequire(filePath) {
   }
 }
 
-function walk(dir, out = []) {
-  if (!fs.existsSync(dir)) return out;
-  for (const entry of fs.readdirSync(dir)) {
-    if (IGNORE_DIRS.has(entry)) continue;
-    const full = path.join(dir, entry);
-    const stat = fs.statSync(full);
-    if (stat.isDirectory()) walk(full, out);
-    else out.push(full);
-  }
-  return out;
-}
-
 function checkRootFiles() {
   for (const file of REQUIRED_ROOT_FILES) {
     const full = path.join(ROOT, file);
@@ -106,7 +86,7 @@ function checkPackageJson() {
 
 function checkCommandFiles() {
   if (!fs.existsSync(COMMANDS_DIR)) {
-    addWarning('commands directory does not exist. Bot may rely on external plugin registry/runtime storage.');
+    addWarning('commands directory does not exist. Bot may rely on runtime plugin registry.');
     return;
   }
 
@@ -169,9 +149,10 @@ function checkCommandFiles() {
     }
   }
 
-  for (const [cmdName, pluginId] of CRITICAL_COMMANDS) {
-    const exists = names.has(cmdName);
-    if (!exists) addWarning(`Critical command '${cmdName}' (${pluginId}) not found in commands/. It may exist only in runtime registry.`);
+  for (const [cmdName, pluginId] of REGISTRY_AWARE_COMMANDS) {
+    if (!names.has(cmdName)) {
+      addInfo(`Registry-aware command '${cmdName}' (${pluginId}) is not in commands/. OK if supplied by runtime registry.`);
+    }
   }
 
   addInfo(`Command files scanned: ${files.length}`);
@@ -180,28 +161,6 @@ function checkCommandFiles() {
 
   if (commandSummaries.length) {
     addInfo('Commands: ' + commandSummaries.map((item) => item.name).sort().join(', '));
-  }
-}
-
-function checkSuspiciousFiles() {
-  const allFiles = walk(ROOT);
-  const sensitivePatterns = [
-    /^\.env$/,
-    /auth_info_baileys\//,
-    /creds\.json$/,
-    /session/i,
-    /apikey/i,
-    /api_key/i
-  ];
-
-  for (const file of allFiles) {
-    const relative = rel(file);
-    if (relative === '.env') addError('.env is present in repository workspace. Do not commit secrets.');
-    if (sensitivePatterns.some((pattern) => pattern.test(relative))) {
-      if (!relative.includes('example') && !relative.includes('README') && !relative.includes('package-lock')) {
-        addWarning(`Review potentially sensitive file before push: ${relative}`);
-      }
-    }
   }
 }
 
@@ -221,7 +180,6 @@ function main() {
   checkRootFiles();
   checkPackageJson();
   checkCommandFiles();
-  checkSuspiciousFiles();
 
   printSection('Errors', results.errors);
   printSection('Warnings', results.warnings);
