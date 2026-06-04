@@ -15,7 +15,7 @@ function isOwner(msg, config) {
 
 module.exports = {
   name: 'status',
-  aliases: ['system', 'sys'],
+  aliases: ['sys'],
   description: 'Full system status',
   execute: async (sock, msg, args, config, ctx = {}) => {
     const safeSend = ctx.safeSend || ((j, m) => sock.sendMessage(j, m));
