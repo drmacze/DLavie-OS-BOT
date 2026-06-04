@@ -1,7 +1,9 @@
 require('dotenv').config();
 
-module.exports = {
+const config = {
   botNumber: process.env.BOT_NUMBER || '6285725483343',
   ownerNumber: process.env.OWNER_NUMBER || '62882007437216',
-  botName: process.env.BOT_NAME || 'DLavie OS'
+  botName: process.env.BOT_NAME || 'DLAVIE BOT',
 };
+
+module.exports = config;
