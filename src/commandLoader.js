@@ -58,8 +58,9 @@ function getSender(msg) {
   const jid = msg.key.remoteJid ?? '';
   const isGroup = jid.endsWith('@g.us');
   const participant = msg.key.participant ?? msg.participant ?? '';
-  const sender = isGroup ? participant : jid;
-  return { jid, isGroup, sender: sender.replace(/@.+/, '') };
+  const raw = isGroup ? participant : jid;
+  const sender = raw.split('@')[0].split(':')[0];
+  return { jid, isGroup, sender };
 }
 
 async function handleMessage(sock, m, commands, config) {
