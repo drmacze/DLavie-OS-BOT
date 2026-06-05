@@ -1,6 +1,7 @@
 'use strict';
 const fs   = require('fs');
 const path = require('path');
+const { isOwner } = require('../src/security/ownerGuard');
 
 const MAINT_FILE = path.join(__dirname, '../tmp/maintenance.json');
 
@@ -14,12 +15,6 @@ function saveMaint(m) {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(MAINT_FILE, JSON.stringify(m, null, 2));
   } catch(_) {}
-}
-
-function isOwner(msg, config) {
-  const owner  = String(config.ownerNumber || '').replace(/\D/g, '');
-  const sender = String(msg.key.participant || msg.key.remoteJid || '').replace(/\D/g, '');
-  return msg.key.fromMe || (owner && sender.includes(owner));
 }
 
 module.exports = {
