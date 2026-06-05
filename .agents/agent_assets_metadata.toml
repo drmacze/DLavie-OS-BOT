@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "aQ3fc7RBKNvtzpmJOMBot"
+uri = "file://tmp/dlavie-panel-vercel.zip"
+type = "unspecified"
+title = "DLavie Panel — Vercel Export (.zip)"

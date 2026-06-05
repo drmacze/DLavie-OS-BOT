@@ -9,6 +9,8 @@
 </head>
 <body>
 
+<!-- POPUP OVERLAY (injected by JS) -->
+
 <!-- NAVBAR -->
 <nav class="navbar">
   <a href="/" class="navbar-brand"><span>⚡</span><span>DLavie<span style="color:var(--primary-l)"> OS</span></span></a>
@@ -26,6 +28,15 @@
     <a href="/dashboard" class="sidebar-item active" data-page="dashboard"><span class="icon">📊</span>Dashboard</a>
     <a href="/bots"      class="sidebar-item"        data-page="bots">     <span class="icon">🤖</span>Bot Manager</a>
     <a href="/tokens"    class="sidebar-item"        data-page="tokens">   <span class="icon">🪙</span>Token & Topup</a>
+
+    <div class="sidebar-section">Tools</div>
+    <a href="/terminal"  class="sidebar-item" data-page="terminal"><span class="icon">⬛</span>Terminal</a>
+    <a href="/files"     class="sidebar-item" data-page="files"><span class="icon">📁</span>File Manager</a>
+    <a href="/ssh"       class="sidebar-item" data-page="ssh"><span class="icon">🔌</span>SSH / Remote</a>
+
+    <!-- Owner Only — shown via JS -->
+    <div class="sidebar-section owner-only" style="display:none">Owner Only</div>
+    <a href="/admin" class="sidebar-item owner-only" data-page="admin" style="display:none"><span class="icon">👑</span>Admin Panel</a>
 
     <div class="sidebar-section">Pengaturan</div>
     <a href="/settings"  class="sidebar-item"        data-page="settings"> <span class="icon">⚙️</span>Profile & Settings</a>
@@ -129,10 +140,11 @@
 document.addEventListener('DOMContentLoaded', () => {
   if (!Auth.guardDashboard()) return;
   initDashboard();
+  checkOwnerFeatures();
+  checkPopup();
   document.getElementById('bot-code-value').addEventListener('click', function() {
     copyText(this.textContent, 'Kode');
   });
-  // Update code hint
   const orig = generateBotCode;
   window.generateBotCode = async function() {
     await orig();

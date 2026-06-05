@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File Manager — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+.fm-layout    { display:flex; flex-direction:column; height:calc(100vh - 56px); }
+.fm-toolbar   { background:var(--surface-2); border-bottom:1px solid var(--border); padding:10px 16px; display:flex; align-items:center; gap:10px; flex-shrink:0; flex-wrap:wrap; }
+.fm-main      { display:flex; flex:1; overflow:hidden; }
+.fm-sidebar   { width:220px; border-right:1px solid var(--border); background:var(--surface); overflow-y:auto; padding:12px; flex-shrink:0; }
+.fm-content   { flex:1; overflow-y:auto; padding:16px; }
+.fm-breadcrumb{ font-size:0.82rem; font-family:var(--font-mono); color:var(--text-2); background:var(--surface-2); padding:6px 14px; border-radius:8px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fm-item      { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:8px; cursor:pointer; transition:var(--transition); border:1px solid transparent; }
+.fm-item:hover{ background:var(--surface-2); border-color:var(--border); }
+.fm-item.selected{ background:rgba(99,102,241,0.1); border-color:rgba(99,102,241,0.3); }
+.fm-item-icon { font-size:1.3rem; flex-shrink:0; }
+.fm-item-name { font-size:0.875rem; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0; }
+.fm-item-meta { font-size:0.75rem; color:var(--text-2); white-space:nowrap; flex-shrink:0; }
+.fm-grid      { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; }
+.fm-grid .fm-item { flex-direction:column; text-align:center; padding:16px 10px; }
+.fm-grid .fm-item-icon { font-size:2.2rem; }
+.fm-grid .fm-item-name { font-size:0.78rem; }
+.fm-grid .fm-item-meta { display:none; }
+.fm-view-toggle { display:flex; gap:4px; }
+.fm-ctx-menu  { position:fixed; z-index:9999; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:6px; min-width:170px; box-shadow:0 8px 32px rgba(0,0,0,0.4); }
+.fm-ctx-menu button { display:block; width:100%; text-align:left; padding:8px 14px; background:none; border:none; color:var(--text); font-size:0.85rem; border-radius:6px; cursor:pointer; transition:var(--transition); }
+.fm-ctx-menu button:hover { background:var(--surface-3); }
+.fm-ctx-menu hr { border:none; border-top:1px solid var(--border); margin:4px 0; }
+.editor-modal .modal-box { max-width:900px; width:95vw; height:80vh; display:flex; flex-direction:column; }
+.code-editor  { flex:1; background:#0d0d0d; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); font-size:0.85rem; color:#e2e8f0; padding:16px; resize:none; overflow:auto; line-height:1.6; outline:none; tab-size:2; }
+.sidebar-shortcut { padding:6px 10px; border-radius:6px; font-size:0.82rem; cursor:pointer; color:var(--text-2); transition:var(--transition); display:flex; align-items:center; gap:8px; }
+.sidebar-shortcut:hover { background:var(--surface-2); color:var(--text); }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="navbar-brand"><span>⚡</span><span>DLavie<span style="color:var(--primary-l)"> OS</span></span></a>
+  <div class="navbar-actions" style="margin-left:auto;gap:10px">
+    <span id="fm-user" style="font-size:0.85rem;color:var(--text-2)"></span>
+    <a href="/terminal" class="btn btn-sm btn-secondary">⬛ Terminal</a>
+    <a href="/dashboard" class="btn btn-ghost btn-sm">← Dashboard</a>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="fm-layout">
+  <!-- TOOLBAR -->
+  <div class="fm-toolbar">
+    <button class="btn btn-sm btn-ghost" onclick="fm.navUp()" title="Up">⬆️</button>
+    <button class="btn btn-sm btn-ghost" onclick="fm.refresh()" title="Refresh">🔄</button>
+    <div class="fm-breadcrumb" id="fm-breadcrumb">/</div>
+    <div class="fm-view-toggle">
+      <button class="btn btn-sm btn-ghost" id="btn-list-view" onclick="fm.setView('list')" title="List">☰</button>
+      <button class="btn btn-sm btn-ghost" id="btn-grid-view" onclick="fm.setView('grid')" title="Grid">⊞</button>
+    </div>
+    <button class="btn btn-sm btn-primary" onclick="fm.promptNewFile()">➕ File</button>
+    <button class="btn btn-sm btn-secondary" onclick="fm.promptNewFolder()">📁 Folder</button>
+    <label class="btn btn-sm btn-outline" style="cursor:pointer">⬆️ Upload<input type="file" id="upload-input" style="display:none" multiple onchange="fm.uploadFiles(this.files)"></label>
+    <input type="text" id="fm-search" class="form-input" style="width:180px;padding:6px 12px;font-size:0.82rem" placeholder="🔍 Cari file...">
+  </div>
+
+  <div class="fm-main">
+    <!-- SIDEBAR -->
+    <div class="fm-sidebar">
+      <div style="font-size:0.75rem;font-weight:600;color:var(--text-2);margin-bottom:8px;padding:0 6px">QUICK ACCESS</div>
+      <div class="sidebar-shortcut" onclick="fm.navigate('/')">🏠 Root</div>
+      <div class="sidebar-shortcut" onclick="fm.navigate('/commands')">📜 Commands</div>
+      <div class="sidebar-shortcut" onclick="fm.navigate('/web')">🌐 Web</div>
+      <div class="sidebar-shortcut" onclick="fm.navigate('/src')">⚙️ Source</div>
+      <div class="sidebar-shortcut" onclick="fm.navigate('/tmp')">📦 Temp Files</div>
+      <div class="sidebar-shortcut" onclick="fm.navigate('/plugins')">🧩 Plugins</div>
+      <hr class="divider">
+      <div style="font-size:0.75rem;font-weight:600;color:var(--text-2);margin-bottom:8px;padding:0 6px">SELECTED</div>
+      <div id="sidebar-selected" style="font-size:0.78rem;color:var(--text-2);padding:0 6px">Tidak ada file dipilih</div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="fm-content" id="fm-content">
+      <div class="empty-state"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div id="fm-ctx" class="fm-ctx-menu" style="display:none">
+  <button onclick="fm.ctxOpen()">📂 Buka</button>
+  <button onclick="fm.ctxEdit()">✏️ Edit</button>
+  <button onclick="fm.ctxDownload()">⬇️ Download</button>
+  <hr>
+  <button onclick="fm.ctxRename()">✏️ Rename</button>
+  <button onclick="fm.ctxCopy()">📋 Copy Path</button>
+  <hr>
+  <button onclick="fm.ctxDelete()" style="color:var(--error)">🗑️ Hapus</button>
+</div>
+
+<!-- Edit Modal -->
+<div id="edit-modal" class="modal editor-modal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title" id="edit-modal-title">Edit File</h3>
+        <div style="font-size:0.78rem;color:var(--text-2);margin-top:2px" id="edit-modal-path"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('edit-modal')">✕</button>
+    </div>
+    <textarea id="code-editor" class="code-editor" spellcheck="false"></textarea>
+    <div class="modal-footer" style="display:flex;gap:10px;justify-content:flex-end;padding:12px 0 0">
+      <button class="btn btn-ghost" onclick="closeModal('edit-modal')">Batal</button>
+      <button class="btn btn-primary" onclick="fm.saveFile()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!localStorage.getItem('dlv_token')) window.location.href = '/login';
+setEl('fm-user', localStorage.getItem('dlv_user') ? JSON.parse(localStorage.getItem('dlv_user')).name : '');
+
+const fm = (() => {
+  let cwd         = '/';
+  let items       = [];
+  let view        = 'list';
+  let ctxTarget   = null;
+  let searchTimer = null;
+
+  function getIcon(item) {
+    if (item.isDir) return '📁';
+    const ext = (item.name.split('.').pop() || '').toLowerCase();
+    const icons = { js:'📜', ts:'📘', json:'📋', md:'📝', txt:'📄', html:'🌐', css:'🎨', sh:'⚙️', env:'🔐', zip:'📦', tar:'📦', gz:'📦', png:'🖼️', jpg:'🖼️', jpeg:'🖼️', gif:'🖼️', svg:'🎨', mp4:'🎬', mp3:'🎵' };
+    return icons[ext] || '📄';
+  }
+
+  function fmtSize(bytes) {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+    return (bytes/1024/1024).toFixed(1) + ' MB';
+  }
+
+  async function load(dir) {
+    cwd = dir || '/';
+    document.getElementById('fm-breadcrumb').textContent = cwd;
+    document.getElementById('fm-content').innerHTML = '<div class="empty-state"><div class="spinner"></div></div>';
+    try {
+      const data = await API.get(`/api/files/list?path=${encodeURIComponent(cwd)}`);
+      items = data.items || [];
+      render(items);
+    } catch(e) { document.getElementById('fm-content').innerHTML = `<div class="alert alert-error">${e.message}</div>`; }
+  }
+
+  function render(list) {
+    const contentEl = document.getElementById('fm-content');
+    if (!list.length) { contentEl.innerHTML = '<div class="empty-state"><div class="icon">📂</div><p>Folder kosong</p></div>'; return; }
+    const sorted = [...list].sort((a,b) => { if (a.isDir && !b.isDir) return -1; if (!a.isDir && b.isDir) return 1; return a.name.localeCompare(b.name); });
+    const cls = view === 'grid' ? 'fm-grid' : '';
+    contentEl.innerHTML = `<div class="${cls}">` + sorted.map(item => `
+      <div class="fm-item" data-name="${item.name}" data-dir="${item.isDir}" data-path="${item.path}"
+        ondblclick="fm.openItem('${item.name}','${item.isDir}','${item.path}')"
+        onclick="fm.selectItem(this,'${item.name}','${item.path}')"
+        oncontextmenu="fm.showCtx(event,'${item.name}','${item.isDir}','${item.path}')">
+        <span class="fm-item-icon">${getIcon(item)}</span>
+        <span class="fm-item-name" title="${item.name}">${item.name}</span>
+        <span class="fm-item-meta">${item.isDir ? '' : fmtSize(item.size)}</span>
+      </div>`).join('') + '</div>';
+  }
+
+  function openItem(name, isDir, p) {
+    if (isDir === 'true' || isDir === true) { load(p); }
+    else { editFile(name, p); }
+  }
+
+  function selectItem(el, name, p) {
+    document.querySelectorAll('.fm-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    ctxTarget = { name, path: p };
+    document.getElementById('sidebar-selected').textContent = name;
+  }
+
+  function showCtx(e, name, isDir, p) {
+    e.preventDefault();
+    ctxTarget = { name, isDir: isDir === 'true' || isDir === true, path: p };
+    const ctx = document.getElementById('fm-ctx');
+    ctx.style.display = 'block';
+    ctx.style.left    = Math.min(e.clientX, window.innerWidth - 180) + 'px';
+    ctx.style.top     = Math.min(e.clientY, window.innerHeight - 220) + 'px';
+  }
+
+  document.addEventListener('click', () => { document.getElementById('fm-ctx').style.display = 'none'; });
+
+  function ctxOpen()     { if (ctxTarget) openItem(ctxTarget.name, ctxTarget.isDir, ctxTarget.path); }
+  function ctxEdit()     { if (ctxTarget && !ctxTarget.isDir) editFile(ctxTarget.name, ctxTarget.path); }
+  function ctxCopy()     { if (ctxTarget) copyText(ctxTarget.path, 'Path'); }
+  function ctxDownload() { if (ctxTarget && !ctxTarget.isDir) downloadFile(ctxTarget.path); }
+
+  function ctxRename() {
+    if (!ctxTarget) return;
+    const newName = prompt('Nama baru:', ctxTarget.name);
+    if (!newName || newName === ctxTarget.name) return;
+    const newPath = ctxTarget.path.replace(/(\/)[^\/]+$/, `$1${newName}`);
+    API.put('/api/files/rename', { from: ctxTarget.path, to: newPath }).then(() => load(cwd)).catch(e => toast(e.message,'error'));
+  }
+
+  function ctxDelete() {
+    if (!ctxTarget) return;
+    if (!confirm(`Hapus "${ctxTarget.name}"? Tidak bisa dibatalkan.`)) return;
+    API.delete(`/api/files/delete?path=${encodeURIComponent(ctxTarget.path)}`).then(() => { toast('Dihapus!','success',2000); load(cwd); }).catch(e => toast(e.message,'error'));
+  }
+
+  async function editFile(name, p) {
+    try {
+      document.getElementById('edit-modal-title').textContent = '✏️ ' + name;
+      document.getElementById('edit-modal-path').textContent  = p;
+      document.getElementById('code-editor').value = 'Memuat...';
+      document.getElementById('edit-modal').style.display = 'flex';
+      const data = await API.get(`/api/files/read?path=${encodeURIComponent(p)}`);
+      document.getElementById('code-editor').value = data.content || '';
+    } catch(e) { toast(e.message,'error'); }
+  }
+
+  async function saveFile() {
+    const p    = document.getElementById('edit-modal-path').textContent;
+    const cont = document.getElementById('code-editor').value;
+    try {
+      await API.post('/api/files/write', { path: p, content: cont });
+      toast('File disimpan!','success',2000);
+      closeModal('edit-modal');
+      load(cwd);
+    } catch(e) { toast(e.message,'error'); }
+  }
+
+  function downloadFile(p) {
+    const token = localStorage.getItem('dlv_token');
+    const a = document.createElement('a');
+    a.href = `/api/files/download?path=${encodeURIComponent(p)}&token=${token}`;
+    a.download = p.split('/').pop();
+    a.click();
+  }
+
+  function promptNewFile() {
+    const name = prompt('Nama file baru (contoh: test.js):');
+    if (!name) return;
+    const p = (cwd.endsWith('/') ? cwd : cwd + '/') + name;
+    API.post('/api/files/write', { path: p, content: '' }).then(() => { toast('File dibuat!','success',2000); load(cwd); }).catch(e => toast(e.message,'error'));
+  }
+
+  function promptNewFolder() {
+    const name = prompt('Nama folder baru:');
+    if (!name) return;
+    const p = (cwd.endsWith('/') ? cwd : cwd + '/') + name;
+    API.post('/api/files/mkdir', { path: p }).then(() => { toast('Folder dibuat!','success',2000); load(cwd); }).catch(e => toast(e.message,'error'));
+  }
+
+  async function uploadFiles(files) {
+    for (const file of files) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const content  = e.target.result.split(',')[1]; // base64
+        const filePath = (cwd.endsWith('/') ? cwd : cwd + '/') + file.name;
+        try {
+          await API.post('/api/files/upload', { path: filePath, content, encoding: 'base64' });
+          toast(`Upload ${file.name} berhasil!`, 'success', 2000);
+          load(cwd);
+        } catch(err) { toast(`Upload ${file.name} gagal: ${err.message}`, 'error'); }
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function setView(v) {
+    view = v;
+    document.getElementById('btn-list-view').style.background = v === 'list' ? 'var(--surface-3)' : '';
+    document.getElementById('btn-grid-view').style.background = v === 'grid' ? 'var(--surface-3)' : '';
+    render(items);
+  }
+
+  function navUp() {
+    if (cwd === '/') return;
+    const parts = cwd.split('/').filter(Boolean);
+    parts.pop();
+    load('/' + parts.join('/') || '/');
+  }
+
+  function navigate(dir) { load(dir); }
+  function refresh()     { load(cwd); }
+
+  // Search
+  document.getElementById('fm-search').addEventListener('input', (e) => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      const q = e.target.value.toLowerCase();
+      const filtered = q ? items.filter(i => i.name.toLowerCase().includes(q)) : items;
+      render(filtered);
+    }, 200);
+  });
+
+  // Tab indent in editor
+  document.getElementById('code-editor').addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') { e.preventDefault(); const s = e.target; const start = s.selectionStart; s.value = s.value.substring(0,start) + '  ' + s.value.substring(s.selectionEnd); s.selectionStart = s.selectionEnd = start + 2; }
+  });
+
+  return { load, navigate, navUp, refresh, openItem, selectItem, showCtx, ctxOpen, ctxEdit, ctxCopy, ctxDownload, ctxRename, ctxDelete, editFile, saveFile, downloadFile, promptNewFile, promptNewFolder, uploadFiles, setView };
+})();
+
+fm.load('/');
+</script>
+</body>
+</html>

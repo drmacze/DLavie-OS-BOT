@@ -7,3 +7,4 @@
 - [Bot dashboard filter bug fix](bot-dashboard-filter.md) — ownerUserId (WA digits) ≠ webUserId (usr_xxx); must store ownerWebUserId at generate+verify time.
 - [Payment system flow](payment-system.md) — QRIS initiate (5-min timer) → proof submit → owner WA notify → !approve/!reject; in tmp/payments.json.
 - [Dashboard URL resolution](dashboard-url.md) — getDashUrl() checks DASHBOARD_URL env → REPLIT_DEV_DOMAIN → cfg.web.dashboardUrl → fallback.
+- [Web panel v3.0 features](web-panel-v3.md) — Popup, maintenance, file manager, WS terminal/SSH, owner guard, admin panel, Vercel export.

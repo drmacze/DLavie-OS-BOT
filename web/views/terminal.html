@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terminal — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<!-- Xterm.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.js"></script>
+<style>
+.terminal-layout { display:flex; flex-direction:column; height:calc(100vh - 56px); }
+.terminal-toolbar { background:var(--surface-2); border-bottom:1px solid var(--border); padding:8px 16px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.terminal-toolbar .dot { width:12px; height:12px; border-radius:50%; }
+.terminal-wrapper { flex:1; overflow:hidden; background:#0d0d0d; }
+#xterm-container { width:100%; height:100%; padding:4px; box-sizing:border-box; }
+.conn-status { font-size:0.78rem; padding:3px 10px; border-radius:20px; font-weight:600; }
+.conn-status.connected    { background:rgba(16,185,129,0.15); color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
+.conn-status.disconnected { background:rgba(239,68,68,0.15);  color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
+.conn-status.connecting   { background:rgba(245,158,11,0.15); color:#fcd34d; border:1px solid rgba(245,158,11,0.3); }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="navbar-brand"><span>⚡</span><span>DLavie<span style="color:var(--primary-l)"> OS</span></span></a>
+  <div class="navbar-actions" style="margin-left:auto;gap:12px">
+    <span id="term-status" class="conn-status connecting">⏳ Menghubungkan...</span>
+    <button class="btn btn-sm btn-secondary" onclick="reconnect()">🔄 Reconnect</button>
+    <button class="btn btn-sm btn-ghost" onclick="clearTerm()">🗑️ Clear</button>
+    <a href="/files" class="btn btn-sm btn-outline">📁 File Manager</a>
+    <a href="/dashboard" class="btn btn-ghost btn-sm">← Dashboard</a>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="terminal-layout">
+  <div class="terminal-toolbar">
+    <div class="dot" style="background:#ff5f57"></div>
+    <div class="dot" style="background:#febc2e"></div>
+    <div class="dot" style="background:#28c840"></div>
+    <span style="font-size:0.82rem;color:var(--text-2);margin-left:8px;font-family:var(--font-mono)">DLavie OS Terminal</span>
+    <span style="margin-left:auto;font-size:0.78rem;color:var(--text-2)" id="term-cwd"></span>
+    <div style="display:flex;gap:8px;margin-left:12px">
+      <button class="btn btn-sm btn-ghost" style="font-size:0.75rem;padding:3px 10px" onclick="sendCmd('ls -la')">ls</button>
+      <button class="btn btn-sm btn-ghost" style="font-size:0.75rem;padding:3px 10px" onclick="sendCmd('pwd')">pwd</button>
+      <button class="btn btn-sm btn-ghost" style="font-size:0.75rem;padding:3px 10px" onclick="sendCmd('ps aux | head -20')">ps</button>
+      <button class="btn btn-sm btn-ghost" style="font-size:0.75rem;padding:3px 10px" onclick="sendCmd('df -h')">df</button>
+      <button class="btn btn-sm btn-ghost" style="font-size:0.75rem;padding:3px 10px" onclick="sendCmd('npm start')">▶ start</button>
+      <button class="btn btn-sm btn-ghost" style="font-size:0.75rem;padding:3px 10px" onclick="sendCmd('top')">top</button>
+    </div>
+  </div>
+  <div class="terminal-wrapper">
+    <div id="xterm-container"></div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!localStorage.getItem('dlv_token')) window.location.href = '/login';
+
+const term = new Terminal({
+  cursorBlink: true,
+  fontSize: 14,
+  fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
+  theme: {
+    background: '#0d0d0d',
+    foreground: '#e2e8f0',
+    cursor:     '#a855f7',
+    selectionBackground: 'rgba(168,85,247,0.3)',
+    black:   '#1a1a2e', red:    '#ef4444', green:  '#22c55e', yellow: '#eab308',
+    blue:    '#6366f1', magenta:'#a855f7', cyan:   '#06b6d4', white:  '#e2e8f0',
+    brightBlack:'#374151', brightRed:'#f87171', brightGreen:'#4ade80', brightYellow:'#facc15',
+    brightBlue:'#818cf8', brightMagenta:'#c084fc', brightCyan:'#67e8f9', brightWhite:'#f8fafc',
+  },
+  allowTransparency: true,
+  scrollback: 5000,
+  convertEol: true,
+});
+
+const fitAddon      = new FitAddon.FitAddon();
+const webLinksAddon = new WebLinksAddon.WebLinksAddon();
+term.loadAddon(fitAddon);
+term.loadAddon(webLinksAddon);
+term.open(document.getElementById('xterm-container'));
+fitAddon.fit();
+
+window.addEventListener('resize', () => fitAddon.fit());
+
+let ws, reconnectTimer;
+const statusEl = document.getElementById('term-status');
+
+function setStatus(s) {
+  statusEl.className = 'conn-status ' + s;
+  statusEl.textContent = s === 'connected' ? '🟢 Terhubung' : s === 'disconnected' ? '🔴 Terputus' : '⏳ Menghubungkan...';
+}
+
+function connect() {
+  clearTimeout(reconnectTimer);
+  const token   = localStorage.getItem('dlv_token');
+  const proto   = location.protocol === 'https:' ? 'wss' : 'ws';
+  const wsUrl   = `${proto}://${location.host}/ws/terminal?token=${token}`;
+  setStatus('connecting');
+  term.writeln('\x1b[33m⚡ DLavie OS Terminal — Menghubungkan...\x1b[0m');
+
+  ws = new WebSocket(wsUrl);
+  ws.onopen = () => {
+    setStatus('connected');
+    term.writeln('\x1b[32m✅ Terhubung! Ketik perintah di bawah.\x1b[0m\r\n');
+    const { rows, cols } = term;
+    ws.send(JSON.stringify({ type: 'resize', cols, rows }));
+  };
+  ws.onmessage = (e) => {
+    try {
+      const m = JSON.parse(e.data);
+      if (m.type === 'output') term.write(m.data);
+      if (m.type === 'exit')   { term.writeln(`\r\n\x1b[31m[Sesi berakhir — kode: ${m.code}]\x1b[0m`); setStatus('disconnected'); reconnectTimer = setTimeout(connect, 5000); }
+    } catch(_) { term.write(e.data); }
+  };
+  ws.onclose = () => {
+    setStatus('disconnected');
+    term.writeln('\r\n\x1b[31m[Koneksi terputus. Reconnect dalam 5 detik...]\x1b[0m');
+    reconnectTimer = setTimeout(connect, 5000);
+  };
+  ws.onerror = () => { setStatus('disconnected'); ws.close(); };
+
+  term.onData((data) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'input', data })); });
+  term.onResize(({ rows, cols }) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'resize', cols, rows })); });
+}
+
+function reconnect() { if (ws) { ws.close(); } else { connect(); } }
+function clearTerm()  { term.clear(); }
+function sendCmd(cmd) { if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'input', data: cmd + '\n' })); }
+function logout()     { localStorage.clear(); window.location.href = '/'; }
+
+connect();
+
+// Focus terminal on click
+document.getElementById('xterm-container').addEventListener('click', () => term.focus());
+</script>
+</body>
+</html>

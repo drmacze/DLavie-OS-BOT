@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSH / Remote — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+<style>
+.ssh-layout { display:flex; height:calc(100vh - 56px); }
+.ssh-sidebar { width:300px; border-right:1px solid var(--border); background:var(--surface); display:flex; flex-direction:column; flex-shrink:0; }
+.ssh-sidebar-header { padding:16px; border-bottom:1px solid var(--border); }
+.ssh-sessions { flex:1; overflow-y:auto; }
+.ssh-session-item { padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:var(--transition); }
+.ssh-session-item:hover { background:var(--surface-2); }
+.ssh-session-item.active { background:rgba(99,102,241,0.12); border-left:3px solid var(--primary); }
+.ssh-main { flex:1; display:flex; flex-direction:column; }
+.ssh-connect-form { padding:24px; max-width:520px; margin:0 auto; width:100%; }
+.ssh-term-wrapper { flex:1; background:#0d0d0d; overflow:hidden; position:relative; }
+#ssh-xterm { width:100%; height:100%; padding:4px; box-sizing:border-box; }
+.tab-bar { display:flex; gap:0; border-bottom:1px solid var(--border); background:var(--surface-2); flex-shrink:0; overflow-x:auto; }
+.tab-btn { padding:8px 20px; font-size:0.82rem; border:none; background:none; color:var(--text-2); cursor:pointer; border-right:1px solid var(--border); white-space:nowrap; transition:var(--transition); }
+.tab-btn.active { color:var(--text); background:var(--surface); border-bottom:2px solid var(--primary); }
+.tab-btn .close { margin-left:8px; opacity:0.5; }
+.tab-btn .close:hover { opacity:1; }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="navbar-brand"><span>⚡</span><span>DLavie<span style="color:var(--primary-l)"> OS</span></span></a>
+  <div class="navbar-actions" style="margin-left:auto;gap:10px">
+    <a href="/terminal" class="btn btn-sm btn-secondary">⬛ Local Terminal</a>
+    <a href="/files" class="btn btn-sm btn-outline">📁 Files</a>
+    <a href="/dashboard" class="btn btn-ghost btn-sm">← Dashboard</a>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="ssh-layout">
+  <!-- SIDEBAR: Saved Connections -->
+  <div class="ssh-sidebar">
+    <div class="ssh-sidebar-header">
+      <div style="font-weight:700;margin-bottom:12px">🔌 Koneksi Remote</div>
+      <button class="btn btn-primary btn-full btn-sm" onclick="showConnectForm()">➕ Koneksi Baru</button>
+    </div>
+    <div class="ssh-sessions" id="saved-sessions">
+      <!-- Saved sessions rendered here -->
+      <div style="padding:16px;font-size:0.82rem;color:var(--text-2);text-align:center">
+        <div style="font-size:2rem;margin-bottom:8px">🔌</div>
+        Belum ada koneksi tersimpan.<br>Klik "+ Koneksi Baru" untuk mulai.
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="ssh-main">
+    <div class="tab-bar" id="tab-bar">
+      <button class="tab-btn active" id="tab-new" onclick="showConnectForm()">➕ Baru</button>
+    </div>
+
+    <!-- CONNECT FORM -->
+    <div id="connect-form-panel" style="overflow-y:auto;flex:1">
+      <div class="ssh-connect-form">
+        <h3 style="margin-bottom:8px">🔌 Koneksi Remote</h3>
+        <p style="color:var(--text-2);font-size:0.875rem;margin-bottom:24px">Hubungkan ke server SSH, VPS, atau host remote kamu.</p>
+
+        <!-- Type Selector -->
+        <div style="display:flex;gap:8px;margin-bottom:20px">
+          <button class="btn btn-sm btn-primary" id="type-ssh"   onclick="setConnType('ssh')">🔐 SSH</button>
+          <button class="btn btn-sm btn-ghost"   id="type-vps"   onclick="setConnType('vps')">🖥️ VPS</button>
+          <button class="btn btn-sm btn-ghost"   id="type-ptero" onclick="setConnType('ptero')">🦖 Pterodactyl</button>
+          <button class="btn btn-sm btn-ghost"   id="type-rdp"   onclick="setConnType('rdp')">🖥️ RDP/VNC</button>
+        </div>
+
+        <!-- SSH / VPS Form -->
+        <div id="form-ssh" class="card">
+          <div class="form-group">
+            <label class="form-label">Nama Koneksi (opsional)</label>
+            <input id="conn-label" class="form-input" placeholder="Contoh: My VPS Production">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:10px">
+            <div class="form-group">
+              <label class="form-label">Host / IP Address</label>
+              <input id="conn-host" class="form-input" placeholder="192.168.1.1 atau domain.com">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Port</label>
+              <input id="conn-port" class="form-input" value="22" style="width:80px">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input id="conn-user" class="form-input" placeholder="root">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password / Private Key</label>
+            <textarea id="conn-pass" class="form-input" rows="3" placeholder="Password atau paste private key (-----BEGIN RSA PRIVATE KEY-----)"></textarea>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-primary btn-full" onclick="connectSSH()">🔌 Hubungkan via SSH</button>
+            <button class="btn btn-secondary" onclick="saveSession()" title="Simpan koneksi">💾</button>
+          </div>
+          <p style="margin-top:12px;font-size:0.78rem;color:var(--text-2)">
+            ⚠️ <strong>Note:</strong> Koneksi SSH berjalan melalui server DLavie OS. Password tidak disimpan secara permanen.
+          </p>
+        </div>
+
+        <!-- Pterodactyl Form -->
+        <div id="form-ptero" class="card" style="display:none">
+          <div class="form-group">
+            <label class="form-label">Pterodactyl Panel URL</label>
+            <input id="ptero-url" class="form-input" placeholder="https://panel.yourdomain.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">API Key (Client API)</label>
+            <input id="ptero-key" class="form-input" type="password" placeholder="ptlc_xxxxxxxxxxxx">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="connectPtero()">🦖 Hubungkan ke Pterodactyl</button>
+          <div id="ptero-servers" style="margin-top:16px"></div>
+        </div>
+
+        <!-- RDP/VNC Info -->
+        <div id="form-rdp" class="card" style="display:none">
+          <div class="alert alert-warning" style="margin-bottom:16px">
+            ⚠️ <strong>RDP & VNC</strong> menggunakan protokol desktop yang tidak bisa di-embed langsung di browser standar.
+          </div>
+          <p style="font-size:0.875rem;margin-bottom:16px">Opsi yang tersedia:</p>
+          <div class="grid-2" style="gap:12px">
+            <div class="card" style="padding:16px;cursor:pointer" onclick="openGuacamole()">
+              <div style="font-size:1.5rem;margin-bottom:8px">🖥️</div>
+              <strong style="display:block;margin-bottom:4px">Apache Guacamole</strong>
+              <p style="font-size:0.78rem;color:var(--text-2)">Web-based RDP/VNC gateway. Perlu install sendiri.</p>
+            </div>
+            <div class="card" style="padding:16px">
+              <div style="font-size:1.5rem;margin-bottom:8px">🔐</div>
+              <strong style="display:block;margin-bottom:4px">Via SSH Tunnel</strong>
+              <p style="font-size:0.78rem;color:var(--text-2)">Forward port RDP melalui SSH tunnel dari terminal.</p>
+              <code style="font-size:0.72rem;display:block;margin-top:8px;color:var(--primary-l)">ssh -L 3389:localhost:3389 user@host</code>
+            </div>
+          </div>
+          <div class="alert alert-info" style="margin-top:16px">
+            💡 Gunakan tab <strong>SSH Terminal</strong> untuk mengakses server dan menjalankan perintah remote.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SSH Terminal Panel (shown after connect) -->
+    <div id="ssh-term-panel" style="display:none;flex:1;flex-direction:column">
+      <div class="ssh-term-wrapper">
+        <div id="ssh-xterm"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!localStorage.getItem('dlv_token')) window.location.href = '/login';
+
+let sshSessions = JSON.parse(localStorage.getItem('dlv_ssh_sessions') || '[]');
+let connType    = 'ssh';
+let sshWs       = null;
+let sshTerm     = null;
+let activeSessIdx = -1;
+
+function logout() { localStorage.removeItem('dlv_token'); localStorage.removeItem('dlv_user'); window.location.href = '/'; }
+function setConnType(t) {
+  connType = t;
+  ['ssh','vps','ptero','rdp'].forEach(k => {
+    document.getElementById(`type-${k}`)?.classList.toggle('btn-primary', k === t);
+    document.getElementById(`type-${k}`)?.classList.toggle('btn-ghost', k !== t);
+    const form = document.getElementById(`form-${k === 'vps' ? 'ssh' : k}`);
+    if (form) form.style.display = (k === t || (k==='vps' && t==='vps')) ? 'block' : 'none';
+  });
+  // ssh and vps share same form
+  if (t === 'vps') document.getElementById('form-ssh').style.display = 'block';
+}
+
+function showConnectForm() {
+  document.getElementById('connect-form-panel').style.display = 'block';
+  document.getElementById('ssh-term-panel').style.display    = 'none';
+}
+
+function saveSessions() { localStorage.setItem('dlv_ssh_sessions', JSON.stringify(sshSessions)); }
+
+function renderSavedSessions() {
+  const el = document.getElementById('saved-sessions');
+  if (!sshSessions.length) { el.innerHTML = '<div style="padding:16px;font-size:0.82rem;color:var(--text-2);text-align:center"><div style="font-size:2rem;margin-bottom:8px">🔌</div>Belum ada koneksi tersimpan.</div>'; return; }
+  el.innerHTML = sshSessions.map((s,i) => `
+    <div class="ssh-session-item ${i===activeSessIdx?'active':''}" onclick="loadSession(${i})">
+      <div style="font-weight:600;font-size:0.875rem">${s.label || s.host}</div>
+      <div style="font-size:0.78rem;color:var(--text-2)">${s.user}@${s.host}:${s.port||22}</div>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <button class="btn btn-sm btn-primary" style="padding:2px 8px;font-size:0.72rem" onclick="event.stopPropagation();connectSession(${i})">🔌 Connect</button>
+        <button class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:0.72rem" onclick="event.stopPropagation();deleteSession(${i})">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function saveSession() {
+  const sess = { label: document.getElementById('conn-label').value.trim(), host: document.getElementById('conn-host').value.trim(), port: document.getElementById('conn-port').value||22, user: document.getElementById('conn-user').value.trim() };
+  if (!sess.host || !sess.user) return toast('Host dan username wajib diisi','warning');
+  sshSessions.push(sess); saveSessions(); renderSavedSessions(); toast('Koneksi disimpan!','success',2000);
+}
+
+function deleteSession(i) { sshSessions.splice(i,1); saveSessions(); renderSavedSessions(); }
+
+function loadSession(i) {
+  const s = sshSessions[i]; activeSessIdx = i; renderSavedSessions();
+  document.getElementById('conn-label').value = s.label||'';
+  document.getElementById('conn-host').value  = s.host||'';
+  document.getElementById('conn-port').value  = s.port||22;
+  document.getElementById('conn-user').value  = s.user||'';
+  showConnectForm();
+}
+
+function connectSession(i) { loadSession(i); connectSSH(); }
+
+function connectSSH() {
+  const host = document.getElementById('conn-host').value.trim();
+  const port = parseInt(document.getElementById('conn-port').value)||22;
+  const user = document.getElementById('conn-user').value.trim();
+  const pass = document.getElementById('conn-pass').value;
+  if (!host || !user) return toast('Host dan username wajib diisi','warning');
+
+  // Show terminal
+  document.getElementById('connect-form-panel').style.display = 'none';
+  document.getElementById('ssh-term-panel').style.display    = 'flex';
+
+  // Init terminal
+  if (!sshTerm) {
+    sshTerm = new Terminal({ cursorBlink:true, fontSize:14, fontFamily:"'JetBrains Mono',monospace", theme:{ background:'#0d0d0d', foreground:'#e2e8f0', cursor:'#a855f7' }, scrollback:5000, convertEol:true });
+    const fit = new FitAddon.FitAddon();
+    sshTerm.loadAddon(fit);
+    sshTerm.open(document.getElementById('ssh-xterm'));
+    fit.fit();
+    window.addEventListener('resize', () => fit.fit());
+  } else { sshTerm.clear(); }
+
+  sshTerm.writeln(`\x1b[33m🔌 Menghubungkan ke ${user}@${host}:${port}...\x1b[0m`);
+
+  const token = localStorage.getItem('dlv_token');
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  sshWs = new WebSocket(`${proto}://${location.host}/ws/ssh?token=${token}`);
+
+  sshWs.onopen = () => {
+    sshWs.send(JSON.stringify({ type: 'connect', host, port, username: user, password: pass }));
+  };
+  sshWs.onmessage = (e) => {
+    try { const m = JSON.parse(e.data); if (m.type==='output') sshTerm.write(m.data); if (m.type==='error') { sshTerm.writeln(`\r\n\x1b[31m[Error: ${m.message}]\x1b[0m`); } if (m.type==='ready') { sshTerm.writeln('\x1b[32m✅ Terhubung!\x1b[0m\r\n'); } } catch(_) { sshTerm.write(e.data); }
+  };
+  sshWs.onerror = () => sshTerm.writeln('\r\n\x1b[31m[Koneksi error]\x1b[0m');
+  sshWs.onclose = () => sshTerm.writeln('\r\n\x1b[31m[Koneksi terputus]\x1b[0m');
+  sshTerm.onData(d => { if (sshWs?.readyState === WebSocket.OPEN) sshWs.send(JSON.stringify({ type:'input', data:d })); });
+}
+
+async function connectPtero() {
+  const url = document.getElementById('ptero-url').value.trim().replace(/\/$/, '');
+  const key = document.getElementById('ptero-key').value.trim();
+  if (!url || !key) return toast('URL dan API key wajib','warning');
+  const el = document.getElementById('ptero-servers');
+  el.innerHTML = '<div class="spinner"></div>';
+  try {
+    const res  = await fetch(`${url}/api/client`, { headers: { Authorization: `Bearer ${key}`, Accept: 'application/json' } });
+    const data = await res.json();
+    const servers = data.data || [];
+    el.innerHTML = `<div style="font-weight:600;margin-bottom:10px">🦖 ${servers.length} Server Ditemukan</div>` + servers.map(s => `
+      <div class="card" style="padding:12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-weight:600">${s.attributes?.name}</div>
+          <div style="font-size:0.78rem;color:var(--text-2)">${s.attributes?.description||'No description'}</div>
+        </div>
+        <a href="${url}/server/${s.attributes?.identifier}" target="_blank" class="btn btn-sm btn-primary">Buka Panel →</a>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = `<div class="alert alert-error">Gagal: ${e.message}. Pastikan URL dan API key benar, dan CORS diizinkan.</div>`; }
+}
+
+function openGuacamole() {
+  const url = prompt('URL Apache Guacamole kamu:', 'https://guacamole.yourdomain.com');
+  if (url) window.open(url, '_blank');
+}
+
+renderSavedSessions();
+setConnType('ssh');
+</script>
+</body>
+</html>

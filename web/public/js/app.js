@@ -596,3 +596,132 @@ document.addEventListener('DOMContentLoaded', () => {
   if (path === '/settings')   initSettings();
   if (path === '/pricing')    initPricing();
 });
+
+// ══════════════════════════════════════════════
+// POPUP SYSTEM
+// ══════════════════════════════════════════════
+
+async function checkPopup() {
+  try {
+    const popup = await API.get('/api/popup', false);
+    if (!popup.active || !popup.title) return;
+
+    // Don't show popup on login/register/landing
+    const path = window.location.pathname;
+    if (['/login', '/register', '/'].includes(path)) return;
+
+    // Don't show if dismissed this session
+    const dismissKey = `dlv_popup_${popup.updatedAt || popup.createdAt}`;
+    if (sessionStorage.getItem(dismissKey)) return;
+
+    showPopupModal(popup, dismissKey);
+  } catch(_) {}
+}
+
+function showPopupModal(popup, dismissKey) {
+  // Create overlay
+  const typeColors = {
+    info:    { bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.3)',  icon: 'ℹ️', header: '#93c5fd' },
+    success: { bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.3)',  icon: '✅', header: '#6ee7b7' },
+    warning: { bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.3)',  icon: '⚠️', header: '#fcd34d' },
+    error:   { bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.3)',   icon: '🔴', header: '#fca5a5' },
+  };
+  const c = typeColors[popup.type || 'info'] || typeColors.info;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'popup-overlay';
+  overlay.style.cssText = `position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn 0.2s ease`;
+
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border:1px solid ${c.border};border-radius:20px;max-width:520px;width:100%;padding:0;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5);animation:slideUp 0.25s ease">
+      <div style="background:${c.bg};border-bottom:1px solid ${c.border};padding:24px 28px;display:flex;align-items:center;gap:14px">
+        <span style="font-size:2rem">${c.icon}</span>
+        <div style="flex:1">
+          <div style="font-size:1.1rem;font-weight:800;color:${c.header}">${popup.title}</div>
+        </div>
+        <button onclick="dismissPopup('${dismissKey}')" style="background:none;border:none;color:var(--text-2);cursor:pointer;font-size:1.2rem;padding:4px;border-radius:6px">✕</button>
+      </div>
+      <div style="padding:24px 28px">
+        <p style="color:var(--text-2);line-height:1.7;font-size:0.95rem">${popup.description || ''}</p>
+        <button onclick="dismissPopup('${dismissKey}')" class="btn btn-primary" style="margin-top:20px;width:100%">OK, Mengerti</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) dismissPopup(dismissKey); });
+}
+
+function dismissPopup(dismissKey) {
+  const overlay = document.getElementById('popup-overlay');
+  if (overlay) overlay.remove();
+  if (dismissKey) sessionStorage.setItem(dismissKey, '1');
+}
+
+
+// ══════════════════════════════════════════════
+// OWNER FEATURES — Show/hide owner-only elements
+// ══════════════════════════════════════════════
+
+async function checkOwnerFeatures() {
+  try {
+    const me = await API.get('/api/auth/me');
+    if (!me.user?.isOwner) return;
+
+    // Show owner-only sidebar items
+    document.querySelectorAll('.owner-only').forEach(el => el.style.display = '');
+
+    // Add owner badge to navbar
+    const navbar = document.querySelector('.navbar-actions');
+    if (navbar && !document.getElementById('owner-badge')) {
+      const badge = document.createElement('span');
+      badge.id = 'owner-badge';
+      badge.className = 'badge';
+      badge.style.cssText = 'background:rgba(239,68,68,0.12);color:#f87171;border-color:rgba(239,68,68,0.3);font-size:0.7rem;padding:3px 9px';
+      badge.textContent = '👑 OWNER';
+      navbar.insertBefore(badge, navbar.firstChild);
+    }
+
+    // Update localStorage user with isOwner flag
+    const stored = Auth.user;
+    if (stored && !stored.isOwner) {
+      Auth.save(Auth.token, { ...stored, isOwner: true });
+    }
+  } catch(_) {}
+}
+
+
+// ══════════════════════════════════════════════
+// PAGE: Admin
+// ══════════════════════════════════════════════
+
+async function initAdmin() {
+  if (!Auth.guardDashboard()) return;
+  // Admin page handles its own init inline
+}
+
+
+// ══════════════════════════════════════════════
+// AUTO-INIT — extended for new pages
+// ══════════════════════════════════════════════
+
+// Extend the existing DOMContentLoaded handler to cover new routes
+(function() {
+  const origHandler = document.addEventListener;
+  // We override by adding another listener
+  window.addEventListener('DOMContentLoaded', () => {
+    const path = window.location.pathname;
+
+    // Check popup and owner features on ALL dashboard pages
+    if (['/dashboard','/bots','/tokens','/settings','/pricing','/admin','/terminal','/files','/ssh'].includes(path)) {
+      if (Auth.loggedIn) {
+        checkOwnerFeatures();
+        checkPopup();
+      }
+    }
+
+    // New pages init
+    if (path === '/admin') {
+      // admin.html handles its own init inline
+    }
+  }, { once: false });
+})();

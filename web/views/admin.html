@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="navbar-brand"><span>⚡</span><span>DLavie<span style="color:var(--primary-l)"> OS</span></span></a>
+  <div class="navbar-actions" style="margin-left:auto;gap:10px">
+    <span id="user-name" style="color:var(--text-2);font-size:0.88rem"></span>
+    <span class="badge" style="background:rgba(239,68,68,0.15);color:#f87171;border-color:rgba(239,68,68,0.3);font-size:0.72rem;padding:3px 10px">👑 OWNER</span>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">Menu Utama</div>
+    <a href="/dashboard" class="sidebar-item" data-page="dashboard"><span class="icon">📊</span>Dashboard</a>
+    <a href="/bots"      class="sidebar-item" data-page="bots"><span class="icon">🤖</span>Bot Manager</a>
+    <a href="/tokens"    class="sidebar-item" data-page="tokens"><span class="icon">🪙</span>Token & Topup</a>
+    <div class="sidebar-section">Tools</div>
+    <a href="/terminal"  class="sidebar-item" data-page="terminal"><span class="icon">⬛</span>Terminal</a>
+    <a href="/files"     class="sidebar-item" data-page="files"><span class="icon">📁</span>File Manager</a>
+    <a href="/ssh"       class="sidebar-item" data-page="ssh"><span class="icon">🔌</span>SSH / Remote</a>
+    <div class="sidebar-section">Owner Only</div>
+    <a href="/admin"     class="sidebar-item active" data-page="admin"><span class="icon">👑</span>Admin Panel</a>
+    <div class="sidebar-section">Pengaturan</div>
+    <a href="/settings"  class="sidebar-item" data-page="settings"><span class="icon">⚙️</span>Settings</a>
+    <a href="/pricing"   class="sidebar-item" data-page="pricing"><span class="icon">💳</span>Upgrade Plan</a>
+  </aside>
+
+  <main class="main-content">
+    <div class="flex items-center justify-between mb-24">
+      <div>
+        <h2>👑 Admin Panel</h2>
+        <p style="margin-top:4px;font-size:0.875rem;color:var(--text-2)">Kontrol penuh sistem DLavie OS</p>
+      </div>
+      <span class="badge" style="background:rgba(239,68,68,0.1);color:#f87171;border-color:rgba(239,68,68,0.3)">Owner Only</span>
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="grid-4 mb-24" id="admin-stats">
+      <div class="stat-card"><div class="icon">👥</div><div class="value" id="st-users">—</div><div class="label">Total User</div></div>
+      <div class="stat-card"><div class="icon">🤖</div><div class="value" id="st-bots">—</div><div class="label">Total Bot</div></div>
+      <div class="stat-card"><div class="icon">💳</div><div class="value" id="st-pending">—</div><div class="label">Pending Payment</div></div>
+      <div class="stat-card"><div class="icon">💰</div><div class="value" id="st-revenue">—</div><div class="label">Total Revenue</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+
+      <!-- POPUP MANAGEMENT -->
+      <div class="card">
+        <div class="flex items-center justify-between mb-16">
+          <h4>📢 Popup Announcement</h4>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="popup-status-badge" class="badge badge-secondary">Nonaktif</span>
+          </div>
+        </div>
+        <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:16px">Tampilkan pengumuman ke semua user di web panel. Bisa dikontrol via bot (<code>!popup set Judul | Deskripsi</code>).</p>
+
+        <div class="form-group">
+          <label class="form-label">Judul Popup</label>
+          <input id="popup-title" class="form-input" placeholder="Contoh: 🔥 Promo Spesial!">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deskripsi</label>
+          <textarea id="popup-desc" class="form-input" rows="3" placeholder="Deskripsi lengkap pengumuman..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipe</label>
+          <select id="popup-type" class="form-input">
+            <option value="info">ℹ️ Info (biru)</option>
+            <option value="success">✅ Success (hijau)</option>
+            <option value="warning">⚠️ Warning (kuning)</option>
+            <option value="error">🔴 Alert (merah)</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="savePopup(true)">💾 Simpan & Aktifkan</button>
+          <button class="btn btn-secondary" onclick="savePopup(false)">💾 Simpan (nonaktif)</button>
+          <button class="btn btn-danger btn-sm" onclick="clearPopup()">🗑️ Hapus</button>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:var(--surface-2);border-radius:8px;font-size:0.78rem;color:var(--text-2)">
+          💡 <strong>Bot command:</strong> <code>!popup set Judul | Deskripsi</code> · <code>!popup on/off</code>
+        </div>
+      </div>
+
+      <!-- MAINTENANCE MODE -->
+      <div class="card">
+        <h4 style="margin-bottom:16px">🔧 Maintenance Mode</h4>
+        <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:16px">Aktifkan maintenance untuk bot atau web panel. Kontrolabel dari bot (<code>!maintenance bot|panel on/off</code>).</p>
+
+        <!-- BOT MAINTENANCE -->
+        <div style="background:var(--surface-2);border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid var(--border)">
+          <div class="flex items-center justify-between mb-10">
+            <div><strong>🤖 Bot Maintenance</strong></div>
+            <span id="maint-bot-badge" class="badge badge-secondary">Normal</span>
+          </div>
+          <input id="maint-bot-desc" class="form-input" style="margin-bottom:8px" placeholder="Keterangan maintenance bot...">
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm btn-danger" id="maint-bot-on-btn" onclick="setMaintenance('bot',true)">🔴 Aktifkan</button>
+            <button class="btn btn-sm btn-secondary" id="maint-bot-off-btn" onclick="setMaintenance('bot',false)">✅ Nonaktifkan</button>
+          </div>
+        </div>
+
+        <!-- PANEL MAINTENANCE -->
+        <div style="background:var(--surface-2);border-radius:10px;padding:14px;border:1px solid var(--border)">
+          <div class="flex items-center justify-between mb-10">
+            <div><strong>🌐 Panel Maintenance</strong></div>
+            <span id="maint-panel-badge" class="badge badge-secondary">Normal</span>
+          </div>
+          <input id="maint-panel-desc" class="form-input" style="margin-bottom:8px" placeholder="Keterangan maintenance panel...">
+          <div class="form-group">
+            <label class="form-label" style="font-size:0.78rem">Jadwal Selesai (opsional)</label>
+            <input id="maint-panel-schedule" type="datetime-local" class="form-input">
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm btn-danger" onclick="setMaintenance('panel',true)">🔴 Aktifkan Panel</button>
+            <button class="btn btn-sm btn-secondary" onclick="setMaintenance('panel',false)">✅ Nonaktifkan</button>
+          </div>
+          <div class="alert alert-warning" style="margin-top:10px;font-size:0.78rem;padding:8px 12px">
+            ⚠️ Mengaktifkan panel maintenance akan memblokir semua user dari mengakses panel. Kamu (owner) masih bisa akses dengan token URL.
+          </div>
+        </div>
+
+        <div style="margin-top:12px;padding:10px;background:var(--surface-2);border-radius:8px;font-size:0.78rem;color:var(--text-2)">
+          💡 <strong>Bot command:</strong> <code>!maintenance panel on [desc]</code> · <code>!maintenance bot off</code>
+        </div>
+      </div>
+
+      <!-- USER MANAGEMENT -->
+      <div class="card" style="grid-column:1/-1">
+        <div class="flex items-center justify-between mb-16">
+          <h4>👥 Manajemen User</h4>
+          <button class="btn btn-sm btn-secondary" onclick="loadUsers()">🔄 Refresh</button>
+        </div>
+        <div id="users-table">
+          <div class="empty-state"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- PAYMENT APPROVALS -->
+      <div class="card" style="grid-column:1/-1">
+        <div class="flex items-center justify-between mb-16">
+          <h4>💳 Semua Payment</h4>
+          <button class="btn btn-sm btn-secondary" onclick="loadPayments()">🔄 Refresh</button>
+        </div>
+        <div id="payments-table">
+          <div class="empty-state"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- ALL BOTS -->
+      <div class="card" style="grid-column:1/-1">
+        <div class="flex items-center justify-between mb-16">
+          <h4>🤖 Semua Bot</h4>
+          <button class="btn btn-sm btn-secondary" onclick="loadAllBots()">🔄 Refresh</button>
+        </div>
+        <div id="all-bots-table">
+          <div class="empty-state"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Edit User Modal -->
+<div id="edit-user-modal" class="modal" style="display:none">
+  <div class="modal-box" style="max-width:440px">
+    <div class="modal-header">
+      <h3 class="modal-title">✏️ Edit User</h3>
+      <button class="modal-close" onclick="closeModal('edit-user-modal')">✕</button>
+    </div>
+    <div style="padding:0 0 16px">
+      <div class="form-group">
+        <label class="form-label">Nama</label>
+        <input id="eu-name" class="form-input" disabled>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input id="eu-email" class="form-input" disabled>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Plan</label>
+        <select id="eu-plan" class="form-input">
+          <option value="free">Free</option>
+          <option value="starter">Starter</option>
+          <option value="pro">Pro</option>
+          <option value="enterprise">Enterprise</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Token Balance</label>
+        <input id="eu-tokens" type="number" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <select id="eu-role" class="form-input">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+          <option value="owner">Owner</option>
+        </select>
+      </div>
+      <input type="hidden" id="eu-userid">
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeModal('edit-user-modal')">Batal</button>
+        <button class="btn btn-primary" onclick="saveUserEdit()">💾 Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.guardDashboard()) return;
+  setEl('user-name', Auth.user?.name || '');
+
+  // Verify owner
+  try {
+    const me = await API.get('/api/auth/me');
+    if (!me.user.isOwner) { toast('Akses ditolak. Halaman ini hanya untuk owner.', 'error'); setTimeout(() => window.location.href = '/dashboard', 2000); return; }
+  } catch(_) { window.location.href = '/dashboard'; return; }
+
+  loadAdminStats();
+  loadUsers();
+  loadPayments();
+  loadAllBots();
+  loadCurrentSettings();
+});
+
+async function loadAdminStats() {
+  try {
+    const d = await API.get('/api/admin/stats');
+    setEl('st-users',   d.totalUsers);
+    setEl('st-bots',    d.totalBots);
+    setEl('st-pending', d.pendingPayments);
+    setEl('st-revenue', 'Rp ' + (d.totalRevenue||0).toLocaleString('id-ID'));
+  } catch(e) { console.error(e); }
+}
+
+async function loadCurrentSettings() {
+  try {
+    const popup = await fetch('/api/popup').then(r => r.json());
+    if (popup.title) document.getElementById('popup-title').value = popup.title;
+    if (popup.description) document.getElementById('popup-desc').value = popup.description;
+    if (popup.type) document.getElementById('popup-type').value = popup.type;
+    updatePopupBadge(popup.active);
+
+    const maint = await fetch('/api/maintenance').then(r => r.json());
+    document.getElementById('maint-bot-desc').value   = maint.bot?.description || '';
+    document.getElementById('maint-panel-desc').value = maint.panel?.description || '';
+    if (maint.panel?.scheduledAt) document.getElementById('maint-panel-schedule').value = new Date(maint.panel.scheduledAt).toISOString().slice(0,16);
+    updateMaintBadge('bot', maint.bot?.active);
+    updateMaintBadge('panel', maint.panel?.active);
+  } catch(e) {}
+}
+
+function updatePopupBadge(active) {
+  const b = document.getElementById('popup-status-badge');
+  if (!b) return;
+  b.className = `badge ${active ? 'badge-success' : 'badge-secondary'}`;
+  b.textContent = active ? '🟢 Aktif' : '⭕ Nonaktif';
+}
+
+function updateMaintBadge(target, active) {
+  const b = document.getElementById(`maint-${target}-badge`);
+  if (!b) return;
+  b.className = `badge ${active ? 'badge-error' : 'badge-success'}`;
+  b.textContent = active ? '🔴 MAINTENANCE' : '🟢 Normal';
+}
+
+async function savePopup(active) {
+  const title = document.getElementById('popup-title').value.trim();
+  const desc  = document.getElementById('popup-desc').value.trim();
+  const type  = document.getElementById('popup-type').value;
+  if (!title) return toast('Judul popup wajib diisi', 'warning');
+  try {
+    await API.post('/api/admin/popup', { title, description: desc, type, active });
+    toast(active ? 'Popup diaktifkan!' : 'Popup disimpan (nonaktif)', 'success');
+    updatePopupBadge(active);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function clearPopup() {
+  if (!confirm('Hapus popup?')) return;
+  try { await API.delete('/api/admin/popup'); toast('Popup dihapus', 'success'); document.getElementById('popup-title').value = ''; document.getElementById('popup-desc').value = ''; updatePopupBadge(false); }
+  catch(e) { toast(e.message, 'error'); }
+}
+
+async function setMaintenance(target, active) {
+  const desc      = document.getElementById(`maint-${target}-desc`).value.trim();
+  const schedEl   = document.getElementById('maint-panel-schedule');
+  const scheduledAt = (target === 'panel' && schedEl.value) ? new Date(schedEl.value).getTime() : null;
+  if (active && target === 'panel' && !confirm('⚠️ Panel maintenance akan MEMBLOKIR semua user. Lanjutkan?')) return;
+  try {
+    await API.post('/api/admin/maintenance', { target, active, description: desc || (active ? `Sedang maintenance` : ''), scheduledAt });
+    toast(`${target === 'bot' ? 'Bot' : 'Panel'} maintenance ${active ? 'diaktifkan' : 'dinonaktifkan'}!`, active ? 'warning' : 'success');
+    updateMaintBadge(target, active);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function loadUsers() {
+  try {
+    const data = await API.get('/api/admin/users');
+    const el = document.getElementById('users-table');
+    if (!data.users.length) { el.innerHTML = '<div class="empty-state">Belum ada user</div>'; return; }
+    const planColor = { free:'badge-secondary', starter:'badge-primary', pro:'badge-accent', enterprise:'badge-warning' };
+    el.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+      <thead><tr style="border-bottom:1px solid var(--border)">
+        <th style="text-align:left;padding:8px">Nama</th><th style="text-align:left;padding:8px">Email</th>
+        <th style="text-align:left;padding:8px">Plan</th><th style="text-align:left;padding:8px">Token</th>
+        <th style="text-align:left;padding:8px">Role</th><th style="text-align:left;padding:8px">Bergabung</th>
+        <th style="text-align:left;padding:8px">Aksi</th>
+      </tr></thead><tbody>` +
+      data.users.map(u => `<tr style="border-bottom:1px solid var(--border-dim)">
+        <td style="padding:8px;font-weight:600">${u.name||'—'}</td>
+        <td style="padding:8px;font-size:0.78rem;color:var(--text-2)">${u.email}</td>
+        <td style="padding:8px"><span class="badge ${planColor[u.plan]||'badge-secondary'}">${(u.plan||'free').toUpperCase()}</span></td>
+        <td style="padding:8px;font-family:var(--font-mono)">${(u.tokens||0).toLocaleString('id-ID')}</td>
+        <td style="padding:8px"><span class="badge ${u.role==='owner'?'badge-error':u.role==='admin'?'badge-warning':'badge-secondary'}">${u.role||'user'}</span></td>
+        <td style="padding:8px;font-size:0.75rem;color:var(--text-2)">${u.createdAt ? new Date(u.createdAt).toLocaleDateString('id-ID') : '—'}</td>
+        <td style="padding:8px"><button class="btn btn-sm btn-secondary" onclick="editUser('${u.userId}','${u.name}','${u.email}','${u.plan}',${u.tokens||0},'${u.role||'user'}')">✏️ Edit</button></td>
+      </tr>`).join('') + '</tbody></table></div>';
+  } catch(e) { document.getElementById('users-table').innerHTML = `<div class="alert alert-error">${e.message}</div>`; }
+}
+
+function editUser(id, name, email, plan, tokens, role) {
+  document.getElementById('eu-userid').value = id;
+  document.getElementById('eu-name').value   = name;
+  document.getElementById('eu-email').value  = email;
+  document.getElementById('eu-plan').value   = plan;
+  document.getElementById('eu-tokens').value = tokens;
+  document.getElementById('eu-role').value   = role;
+  document.getElementById('edit-user-modal').style.display = 'flex';
+}
+
+async function saveUserEdit() {
+  const userId = document.getElementById('eu-userid').value;
+  const plan   = document.getElementById('eu-plan').value;
+  const tokens = parseInt(document.getElementById('eu-tokens').value);
+  const role   = document.getElementById('eu-role').value;
+  try {
+    await API.put(`/api/admin/users/${userId}`, { plan, tokens, role });
+    toast('User diperbarui!', 'success');
+    closeModal('edit-user-modal');
+    loadUsers();
+    loadAdminStats();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function loadPayments() {
+  try {
+    const data = await API.get('/api/admin/payments');
+    const el   = document.getElementById('payments-table');
+    if (!data.payments.length) { el.innerHTML = '<div class="empty-state">Belum ada payment</div>'; return; }
+    const statusColor = { approved:'badge-success', rejected:'badge-error', pending_proof:'badge-warning', proof_submitted:'badge-primary', expired:'badge-secondary', cancelled:'badge-secondary' };
+    const statusLabel = { approved:'✅ Approved', rejected:'❌ Ditolak', pending_proof:'⏳ Belum Bayar', proof_submitted:'📋 Diproses', expired:'⌛ Expired', cancelled:'✖ Batal' };
+    el.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+      <thead><tr style="border-bottom:1px solid var(--border)">
+        <th style="text-align:left;padding:8px">Pay ID</th><th style="text-align:left;padding:8px">Pembeli</th>
+        <th style="text-align:left;padding:8px">Tipe</th><th style="text-align:left;padding:8px">Nominal</th>
+        <th style="text-align:left;padding:8px">Status</th><th style="text-align:left;padding:8px">Tanggal</th>
+      </tr></thead><tbody>` +
+      data.payments.map(p => `<tr style="border-bottom:1px solid var(--border-dim)">
+        <td style="padding:8px;font-family:var(--font-mono);font-size:0.75rem;color:var(--primary-l)">${p.payId}</td>
+        <td style="padding:8px;font-size:0.78rem">${p.name||'—'}<br><span style="color:var(--text-2)">${p.email}</span></td>
+        <td style="padding:8px">${p.type === 'plan' ? `Plan ${p.planName}` : `Token ${(p.tokens||0).toLocaleString('id-ID')}`}</td>
+        <td style="padding:8px;font-weight:600">Rp ${(p.amount||0).toLocaleString('id-ID')}</td>
+        <td style="padding:8px"><span class="badge ${statusColor[p.status]||'badge-secondary'}">${statusLabel[p.status]||p.status}</span></td>
+        <td style="padding:8px;font-size:0.75rem;color:var(--text-2)">${p.createdAt ? new Date(p.createdAt).toLocaleString('id-ID') : '—'}</td>
+      </tr>`).join('') + '</tbody></table></div>';
+  } catch(e) { document.getElementById('payments-table').innerHTML = `<div class="alert alert-error">${e.message}</div>`; }
+}
+
+async function loadAllBots() {
+  try {
+    const data = await API.get('/api/admin/bots');
+    const el   = document.getElementById('all-bots-table');
+    if (!data.bots.length) { el.innerHTML = '<div class="empty-state">Belum ada bot terhubung</div>'; return; }
+    el.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+      <thead><tr style="border-bottom:1px solid var(--border)">
+        <th style="text-align:left;padding:8px">Bot ID</th><th style="text-align:left;padding:8px">Nomor</th>
+        <th style="text-align:left;padding:8px">Status</th><th style="text-align:left;padding:8px">Owner</th>
+        <th style="text-align:left;padding:8px">Terhubung</th>
+      </tr></thead><tbody>` +
+      data.bots.map(b => `<tr style="border-bottom:1px solid var(--border-dim)">
+        <td style="padding:8px;font-family:var(--font-mono);font-size:0.75rem">${b.botId}</td>
+        <td style="padding:8px">+${b.botNumber||'—'}</td>
+        <td style="padding:8px"><span class="badge ${b.status==='active'?'badge-success':'badge-error'}">${b.status||'unknown'}</span></td>
+        <td style="padding:8px;font-size:0.78rem;color:var(--text-2)">${b.ownerWebUserId||b.ownerUserId||'—'}</td>
+        <td style="padding:8px;font-size:0.75rem;color:var(--text-2)">${b.connectedAt ? new Date(b.connectedAt).toLocaleString('id-ID') : '—'}</td>
+      </tr>`).join('') + '</tbody></table></div>';
+  } catch(e) { document.getElementById('all-bots-table').innerHTML = `<div class="alert alert-error">${e.message}</div>`; }
+}
+
+function closeModal(id) { const m = document.getElementById(id); if (m) m.style.display = 'none'; }
+function logout() { localStorage.clear(); window.location.href = '/'; }
+</script>
+</body>
+</html>

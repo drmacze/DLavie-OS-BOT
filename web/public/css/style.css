@@ -818,3 +818,41 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   h1 { font-size: 1.8rem; }
   h2 { font-size: 1.5rem; }
 }
+
+/* ══ POPUP OVERLAY ══ */
+@keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+/* ══ TERMINAL ══ */
+.xterm-viewport::-webkit-scrollbar { width:6px; }
+.xterm-viewport::-webkit-scrollbar-track { background:#111; }
+.xterm-viewport::-webkit-scrollbar-thumb { background:#333; border-radius:3px; }
+
+/* ══ FILE MANAGER ══ */
+.fm-sidebar::-webkit-scrollbar { width:4px; }
+.fm-sidebar::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.fm-content::-webkit-scrollbar { width:6px; }
+.fm-content::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+/* ══ ADMIN PANEL ══ */
+.admin-table th { font-weight:600; font-size:0.78rem; color:var(--text-2); text-transform:uppercase; letter-spacing:0.5px; }
+
+/* ══ MAINTENANCE PAGE ══ */
+.maintenance-progress { height:3px; background:linear-gradient(90deg,var(--primary),var(--secondary),var(--primary)); background-size:200% 100%; animation:maintScroll 2s linear infinite; }
+@keyframes maintScroll { 0%{background-position:0%} 100%{background-position:200%} }
+
+/* ══ OWNER BADGE ══ */
+#owner-badge { flex-shrink:0; }
+
+/* ══ SSH PANEL ══ */
+.ssh-sessions::-webkit-scrollbar { width:4px; }
+.ssh-sessions::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+/* ══ RESPONSIVE TERMINAL / FILES ══ */
+@media (max-width: 768px) {
+  .fm-sidebar   { display:none; }
+  .ssh-sidebar  { width:100%; border-right:none; border-bottom:1px solid var(--border); max-height:200px; }
+  .ssh-layout   { flex-direction:column; }
+  .terminal-toolbar { flex-wrap:wrap; gap:6px; }
+  .terminal-toolbar div:last-child { display:none; }
+  .grid-4 { grid-template-columns:repeat(2,1fr); }
+}
