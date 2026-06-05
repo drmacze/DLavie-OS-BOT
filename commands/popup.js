@@ -1,6 +1,7 @@
 'use strict';
 const fs   = require('fs');
 const path = require('path');
+const { isOwner } = require('../src/security/ownerGuard');
 
 const POPUP_FILE = path.join(__dirname, '../tmp/popup.json');
 
@@ -14,12 +15,6 @@ function savePopup(p) {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(POPUP_FILE, JSON.stringify(p, null, 2));
   } catch(_) {}
-}
-
-function isOwner(msg, config) {
-  const owner = String(config.ownerNumber || '').replace(/\D/g, '');
-  const sender = String(msg.key.participant || msg.key.remoteJid || '').replace(/\D/g, '');
-  return msg.key.fromMe || (owner && sender.includes(owner));
 }
 
 module.exports = {
