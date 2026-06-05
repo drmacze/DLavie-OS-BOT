@@ -4,3 +4,6 @@
 - [Token engine model](token-engine.md) — Free 5K tokens, rate limit 100/10min, feature-based costs, referral bonus.
 - [Website integration config](website-integration.md) — REST API port 8080, WebSocket /ws, Supabase realtime, JWT auth.
 - [WhatsApp Baileys reconnect](baileys-reconnect.md) — 5s reconnect delay, 428/405 = session conflict with another device.
+- [Bot dashboard filter bug fix](bot-dashboard-filter.md) — ownerUserId (WA digits) ≠ webUserId (usr_xxx); must store ownerWebUserId at generate+verify time.
+- [Payment system flow](payment-system.md) — QRIS initiate (5-min timer) → proof submit → owner WA notify → !approve/!reject; in tmp/payments.json.
+- [Dashboard URL resolution](dashboard-url.md) — getDashUrl() checks DASHBOARD_URL env → REPLIT_DEV_DOMAIN → cfg.web.dashboardUrl → fallback.

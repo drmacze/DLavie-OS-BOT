@@ -30,10 +30,10 @@
   <main class="main-content">
     <div class="mb-24">
       <h2>Profile & Settings</h2>
-      <p style="margin-top:4px;font-size:0.875rem">Kelola profil dan keamanan akun kamu</p>
+      <p style="margin-top:4px;font-size:0.875rem;color:var(--text-2)">Kelola profil dan keamanan akun kamu</p>
     </div>
 
-    <div class="grid-2" style="align-items:start;gap:24px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
       <!-- PROFILE FORM -->
       <div class="card">
         <h4 style="margin-bottom:20px">👤 Informasi Profil</h4>
@@ -44,67 +44,49 @@
           </div>
           <div class="form-group">
             <label class="form-label">Email</label>
-            <input id="settings-email" type="email" class="form-input" placeholder="email@kamu.com" disabled style="opacity:0.5;cursor:not-allowed">
+            <input id="settings-email" type="email" class="form-input" disabled style="opacity:0.5;cursor:not-allowed">
             <div class="form-hint">Email tidak bisa diubah</div>
           </div>
           <hr class="divider">
-          <h4 style="margin-bottom:16px">🔒 Ganti Password</h4>
           <div class="form-group">
-            <label class="form-label">Password Sekarang</label>
-            <input id="settings-current-pass" type="password" class="form-input" placeholder="••••••••" autocomplete="current-password">
+            <label class="form-label">Password Lama</label>
+            <input id="settings-current-pass" type="password" class="form-input" placeholder="Kosongkan jika tidak ganti password">
           </div>
           <div class="form-group">
             <label class="form-label">Password Baru</label>
-            <input id="settings-new-pass" type="password" class="form-input" placeholder="Min. 8 karakter" autocomplete="new-password">
-            <div class="form-hint">Kosongkan jika tidak ingin ganti password</div>
+            <input id="settings-new-pass" type="password" class="form-input" placeholder="Min 8 karakter">
           </div>
-          <button type="submit" id="settings-save-btn" class="btn btn-primary btn-full">Simpan Perubahan</button>
+          <button id="settings-save-btn" type="submit" class="btn btn-primary btn-full">Simpan Perubahan</button>
         </form>
       </div>
 
-      <!-- ACCESS KEY & ACCOUNT INFO -->
-      <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <!-- ACCESS KEY -->
         <div class="card">
-          <h4 style="margin-bottom:12px">🔑 Access Key Bot</h4>
-          <p style="font-size:0.875rem;color:var(--text-2);margin-bottom:16px">
-            Access key ini unik per akun kamu. Digunakan untuk mengotentikasi bot kamu ke API DLavie OS.
-          </p>
-          <div id="access-key-display" style="font-family:var(--font-mono);font-size:0.78rem;background:var(--bg-2);padding:12px;border-radius:8px;border:1px solid var(--border-dim);color:var(--primary-l);word-break:break-all">
-            Login ke bot untuk mendapatkan access key
+          <h4 style="margin-bottom:16px">🔑 Access Key</h4>
+          <p style="font-size:0.875rem;color:var(--text-2);margin-bottom:12px">Key unik kamu untuk autentikasi API dan integrasi bot.</p>
+          <div style="position:relative">
+            <input id="settings-access-key" type="text" class="form-input mono" readonly style="padding-right:100px;font-size:0.78rem;opacity:0.8">
+            <button class="btn btn-sm btn-secondary" style="position:absolute;right:8px;top:50%;transform:translateY(-50%)"
+              onclick="copyText(document.getElementById('settings-access-key').value,'Access Key')">Copy</button>
           </div>
-          <button class="btn btn-secondary btn-sm mt-8" onclick="loadAccessKey()">🔄 Refresh</button>
+          <div class="form-hint">Jangan bagikan key ini ke siapapun. Digunakan untuk <code>!login</code> via bot.</div>
         </div>
 
+        <!-- PLAN INFO -->
         <div class="card">
-          <h4 style="margin-bottom:12px">📦 Informasi Akun</h4>
-          <div style="display:flex;flex-direction:column;gap:10px;font-size:0.875rem">
-            <div class="flex justify-between">
-              <span class="dimmed">Plan Aktif</span>
-              <span id="info-plan" class="badge badge-primary">FREE</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="dimmed">Token Tersedia</span>
-              <span id="info-tokens" style="font-weight:600">—</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="dimmed">Tanggal Daftar</span>
-              <span id="info-created">—</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="dimmed">Login Terakhir</span>
-              <span id="info-lastlogin">—</span>
-            </div>
+          <h4 style="margin-bottom:16px">📊 Info Plan</h4>
+          <div id="plan-info-content">
+            <div class="spinner"></div>
           </div>
-          <hr class="divider">
-          <a href="/pricing" class="btn btn-outline btn-full btn-sm">⚡ Upgrade Plan</a>
+          <a href="/pricing" class="btn btn-secondary btn-full mt-16">Upgrade Plan →</a>
         </div>
 
-        <div class="card" style="border-color:rgba(239,68,68,0.2)">
-          <h4 style="margin-bottom:8px;color:var(--error)">⚠️ Zona Berbahaya</h4>
-          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:12px">
-            Logout dari semua sesi akan memutus koneksi bot dari DLavie OS.
-          </p>
-          <button class="btn btn-danger btn-sm" onclick="confirmLogoutAll()">Logout dari Semua Sesi</button>
+        <!-- DANGER ZONE -->
+        <div class="card" style="border-color:rgba(239,68,68,0.3)">
+          <h4 style="margin-bottom:10px;color:var(--error)">⚠️ Zona Berbahaya</h4>
+          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:14px">Tindakan ini tidak bisa dibatalkan.</p>
+          <button class="btn btn-danger btn-sm" onclick="alert('Hubungi admin untuk menghapus akun.')">Hapus Akun</button>
         </div>
       </div>
     </div>
@@ -118,44 +100,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   setEl('user-name', Auth.user?.name || '');
   initSettings();
 
-  // Load account info
+  // Load plan info
   try {
     const data = await API.get('/api/auth/me');
     const u = data.user;
-    setEl('info-plan', (u.plan || 'free').toUpperCase());
-    setEl('info-tokens', fmtNumber(u.tokens));
-    setEl('info-created', u.createdAt ? fmtDate(u.createdAt) : '—');
-    setEl('info-lastlogin', u.lastLogin ? fmtTime(u.lastLogin) : 'Baru pertama kali');
-
-    const planEl = document.getElementById('info-plan');
+    const planColors = { free: 'badge-secondary', starter: 'badge-primary', pro: 'badge-accent', enterprise: 'badge-warning' };
+    const planEl = document.getElementById('plan-info-content');
     if (planEl) {
-      planEl.className = 'badge ' + (u.plan === 'pro' || u.plan === 'enterprise' ? 'badge-success' : 'badge-primary');
+      planEl.innerHTML = `
+        <div class="flex items-center gap-12 mb-12">
+          <span class="badge ${planColors[u.plan]||'badge-secondary'}" style="font-size:0.85rem;padding:6px 14px">${(u.plan||'free').toUpperCase()}</span>
+        </div>
+        <div class="flex items-center justify-between small" style="margin-bottom:8px">
+          <span class="dimmed">Token Tersedia</span>
+          <strong>🪙 ${Number(u.tokens||0).toLocaleString('id-ID')}</strong>
+        </div>
+        <div class="flex items-center justify-between small">
+          <span class="dimmed">Bergabung</span>
+          <strong>${new Date(u.createdAt||Date.now()).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</strong>
+        </div>`;
     }
-  } catch (err) {
-    console.error(err);
-  }
+  } catch(_) {}
 });
-
-async function loadAccessKey() {
-  try {
-    const data = await API.get('/api/bot/sessions');
-    const el = document.getElementById('access-key-display');
-    if (!el) return;
-    if (data.sessions?.length) {
-      el.textContent = data.sessions[0].accessKey || '(no key)';
-    } else {
-      el.textContent = 'Belum ada sesi aktif. Login ke bot terlebih dahulu dengan !login KODE.';
-    }
-  } catch (err) {
-    toast(err.message, 'error');
-  }
-}
-
-function confirmLogoutAll() {
-  if (!confirm('Yakin ingin logout dari semua sesi? Bot kamu akan terputus dari DLavie OS.')) return;
-  Auth.clear();
-  window.location.href = '/login';
-}
 </script>
 </body>
 </html>

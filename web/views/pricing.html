@@ -6,6 +6,14 @@
 <title>Pricing — DLavie OS</title>
 <link rel="stylesheet" href="/css/style.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  .plan-current-badge {
+    display:inline-block;background:var(--success);color:#fff;
+    font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:20px;
+    margin-bottom:10px;letter-spacing:0.5px
+  }
+  .pricing-card.current-plan { border-color:rgba(34,197,94,0.4); }
+</style>
 </head>
 <body>
 
@@ -13,22 +21,23 @@
   <a href="/" class="navbar-brand"><span>⚡</span><span>DLavie<span style="color:var(--primary-l)"> OS</span></span></a>
   <div class="navbar-links">
     <a href="/" class="navbar-link">Home</a>
-    <a href="#features" class="navbar-link">Fitur</a>
     <a href="/pricing" class="navbar-link active">Pricing</a>
   </div>
-  <div class="navbar-actions">
-    <a href="/login"    class="btn btn-secondary btn-sm">Login</a>
+  <div class="navbar-actions" id="nav-actions">
+    <a href="/login"    id="nav-login"  class="btn btn-secondary btn-sm">Login</a>
     <a href="/register" class="btn btn-primary btn-sm">Mulai Gratis</a>
+    <span id="nav-user-name" style="color:var(--text-2);font-size:0.88rem;display:none"></span>
+    <button id="nav-logout" class="btn btn-ghost btn-sm" style="display:none" onclick="logout()">Logout</button>
   </div>
 </nav>
 
 <section style="padding-top:calc(var(--header-h) + 60px);padding-bottom:60px;background:var(--grad-hero)">
   <div class="container text-center">
-    <div class="section-badge">Harga</div>
+    <div class="section-badge">💳 Harga</div>
     <h1 style="margin:16px 0">Mulai <span class="gradient-text">Gratis</span>,<br>Scale Kapan Saja</h1>
-    <p style="max-width:520px;margin:0 auto;font-size:1.05rem">
+    <p style="max-width:520px;margin:0 auto;font-size:1.05rem;color:var(--text-2)">
       Token adalah bahan bakar DLavie OS. Gratis reset 100 token tiap 10 menit untuk semua plan.
-      Beli lebih untuk fitur premium.
+      Topup lebih untuk fitur premium tanpa batas.
     </p>
   </div>
 </section>
@@ -37,8 +46,8 @@
   <div class="container">
     <div id="pricing-grid" class="pricing-grid">
       <div class="card text-center" style="padding:48px;grid-column:1/-1">
-        <div class="spinner" style="width:32px;height:32px;margin:0 auto"></div>
-        <p class="mt-16">Memuat harga...</p>
+        <div class="spinner" style="width:32px;height:32px;margin:0 auto 16px"></div>
+        <p>Memuat harga...</p>
       </div>
     </div>
   </div>
@@ -48,7 +57,7 @@
 <section class="section" style="padding-top:0;background:var(--bg-2)">
   <div class="container">
     <div class="section-header">
-      <h2>Perbandingan <span class="gradient-text">Lengkap</span></h2>
+      <h2>Perbandingan <span class="gradient-text">Fitur Lengkap</span></h2>
     </div>
     <div class="table-wrap">
       <table>
@@ -64,101 +73,61 @@
         <tbody>
           <tr><td>Token/bulan</td><td>5K</td><td>25K</td><td>100K</td><td>∞</td></tr>
           <tr><td>Jumlah Bot</td><td>1</td><td>3</td><td>10</td><td>∞</td></tr>
-          <tr><td>Sistem Antrian</td><td>✅ Queue</td><td>✅ Queue</td><td>⚡ Bypass</td><td>⚡ Bypass</td></tr>
+          <tr><td>Sistem Antrian</td><td>Queue</td><td>Queue</td><td>⚡ Bypass</td><td>⚡ Bypass</td></tr>
           <tr><td>Shell Access</td><td>❌</td><td>❌</td><td>✅</td><td>✅</td></tr>
           <tr><td>AI Auto-Fix</td><td>❌</td><td>Basic</td><td>✅ Full</td><td>✅ Full</td></tr>
           <tr><td>Plugin Marketplace</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
           <tr><td>GitHub Plugin Install</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Bot Update Remote</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
           <tr><td>Remote File Manager</td><td>❌</td><td>❌</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Broadcast ke Grup</td><td>❌</td><td>❌</td><td>✅</td><td>✅</td></tr>
           <tr><td>Scheduled Tasks</td><td>3/bot</td><td>5/bot</td><td>10/bot</td><td>∞</td></tr>
           <tr><td>Monitoring Real-time</td><td>Basic</td><td>Basic</td><td>Advanced</td><td>Advanced</td></tr>
           <tr><td>Audit Log</td><td>7 hari</td><td>30 hari</td><td>90 hari</td><td>∞</td></tr>
+          <tr><td>Bot Customization</td><td>Basic</td><td>✅</td><td>✅</td><td>✅ Full</td></tr>
           <tr><td>Custom Plugin Builder</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td></tr>
           <tr><td>White Label</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td></tr>
           <tr><td>Full API Access</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td></tr>
-          <tr><td>Support</td><td>Community</td><td>Email</td><td>Priority</td><td>Dedicated</td></tr>
+          <tr><td>Support</td><td>Community</td><td>Email</td><td>Priority WA</td><td>Dedicated</td></tr>
+          <tr><td>SLA</td><td>—</td><td>—</td><td>99%</td><td>99.9%</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 </section>
 
-<!-- TOKEN COST TABLE -->
-<section class="section">
-  <div class="container">
-    <div class="section-header">
-      <div class="section-badge">Token Usage</div>
-      <h2>Biaya per <span class="gradient-text">Operasi</span></h2>
-      <p>Semua user mendapatkan refill otomatis 100 token setiap 10 menit</p>
-    </div>
-    <div class="grid-2" style="gap:20px">
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Operasi</th><th>Token</th></tr></thead>
-          <tbody>
-            <tr><td>Command biasa</td><td>1</td></tr>
-            <tr><td>Relay command ke bot</td><td>5</td></tr>
-            <tr><td>Task terjadwal (create)</td><td>5</td></tr>
-            <tr><td>Shell command</td><td>10</td></tr>
-            <tr><td>File manager</td><td>15</td></tr>
-            <tr><td>Bulk/broadcast command</td><td>20</td></tr>
-            <tr><td>Plugin install</td><td>30</td></tr>
-            <tr><td>Update bot</td><td>60</td></tr>
-            <tr><td>Generate plugin (template)</td><td>100</td></tr>
-            <tr><td>Auto-Fix dengan AI</td><td>150</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="card" style="align-self:start">
-        <h4 style="margin-bottom:12px">💡 Tips Hemat Token</h4>
-        <ul style="padding-left:20px;display:flex;flex-direction:column;gap:10px;font-size:0.875rem;color:var(--text-2)">
-          <li>Token gratis 100 setiap 10 menit = 600/jam otomatis</li>
-          <li>Gunakan auto-fix rule-based dulu (gratis) sebelum AI</li>
-          <li>Bulk command lebih hemat dari relay satu per satu</li>
-          <li>Jadwalkan update bot saat traffic rendah</li>
-          <li>Upgrade ke Pro untuk 100K token/bulan</li>
-        </ul>
-        <hr class="divider">
-        <div class="text-center">
-          <a href="/register" class="btn btn-primary btn-full">Mulai dengan 5K Token Gratis</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- FAQ -->
-<section class="section" style="background:var(--bg-2)">
-  <div class="container" style="max-width:720px">
+<section class="section">
+  <div class="container" style="max-width:680px">
     <div class="section-header"><h2>FAQ</h2></div>
     <div style="display:flex;flex-direction:column;gap:16px">
       <div class="card">
-        <h4 style="margin-bottom:8px">Apa itu token?</h4>
-        <p style="font-size:0.875rem">Token adalah "bahan bakar" untuk fitur DLavie OS. Command sederhana hanya butuh 1 token, fitur AI membutuhkan lebih banyak.</p>
+        <strong>Apa itu Token?</strong>
+        <p class="mt-8" style="font-size:0.875rem;color:var(--text-2)">Token adalah "bahan bakar" untuk menjalankan fitur DLavie OS. Setiap command menggunakan token. Semua plan dapat 100 token gratis tiap 10 menit secara otomatis.</p>
       </div>
       <div class="card">
-        <h4 style="margin-bottom:8px">Apakah token expired?</h4>
-        <p style="font-size:0.875rem">Token tidak expired. Token yang kamu beli akan tetap ada sampai digunakan. Token gratis bulanan akan di-reset di awal bulan.</p>
+        <strong>Bisa upgrade/downgrade kapan saja?</strong>
+        <p class="mt-8" style="font-size:0.875rem;color:var(--text-2)">Ya! Upgrade ke plan yang lebih tinggi kapan saja. Sisa token tidak hangus saat upgrade.</p>
       </div>
       <div class="card">
-        <h4 style="margin-bottom:8px">Apa itu sistem antrian?</h4>
-        <p style="font-size:0.875rem">Untuk melindungi nomor bot dari ban WhatsApp, user Free & Starter masuk antrian. Pro & Enterprise bypass antrian dan langsung diproses.</p>
+        <strong>Pembayaran via apa saja?</strong>
+        <p class="mt-8" style="font-size:0.875rem;color:var(--text-2)">Pembayaran via QRIS (semua bank & e-wallet: GoPay, OVO, Dana, ShopeePay, BCA, Mandiri, BNI, BRI, dll). Transfer manual juga bisa.</p>
       </div>
       <div class="card">
-        <h4 style="margin-bottom:8px">Bisakah saya upgrade kapan saja?</h4>
-        <p style="font-size:0.875rem">Ya! Hubungi admin via WhatsApp dengan bukti pembayaran untuk upgrade plan kamu.</p>
-      </div>
-      <div class="card">
-        <h4 style="margin-bottom:8px">Berapa bot yang bisa dihubungkan?</h4>
-        <p style="font-size:0.875rem">Free: 1 bot, Starter: 3 bot, Pro: 10 bot, Enterprise: unlimited. Setiap bot mendapat access key unik dan panel kontrol privat.</p>
+        <strong>Berapa lama token ditambahkan?</strong>
+        <p class="mt-8" style="font-size:0.875rem;color:var(--text-2)">Maksimal 1×24 jam kerja setelah bukti transfer diverifikasi. Biasanya dalam 1-2 jam. Kamu dapat notifikasi WhatsApp saat token ditambahkan.</p>
       </div>
     </div>
   </div>
 </section>
 
-<footer style="border-top:1px solid var(--border-dim);padding:32px;text-align:center;color:var(--text-3);font-size:0.82rem">
-  <div>⚡ DLavie OS — WhatsApp Multi-Bot Control Platform</div>
-  <div style="margin-top:8px">© 2026 DLavie OS. All rights reserved.</div>
+<footer style="background:var(--bg-2);border-top:1px solid var(--border-dim);padding:32px 0;text-align:center">
+  <div class="container">
+    <div class="navbar-brand" style="justify-content:center;margin-bottom:12px">
+      <span>⚡</span><span>DLavie<span style="color:var(--primary-l)"> OS</span></span>
+    </div>
+    <p style="font-size:0.8rem;color:var(--text-3)">© 2025 DLavie OS · WhatsApp Multi-Bot Control Platform</p>
+  </div>
 </footer>
 
 <script src="/js/app.js"></script>
@@ -166,9 +135,10 @@
 document.addEventListener('DOMContentLoaded', () => {
   const user = Auth.user;
   if (user) {
-    document.querySelector('[href="/login"]')?.style && (document.querySelector('[href="/login"]').style.display = 'none');
-    document.querySelector('[href="/register"]').textContent = 'Dashboard';
-    document.querySelector('[href="/register"]').href = '/dashboard';
+    setEl('nav-user-name', user.name);
+    document.getElementById('nav-user-name').style.display = 'inline';
+    document.getElementById('nav-logout').style.display = 'inline-flex';
+    document.getElementById('nav-login').style.display = 'none';
   }
   initPricing();
 });

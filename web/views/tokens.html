@@ -30,112 +30,181 @@
   <main class="main-content">
     <div class="mb-24">
       <h2>Token & Topup</h2>
-      <p style="margin-top:4px;font-size:0.875rem">Kelola token dan isi ulang untuk menggunakan fitur DLavie OS</p>
+      <p style="margin-top:4px;font-size:0.875rem;color:var(--text-2)">Kelola token dan isi ulang untuk menggunakan fitur DLavie OS</p>
     </div>
 
-    <!-- BALANCE -->
-    <div class="grid-2 mb-24" style="grid-template-columns: 1fr 2fr;">
-      <div class="stat-card" style="justify-content:center;text-align:center;min-height:150px">
-        <div class="icon" style="margin:0 auto">🪙</div>
+    <!-- BALANCE + COST BREAKDOWN -->
+    <div class="grid-2 mb-24" style="grid-template-columns:1fr 2fr;align-items:stretch">
+      <div class="stat-card" style="justify-content:center;text-align:center;min-height:160px">
+        <div class="icon" style="margin:0 auto;font-size:2rem">🪙</div>
         <div class="value" id="token-balance" style="font-size:2.5rem">—</div>
         <div class="label">Token Tersedia</div>
         <div class="badge badge-primary mt-8" id="token-plan" style="margin:0 auto">FREE</div>
       </div>
-
-      <!-- TOKEN COSTS -->
       <div class="card">
-        <h4 style="margin-bottom:16px">💡 Biaya Per Operasi</h4>
+        <h4 style="margin-bottom:14px">💡 Biaya Per Operasi</h4>
         <div class="token-bar-container">
-          <div class="token-bar-row">
-            <span class="token-bar-label">Basic</span>
-            <div class="token-bar-track"><div class="token-bar-fill" style="width:1%"></div></div>
-            <span class="token-bar-val">1</span>
-          </div>
-          <div class="token-bar-row">
-            <span class="token-bar-label">Shell</span>
-            <div class="token-bar-track"><div class="token-bar-fill" style="width:7%"></div></div>
-            <span class="token-bar-val">10</span>
-          </div>
-          <div class="token-bar-row">
-            <span class="token-bar-label">Relay</span>
-            <div class="token-bar-track"><div class="token-bar-fill" style="width:3%"></div></div>
-            <span class="token-bar-val">5</span>
-          </div>
-          <div class="token-bar-row">
-            <span class="token-bar-label">Plugin</span>
-            <div class="token-bar-track"><div class="token-bar-fill" style="width:20%"></div></div>
-            <span class="token-bar-val">30</span>
-          </div>
-          <div class="token-bar-row">
-            <span class="token-bar-label">Update</span>
-            <div class="token-bar-track"><div class="token-bar-fill" style="width:40%"></div></div>
-            <span class="token-bar-val">60</span>
-          </div>
-          <div class="token-bar-row">
-            <span class="token-bar-label">Gen Plugin</span>
-            <div class="token-bar-track"><div class="token-bar-fill" style="width:67%"></div></div>
-            <span class="token-bar-val">100</span>
-          </div>
-          <div class="token-bar-row">
-            <span class="token-bar-label">AI Fix</span>
-            <div class="token-bar-track"><div class="token-bar-fill" style="width:100%"></div></div>
-            <span class="token-bar-val">150</span>
-          </div>
+          <div class="token-bar-row"><span class="token-bar-label">Monitor</span><div class="token-bar-track"><div class="token-bar-fill" style="width:0.7%"></div></div><span class="token-bar-val">1</span></div>
+          <div class="token-bar-row"><span class="token-bar-label">Relay/Status</span><div class="token-bar-track"><div class="token-bar-fill" style="width:3%"></div></div><span class="token-bar-val">5</span></div>
+          <div class="token-bar-row"><span class="token-bar-label">Shell</span><div class="token-bar-track"><div class="token-bar-fill" style="width:7%"></div></div><span class="token-bar-val">10</span></div>
+          <div class="token-bar-row"><span class="token-bar-label">Plugin Install</span><div class="token-bar-track"><div class="token-bar-fill" style="width:20%"></div></div><span class="token-bar-val">30</span></div>
+          <div class="token-bar-row"><span class="token-bar-label">Bot Update</span><div class="token-bar-track"><div class="token-bar-fill" style="width:40%"></div></div><span class="token-bar-val">60</span></div>
+          <div class="token-bar-row"><span class="token-bar-label">Gen Plugin</span><div class="token-bar-track"><div class="token-bar-fill" style="width:67%"></div></div><span class="token-bar-val">100</span></div>
+          <div class="token-bar-row"><span class="token-bar-label">AI Auto-Fix</span><div class="token-bar-track"><div class="token-bar-fill" style="width:100%"></div></div><span class="token-bar-val">150</span></div>
         </div>
-        <p class="form-hint mt-16">Token gratis 100/10 menit untuk semua plan. Free token awal: 5.000</p>
+        <p class="form-hint mt-12">♻️ Token gratis: 100/10 menit untuk semua plan. Token awal: 5.000</p>
       </div>
     </div>
 
-    <!-- TOPUP -->
+    <!-- TOPUP PACKAGES -->
     <div class="card mb-24">
-      <h4 style="margin-bottom:6px">💳 Topup Token</h4>
-      <p style="font-size:0.875rem;margin-bottom:20px">Pilih paket token yang sesuai kebutuhan. Bayar via QRIS, konfirmasi ke admin.</p>
-      <div id="token-packages" class="grid-3" style="gap:16px">
-        <div class="empty-state"><div class="spinner"></div></div>
+      <h4 style="margin-bottom:6px">💳 Pilih Paket Topup</h4>
+      <p style="font-size:0.875rem;color:var(--text-2);margin-bottom:20px">
+        Pilih paket, bayar via QRIS, upload bukti — token masuk otomatis setelah admin konfirmasi.
+      </p>
+      <div id="token-packages" class="grid-4" style="gap:14px">
+        <div class="empty-state" style="grid-column:1/-1"><div class="spinner"></div></div>
       </div>
     </div>
 
-    <!-- QRIS -->
-    <div class="card">
-      <h4 style="margin-bottom:12px">📱 Pembayaran QRIS</h4>
-      <div class="grid-2">
+    <!-- STATIC QRIS + HOW TO -->
+    <div class="card mb-24">
+      <h4 style="margin-bottom:14px">📱 Info Pembayaran QRIS</h4>
+      <div class="grid-2" style="gap:24px">
         <div style="text-align:center">
-          <img id="qris-image" src="" alt="QRIS" style="display:none;max-width:240px;border-radius:12px;border:1px solid var(--border-dim)">
-          <div id="qris-placeholder" style="width:200px;height:200px;background:var(--surface-2);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto;border:1px dashed var(--border-dim)">
-            <span style="font-size:0.8rem;color:var(--text-3)">QRIS belum dikonfigurasi</span>
+          <img id="qris-img-static" src="" alt="QRIS DLavie OS" style="display:none;max-width:220px;width:100%;border-radius:12px;border:1px solid var(--border-dim)">
+          <div id="qris-placeholder" style="width:200px;height:200px;background:var(--surface-2);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto;border:2px dashed var(--border-dim)">
+            <div style="text-align:center">
+              <div style="font-size:2rem">📲</div>
+              <span style="font-size:0.75rem;color:var(--text-3)">QRIS akan muncul<br>setelah pilih paket</span>
+            </div>
           </div>
+          <p style="font-size:0.75rem;color:var(--text-3);margin-top:8px">Scan dengan app bank / e-wallet</p>
         </div>
         <div>
-          <h4>Cara Topup:</h4>
-          <ol style="padding-left:20px;margin-top:12px;display:flex;flex-direction:column;gap:10px;font-size:0.875rem;color:var(--text-2)">
-            <li>Pilih paket token yang diinginkan</li>
-            <li>Scan QRIS atau transfer sesuai nominal</li>
-            <li>Simpan bukti pembayaran</li>
-            <li>Hubungi admin via WhatsApp dengan bukti + ID topup</li>
-            <li>Token akan ditambahkan dalam 1×24 jam</li>
+          <h5 style="margin-bottom:12px">Cara Topup:</h5>
+          <ol style="padding-left:18px;display:flex;flex-direction:column;gap:10px;font-size:0.875rem;color:var(--text-2)">
+            <li>Pilih paket token yang diinginkan di atas</li>
+            <li>QRIS muncul otomatis — scan & bayar sesuai nominal</li>
+            <li>Klik "Sudah Bayar" lalu upload screenshot/foto bukti</li>
+            <li>Masukkan nama yang tertera saat transfer</li>
+            <li>Token ditambahkan dalam max 1×24 jam kerja</li>
           </ol>
-          <div class="alert alert-info mt-16">
-            ℹ️ Topup dikonfirmasi manual oleh admin. Simpan ID topup kamu sebagai bukti.
+          <div class="alert alert-info mt-16" style="font-size:0.82rem">
+            ℹ️ Setelah submit bukti, admin DLavie OS dinotifikasi via WhatsApp secara otomatis.
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- PAYMENT HISTORY -->
+    <div class="card">
+      <h4 style="margin-bottom:14px">📋 Riwayat Pembayaran</h4>
+      <div id="payment-history">
+        <p class="dimmed small text-center">Memuat riwayat...</p>
       </div>
     </div>
   </main>
 </div>
 
-<!-- TOPUP MODAL -->
-<div id="topup-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
-  <div class="card" style="max-width:440px;width:90%">
-    <h4 style="margin-bottom:12px">✅ Topup Request Dibuat</h4>
-    <div style="font-size:0.875rem;color:var(--text-2);display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
-      <div>Nominal: <strong id="topup-amount"></strong></div>
-      <div>Token: <strong id="topup-tokens"></strong></div>
-      <div>ID Topup: <code class="mono" id="topup-id" style="color:var(--primary-l)"></code></div>
+<!-- ══════════════════════════════════════ -->
+<!-- QRIS PAYMENT MODAL — 3-Step Flow      -->
+<!-- ══════════════════════════════════════ -->
+<div id="qris-payment-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(8px)">
+  <div class="card" style="max-width:460px;width:92%;max-height:92vh;overflow-y:auto">
+
+    <!-- Step 1: Scan & Pay -->
+    <div id="qris-step-pay">
+      <div class="flex items-center justify-between mb-16">
+        <h4>💳 Pembayaran QRIS</h4>
+        <button class="btn btn-ghost btn-sm" onclick="cancelPayment()">✕ Batal</button>
+      </div>
+
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:0.8rem;color:var(--text-3);margin-bottom:4px">Paket</div>
+        <div id="qris-pay-label" style="font-weight:700;font-size:1.05rem;color:var(--primary-l)"></div>
+        <div style="font-size:1.6rem;font-weight:900;margin:6px 0" id="qris-pay-amount"></div>
+      </div>
+
+      <!-- QRIS Image -->
+      <div style="text-align:center;margin:16px 0">
+        <img id="qris-modal-img" src="" alt="QRIS" style="display:none;max-width:200px;width:100%;border-radius:12px;border:1px solid var(--border-dim);margin:0 auto">
+        <div id="qris-modal-placeholder" style="width:180px;height:180px;background:var(--surface-2);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto;border:2px dashed var(--border-dim)">
+          <div style="text-align:center">
+            <div style="font-size:2.5rem">📲</div>
+            <div style="font-size:0.78rem;color:var(--text-3);margin-top:4px">Scan QRIS<br>atau Transfer Manual</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timer -->
+      <div style="text-align:center;margin:12px 0">
+        <div style="font-size:0.78rem;color:var(--text-3)">⏱️ Selesaikan pembayaran dalam</div>
+        <div id="qris-timer" style="font-size:2rem;font-weight:900;color:var(--warning);font-family:monospace">5:00</div>
+      </div>
+
+      <!-- Payment ID -->
+      <div style="background:var(--surface-2);border-radius:8px;padding:12px;margin:12px 0;text-align:center">
+        <div style="font-size:0.75rem;color:var(--text-3)">Payment ID (simpan sebagai bukti)</div>
+        <div id="qris-pay-id" class="mono" style="color:var(--primary-l);font-size:0.9rem;margin-top:4px;word-break:break-all"></div>
+        <button class="btn btn-ghost btn-sm mt-8" onclick="copyText(document.getElementById('qris-pay-id').textContent,'Payment ID')">📋 Copy ID</button>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-primary flex-1" onclick="showProofForm()">✅ Sudah Bayar → Upload Bukti</button>
+      </div>
+      <div style="text-align:center;margin-top:8px">
+        <button class="btn btn-ghost btn-sm" style="color:var(--text-3)" onclick="cancelPayment()">Batalkan Payment</button>
+      </div>
     </div>
-    <div class="alert alert-warning">⚠️ Simpan ID Topup sebagai bukti pembayaran kamu!</div>
-    <div style="display:flex;gap:8px;margin-top:16px">
-      <button class="btn btn-primary flex-1" onclick="copyText(document.getElementById('topup-id').textContent,'ID Topup')">Copy ID Topup</button>
-      <button class="btn btn-secondary" onclick="closeModal('topup-modal')">Tutup</button>
+
+    <!-- Step 2: Upload Proof -->
+    <div id="qris-step-proof" style="display:none">
+      <div class="flex items-center justify-between mb-16">
+        <h4>📸 Upload Bukti Pembayaran</h4>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('qris-payment-modal')">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nama Pembayar <span style="color:var(--error)">*</span></label>
+        <input id="proof-buyer-name" type="text" class="form-input" placeholder="Nama sesuai rekening / akun e-wallet">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Foto Bukti Transfer</label>
+        <input id="proof-image-input" type="file" accept="image/*" class="form-input" style="padding:10px">
+        <div class="form-hint">Screenshot struk / bukti pembayaran. Maks 5MB.</div>
+      </div>
+
+      <div id="proof-preview-wrap" style="text-align:center;margin:10px 0">
+        <img id="proof-preview" src="" alt="Preview" style="display:none;max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border-dim)">
+      </div>
+
+      <div class="alert" style="font-size:0.82rem;margin:12px 0;background:rgba(99,102,241,0.08);border-color:rgba(99,102,241,0.25)">
+        💬 Setelah submit, admin DLavie OS akan dinotifikasi otomatis via WhatsApp dan memproses dalam 1×24 jam.
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button id="submit-proof-btn" class="btn btn-primary flex-1" onclick="submitProof()">📤 Kirim Bukti</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('qris-step-pay').style.display='block';document.getElementById('qris-step-proof').style.display='none'">← Kembali</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Success -->
+    <div id="qris-step-success" style="display:none;text-align:center;padding:20px 0">
+      <div style="font-size:3.5rem;margin-bottom:16px">🎉</div>
+      <h4 style="margin-bottom:10px">Bukti Terkirim!</h4>
+      <p style="font-size:0.875rem;color:var(--text-2);margin-bottom:16px">
+        Bukti pembayaran berhasil dikirim. Admin akan memverifikasi dan token ditambahkan otomatis.
+      </p>
+      <div style="background:var(--surface-2);border-radius:8px;padding:12px;margin-bottom:16px">
+        <div style="font-size:0.75rem;color:var(--text-3)">Payment ID</div>
+        <div id="success-pay-id" class="mono" style="color:var(--primary-l);margin-top:4px;word-break:break-all"></div>
+      </div>
+      <div class="alert alert-info" style="font-size:0.82rem;margin-bottom:16px">
+        📱 Kamu akan mendapat notifikasi WhatsApp saat token berhasil ditambahkan.
+      </div>
+      <button class="btn btn-primary btn-full" onclick="closeModal('qris-payment-modal')">Tutup</button>
     </div>
   </div>
 </div>
@@ -146,6 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!Auth.guardDashboard()) return;
   setEl('user-name', Auth.user?.name || '');
   initTokens();
+  checkPlanPaymentParam();
 });
 </script>
 </body>

@@ -1,7 +1,7 @@
 /**
- * DLavie OS — !connect command
- * Hubungkan bot user ke DLavie OS Control Panel
- * User bot harus generate Connection Token dari web DLavie OS
+ * DLavie OS — !connect command v2.1
+ * FIX: simpan ownerWebUserId agar bot muncul di web dashboard
+ * FIX: instruksi step 2 lebih jelas
  */
 
 const { getEngine }  = require('../src/core/engine');
@@ -9,6 +9,14 @@ const { getWebAuth } = require('../src/auth/webAuth');
 const crypto = require('crypto');
 const fs     = require('fs');
 const path   = require('path');
+
+function getDashUrl() {
+  if (process.env.DASHBOARD_URL) return process.env.DASHBOARD_URL;
+  if (process.env.REPLIT_DEV_DOMAIN) return `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  let cfg = {};
+  try { cfg = require('../DLavieConfig'); } catch(_){}
+  return cfg.web?.dashboardUrl || cfg.website?.dashboardUrl || 'https://dlavie-os.replit.app';
+}
 
 const CONNECTIONS_FILE = path.join(__dirname, '../tmp/bot_connections.json');
 
@@ -55,37 +63,58 @@ module.exports = {
 
     // ─── Generate token koneksi ───
     if (mode === 'generate') {
-      const connections = loadConnections();
-      const userConns = Object.values(connections).filter(c => c.ownerUserId === userId);
       const session   = webAuth.getSession(userId);
-      const plan      = session?.plan || 'free';
-      const maxBots   = { free: 1, starter: 3, pro: 10, enterprise: 999 }[plan] || 1;
+      if (!session) {
+        const dashUrl = getDashUrl();
+        await safeSend(jid, {
+          text: `⚠️ *Kamu belum login ke DLavie OS.*\n\n*Cara Login:*\n1️⃣ Buka: ${dashUrl}/register\n2️⃣ Daftar atau Login\n3️⃣ Di Dashboard, klik "Get Bot Code"\n4️⃣ Kirim: \`!login KODE\`\n\nSetelah itu jalankan \`!connect generate\` lagi.`
+        });
+        return;
+      }
+
+      const connections = loadConnections();
+      const userConns   = Object.values(connections).filter(c =>
+        (c.ownerUserId === userId || c.ownerWebUserId === session.webUserId) && c.botId
+      );
+      const plan    = session?.plan || 'free';
+      const maxBots = { free: 1, starter: 3, pro: 10, enterprise: 999 }[plan] || 1;
 
       if (userConns.length >= maxBots) {
+        const dashUrl = getDashUrl();
         await safeSend(jid, {
-          text: `⚠️ Kamu sudah mencapai batas bot (${maxBots} bot untuk plan ${plan.toUpperCase()}).\n\nUpgrade plan untuk menambah lebih banyak bot!`
+          text: `⚠️ Batas bot tercapai (${userConns.length}/${maxBots} untuk plan *${plan.toUpperCase()}*).\n\nUpgrade plan di ${dashUrl}/pricing untuk menambah lebih banyak bot!`
         });
         return;
       }
 
       const token = 'dlvc_' + crypto.randomBytes(24).toString('hex');
-      const tokenEntry = {
+      if (!connections._pending) connections._pending = {};
+      connections._pending[token] = {
         token,
-        ownerUserId: userId,
-        ownerEmail:  session?.email || userId,
+        ownerUserId:    userId,            // WA phone digits
+        ownerWebUserId: session.webUserId, // usr_xxx — INI KUNCI FIX DASHBOARD
+        ownerEmail:     session.email || userId,
         plan,
-        createdAt:   Date.now(),
-        expiresAt:   Date.now() + (24 * 60 * 60 * 1000), // 24 jam
+        createdAt:  Date.now(),
+        expiresAt:  Date.now() + (24 * 60 * 60 * 1000),
         used: false,
       };
-
-      // Simpan token pending
-      if (!connections._pending) connections._pending = {};
-      connections._pending[token] = tokenEntry;
       saveConnections(connections);
 
+      const dashUrl = getDashUrl();
       await safeSend(jid, {
-        text: `🔑 *Connection Token Generated*\n\n\`${token}\`\n\n*Cara pakai:*\n1. Copy token di atas\n2. Di bot user kamu, tambahkan kode:\n\`\`\`\n// Kirim ke DLavie OS bot:\n!connect verify ${token}\n\`\`\`\nAtau via API:\n\`\`\`\nPOST /api/bot/connect\n{ "token": "${token}" }\n\`\`\`\n\n⏱️ Token berlaku *24 jam*.\n📊 Bot terhubung: ${userConns.length}/${maxBots}`
+        text: `🔑 *Connection Token Generated*\n\n\`${token}\`\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `*Cara Menghubungkan Bot User:*\n\n` +
+          `1️⃣ *Copy* token di atas\n\n` +
+          `2️⃣ Buka WhatsApp bot *KAMU* (bot yang ingin dikontrol),\n` +
+          `   lalu kirim pesan ini ke bot tersebut:\n` +
+          `   \`!connect verify ${token}\`\n\n` +
+          `   ⚠️ *PENTING:* Kirim command itu dari *bot kamu*, bukan dari sini!\n\n` +
+          `3️⃣ Bot akan muncul otomatis di web panel:\n` +
+          `   ${dashUrl}/bots\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `⏱️ Token berlaku *24 jam* • Bot: ${userConns.length}/${maxBots}`
       });
       return;
     }
@@ -113,17 +142,30 @@ module.exports = {
         return;
       }
 
+      // Cek apakah nomor ini sudah terhubung sebagai bot lain
+      const existBot = Object.values(connections).find(c => c.botNumber === userId && c.botId);
+      if (existBot) {
+        await safeSend(jid, {
+          text: `⚠️ Nomor ini sudah terhubung sebagai bot *${existBot.botId}*.\nGunakan \`!connect remove ${existBot.botId}\` dulu.`
+        });
+        return;
+      }
+
       // Buat bot ID unik
       const botId = 'bot_' + crypto.randomBytes(8).toString('hex');
+      const now   = Date.now();
       const botEntry = {
         botId,
-        botNumber: userId,
-        ownerUserId: pending.ownerUserId,
-        ownerEmail:  pending.ownerEmail,
-        connectedAt: Date.now(),
-        status: 'active',
-        plan: pending.plan,
-        lastPing: Date.now(),
+        botNumber:      userId,
+        ownerUserId:    pending.ownerUserId,    // WA phone (backward compat)
+        ownerWebUserId: pending.ownerWebUserId, // usr_xxx — FIX WEB DASHBOARD
+        ownerEmail:     pending.ownerEmail,
+        connectedAt:    now,
+        status:         'active',
+        plan:           pending.plan,
+        lastPing:       now,
+        settings: { name: '', prefix: '!', bio: '', language: 'id', timezone: 'Asia/Jakarta' },
+        stats:    { commandsTotal: 0, commandsToday: 0, lastCommand: null },
         metadata: {},
       };
 
@@ -134,24 +176,31 @@ module.exports = {
       // Register ke MultiBot Manager
       if (multiBot) {
         try {
-          await multiBot.registerBot(botId, {
-            number: userId,
-            owner:  pending.ownerUserId,
-            plan:   pending.plan,
-          });
+          await multiBot.registerBot(botId, { number: userId, owner: pending.ownerUserId, plan: pending.plan });
         } catch (_) {}
       }
 
-      // Notifikasi ke owner
+      // Notifikasi ke owner WA
+      const dashUrl = getDashUrl();
       try {
         const ownerJid = `${pending.ownerUserId}@s.whatsapp.net`;
         await sock.sendMessage(ownerJid, {
-          text: `🟢 *Bot Terhubung!*\n\nBot: ${userId}\nBot ID: \`${botId}\`\nWaktu: ${new Date().toLocaleString('id-ID')}\n\nGunakan \`!relay ${botId} <command>\` untuk kontrol bot ini.`
+          text: `🟢 *Bot Berhasil Terhubung!*\n\n` +
+            `Bot ID: \`${botId}\`\nNomor Bot: +${userId}\n` +
+            `Owner: ${pending.ownerEmail}\nPlan: ${pending.plan?.toUpperCase()}\n` +
+            `Waktu: ${new Date(now).toLocaleString('id-ID')}\n\n` +
+            `*Control Commands:*\n\`!relay ${botId} status\`\n\`!relay ${botId} restart\`\n\`!relay ${botId} plugin list\`\n\n` +
+            `🌐 Dashboard: ${dashUrl}/bots`
         });
       } catch (_) {}
 
       await safeSend(jid, {
-        text: `✅ *Berhasil Terhubung ke DLavie OS!*\n\nBot ID: \`${botId}\`\nOwner: ${pending.ownerEmail}\n\nBot kamu sekarang terhubung ke DLavie OS Control Panel.\nOwner bisa mengontrol bot ini via \`!relay\` atau web dashboard.`
+        text: `✅ *Berhasil Terhubung ke DLavie OS!*\n\n` +
+          `Bot ID: \`${botId}\`\nOwner: ${pending.ownerEmail}\nPlan: ${pending.plan?.toUpperCase()}\n\n` +
+          `Bot kamu sekarang bisa dikontrol via:\n` +
+          `• WA: \`!relay ${botId} <command>\`\n` +
+          `• Web: ${dashUrl}/bots\n\n` +
+          `Bot muncul di panel owner dalam beberapa detik.`
       });
       return;
     }
@@ -159,19 +208,28 @@ module.exports = {
     // ─── List bot ───
     if (mode === 'list') {
       const connections = loadConnections();
-      const userBots = Object.values(connections).filter(c => c.ownerUserId === userId && c.botId);
+      const session     = webAuth.getSession(userId);
+      const userBots    = Object.values(connections).filter(c =>
+        (c.ownerUserId === userId || (session?.webUserId && c.ownerWebUserId === session.webUserId)) && c.botId
+      );
 
       if (!userBots.length) {
-        await safeSend(jid, { text: 'Belum ada bot yang terhubung.\n\nGunakan `!connect generate` untuk membuat token koneksi.' });
+        const dashUrl = getDashUrl();
+        await safeSend(jid, {
+          text: `Belum ada bot yang terhubung.\n\nGunakan \`!connect generate\` untuk membuat token.\nLihat panduan di: ${dashUrl}/bots`
+        });
         return;
       }
 
-      const lines = userBots.map((b, i) =>
-        `${i + 1}. *${b.botId}*\n   📱 ${b.botNumber} | ${b.status === 'active' ? '🟢' : '🔴'} ${b.status}\n   🕐 ${new Date(b.connectedAt).toLocaleDateString('id-ID')}`
+      const plan    = session?.plan || 'free';
+      const maxBots = { free: 1, starter: 3, pro: 10, enterprise: 999 }[plan] || 1;
+      const lines   = userBots.map((b, i) =>
+        `${i + 1}. *${b.botId}*\n   📱 +${b.botNumber} | ${b.status === 'active' ? '🟢' : '🔴'} ${b.status}\n   🕐 ${new Date(b.connectedAt).toLocaleDateString('id-ID')}`
       );
 
+      const dashUrl = getDashUrl();
       await safeSend(jid, {
-        text: `*🤖 Bot Terhubung (${userBots.length})*\n\n${lines.join('\n\n')}\n\nKontrol: \`!relay <botId> <command>\``
+        text: `*🤖 Bot Terhubung (${userBots.length}/${maxBots})*\n\n${lines.join('\n\n')}\n\n🌐 Kelola di: ${dashUrl}/bots\nKontrol: \`!relay <botId> <command>\``
       });
       return;
     }
@@ -179,22 +237,19 @@ module.exports = {
     // ─── Remove bot ───
     if (mode === 'remove') {
       const botId = args[1];
-      if (!botId) {
-        await safeSend(jid, { text: 'Format: `!connect remove <botId>`' });
-        return;
-      }
+      if (!botId) { await safeSend(jid, { text: 'Format: `!connect remove <botId>`' }); return; }
 
       const connections = loadConnections();
-      const botEntry = connections[botId];
+      const botEntry    = connections[botId];
+      const session     = webAuth.getSession(userId);
 
-      if (!botEntry || botEntry.ownerUserId !== userId) {
+      if (!botEntry || (botEntry.ownerUserId !== userId && botEntry.ownerWebUserId !== session?.webUserId)) {
         await safeSend(jid, { text: '❌ Bot tidak ditemukan atau bukan milikmu.' });
         return;
       }
 
       delete connections[botId];
       saveConnections(connections);
-
       await safeSend(jid, { text: `✅ Bot \`${botId}\` berhasil dilepas dari DLavie OS.` });
       return;
     }
@@ -202,25 +257,28 @@ module.exports = {
     // ─── Status bot ───
     if (mode === 'status') {
       const botId = args[1];
-      if (!botId) {
-        await safeSend(jid, { text: 'Format: `!connect status <botId>`' });
-        return;
-      }
+      if (!botId) { await safeSend(jid, { text: 'Format: `!connect status <botId>`' }); return; }
 
       const connections = loadConnections();
-      const botEntry = connections[botId];
+      const botEntry    = connections[botId];
+      const session     = webAuth.getSession(userId);
 
-      if (!botEntry || botEntry.ownerUserId !== userId) {
+      if (!botEntry || (botEntry.ownerUserId !== userId && botEntry.ownerWebUserId !== session?.webUserId)) {
         await safeSend(jid, { text: '❌ Bot tidak ditemukan atau bukan milikmu.' });
         return;
       }
 
-      const uptime  = Date.now() - botEntry.connectedAt;
-      const hours   = Math.floor(uptime / 3600000);
-      const mins    = Math.floor((uptime % 3600000) / 60000);
+      const uptime = Date.now() - botEntry.connectedAt;
+      const h = Math.floor(uptime / 3600000), m = Math.floor((uptime % 3600000) / 60000);
 
       await safeSend(jid, {
-        text: `*Status Bot*\n\nID: \`${botEntry.botId}\`\nNomor: ${botEntry.botNumber}\nStatus: ${botEntry.status === 'active' ? '🟢 Active' : '🔴 Offline'}\nTerhubung: ${new Date(botEntry.connectedAt).toLocaleString('id-ID')}\nUptime: ${hours}j ${mins}m\nPlan: ${botEntry.plan?.toUpperCase()}`
+        text: `*📊 Status Bot*\n\n` +
+          `ID: \`${botEntry.botId}\`\nNomor: +${botEntry.botNumber}\n` +
+          `Status: ${botEntry.status === 'active' ? '🟢 Active' : '🔴 Offline'}\n` +
+          `Plan: ${(botEntry.plan || 'free').toUpperCase()}\n` +
+          `Terhubung: ${new Date(botEntry.connectedAt).toLocaleString('id-ID')}\n` +
+          `Uptime: ${h}j ${m}m\n` +
+          `Total CMD: ${botEntry.stats?.commandsTotal || 0}\nHari Ini: ${botEntry.stats?.commandsToday || 0}`
       });
       return;
     }

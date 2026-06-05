@@ -31,28 +31,48 @@
     <div class="flex items-center justify-between mb-24">
       <div>
         <h2>Bot Manager</h2>
-        <p style="margin-top:4px;font-size:0.875rem">Kelola semua bot yang terhubung ke DLavie OS</p>
+        <p style="margin-top:4px;font-size:0.875rem;color:var(--text-2)">Kelola semua bot yang terhubung ke DLavie OS</p>
       </div>
+      <button class="btn btn-sm btn-secondary" onclick="initBots()">🔄 Refresh</button>
     </div>
 
-    <!-- HOW TO CONNECT -->
-    <div class="card mb-24" style="border-color:rgba(99,102,241,0.3);background:rgba(99,102,241,0.05)">
-      <h4 style="margin-bottom:12px">🔌 Cara Menghubungkan Bot</h4>
-      <div class="grid-2">
+    <!-- CONNECT GUIDE -->
+    <div class="card mb-24" style="border-color:rgba(99,102,241,0.35);background:rgba(99,102,241,0.06)">
+      <h4 style="margin-bottom:14px">🔌 Cara Menghubungkan Bot</h4>
+      <div class="grid-2" style="gap:20px">
         <div>
-          <p style="font-size:0.875rem;margin-bottom:12px">Hubungkan bot WhatsApp kamu ke DLavie OS dalam 2 langkah:</p>
-          <ol style="padding-left:20px;font-size:0.875rem;color:var(--text-2);display:flex;flex-direction:column;gap:8px">
-            <li>Kirim ke DLavie OS Bot: <code style="background:rgba(99,102,241,0.15);padding:2px 8px;border-radius:6px;color:var(--primary-l)">!connect generate</code></li>
-            <li>Salin token yang didapat, kirim dari bot user: <code style="background:rgba(99,102,241,0.15);padding:2px 8px;border-radius:6px;color:var(--primary-l)">!connect verify TOKEN</code></li>
+          <p style="font-size:0.875rem;margin-bottom:14px;color:var(--text-2)">
+            Hubungkan bot WhatsApp kamu ke DLavie OS dalam 3 langkah mudah:
+          </p>
+          <ol style="padding-left:18px;font-size:0.875rem;color:var(--text-2);display:flex;flex-direction:column;gap:10px">
+            <li>
+              Pastikan sudah login DLavie OS di WA. Jika belum, klik Dashboard → "Get Bot Code" → kirim <code style="background:rgba(99,102,241,0.15);padding:1px 7px;border-radius:5px;color:var(--primary-l)">!login KODE</code>
+            </li>
+            <li>
+              Kirim ke <strong>DLavie OS Bot</strong>:
+              <code style="display:block;background:rgba(99,102,241,0.15);padding:6px 10px;border-radius:6px;color:var(--primary-l);margin-top:4px">!connect generate</code>
+            </li>
+            <li>
+              Kirim token yang didapat ke <strong>bot kamu</strong> (bot yang ingin dikontrol):
+              <code style="display:block;background:rgba(99,102,241,0.15);padding:6px 10px;border-radius:6px;color:var(--primary-l);margin-top:4px">!connect verify TOKEN_YANG_DIDAPAT</code>
+              <span style="font-size:0.75rem;color:var(--warning);display:block;margin-top:4px">⚠️ Kirim dari bot kamu, bukan dari DLavie OS Bot!</span>
+            </li>
           </ol>
+          <div class="alert" style="margin-top:14px;background:rgba(99,102,241,0.08);border-color:rgba(99,102,241,0.25);font-size:0.82rem">
+            ✅ Setelah verify berhasil, bot muncul otomatis di bawah ini.
+          </div>
         </div>
         <div style="padding:16px;background:var(--surface-2);border-radius:10px">
-          <div style="font-size:0.78rem;color:var(--text-3);margin-bottom:8px;font-weight:700">SETELAH TERHUBUNG</div>
-          <code style="font-size:0.8rem;color:var(--primary-l);display:block;line-height:1.8">
+          <div style="font-size:0.75rem;color:var(--text-3);margin-bottom:10px;font-weight:700;letter-spacing:1px">SETELAH TERHUBUNG — CONTROL COMMANDS</div>
+          <code style="font-size:0.8rem;color:var(--primary-l);display:block;line-height:2">
+            !relay bot_id status<br>
             !relay bot_id restart<br>
             !relay bot_id update<br>
             !relay bot_id plugin list<br>
-            !relay bot_id status
+            !relay bot_id plugin install REPO<br>
+            !relay bot_id shell ls -la<br>
+            !relay bot_id fix auto<br>
+            !connect list
           </code>
         </div>
       </div>
@@ -71,26 +91,86 @@
 
     <!-- BOT COMMANDS REFERENCE -->
     <div class="card mt-24">
-      <h4 style="margin-bottom:16px">📚 Referensi Command Bot</h4>
+      <h4 style="margin-bottom:16px">📚 Referensi Command Multi-Bot</h4>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr><th>Command</th><th>Fungsi</th><th>Token Cost</th></tr>
-          </thead>
+          <thead><tr><th>Command</th><th>Fungsi</th><th>Token</th><th>Min Plan</th></tr></thead>
           <tbody>
-            <tr><td><code class="mono">!connect generate</code></td><td>Generate token koneksi baru</td><td>0</td></tr>
-            <tr><td><code class="mono">!relay &lt;id&gt; restart</code></td><td>Restart bot user</td><td>5</td></tr>
-            <tr><td><code class="mono">!relay &lt;id&gt; update</code></td><td>Update bot user</td><td>60</td></tr>
-            <tr><td><code class="mono">!relay &lt;id&gt; status</code></td><td>Cek status bot</td><td>5</td></tr>
-            <tr><td><code class="mono">!relay &lt;id&gt; plugin list</code></td><td>Lihat plugin terpasang</td><td>5</td></tr>
-            <tr><td><code class="mono">!shell &lt;command&gt;</code></td><td>Eksekusi shell command</td><td>10</td></tr>
-            <tr><td><code class="mono">!monitor all</code></td><td>Monitor semua bot</td><td>1</td></tr>
-            <tr><td><code class="mono">!fix auto</code></td><td>Auto-fix error terbaru</td><td>50-150</td></tr>
+            <tr><td><code class="mono">!connect generate</code></td><td>Generate token koneksi baru</td><td>0</td><td>Free</td></tr>
+            <tr><td><code class="mono">!connect verify TOKEN</code></td><td>Verifikasi & hubungkan bot</td><td>0</td><td>Free</td></tr>
+            <tr><td><code class="mono">!connect list</code></td><td>Lihat semua bot terhubung</td><td>0</td><td>Free</td></tr>
+            <tr><td><code class="mono">!relay &lt;id&gt; status</code></td><td>Status bot user</td><td>5</td><td>Free</td></tr>
+            <tr><td><code class="mono">!relay &lt;id&gt; restart</code></td><td>Restart bot user</td><td>5</td><td>Free</td></tr>
+            <tr><td><code class="mono">!relay &lt;id&gt; update</code></td><td>Update bot user</td><td>60</td><td>Starter</td></tr>
+            <tr><td><code class="mono">!relay &lt;id&gt; plugin list</code></td><td>Plugin terpasang</td><td>5</td><td>Starter</td></tr>
+            <tr><td><code class="mono">!relay &lt;id&gt; plugin install REPO</code></td><td>Install plugin dari GitHub</td><td>30</td><td>Starter</td></tr>
+            <tr><td><code class="mono">!relay &lt;id&gt; shell COMMAND</code></td><td>Eksekusi shell command</td><td>10</td><td>Pro</td></tr>
+            <tr><td><code class="mono">!relay &lt;id&gt; fix auto</code></td><td>AI auto-fix error</td><td>50-150</td><td>Pro</td></tr>
+            <tr><td><code class="mono">!monitor all</code></td><td>Monitor semua bot real-time</td><td>1</td><td>Free</td></tr>
+            <tr><td><code class="mono">!relay &lt;id&gt; logs</code></td><td>Lihat log terbaru</td><td>5</td><td>Starter</td></tr>
+            <tr><td><code class="mono">!relay &lt;id&gt; broadcast MSG</code></td><td>Broadcast pesan dari bot</td><td>20</td><td>Pro</td></tr>
+            <tr><td><code class="mono">!relay &lt;id&gt; backup</code></td><td>Backup konfigurasi bot</td><td>10</td><td>Starter</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </main>
+</div>
+
+<!-- BOT SETTINGS MODAL -->
+<div id="bot-settings-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(6px)">
+  <div class="card" style="max-width:520px;width:92%;max-height:90vh;overflow-y:auto">
+    <div class="flex items-center justify-between mb-20">
+      <h4>⚙️ Pengaturan Bot</h4>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('bot-settings-modal')">✕</button>
+    </div>
+    <div style="font-size:0.78rem;color:var(--text-3);margin-bottom:16px">
+      Bot ID: <span id="bs-bot-id-display" class="mono" style="color:var(--primary-l)"></span>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nama Bot</label>
+      <input id="bs-name" type="text" class="form-input" placeholder="Nama bot (kosong = nama default)">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Prefix Command</label>
+      <input id="bs-prefix" type="text" class="form-input" placeholder="!" maxlength="3">
+      <div class="form-hint">Simbol awal command, misal: ! / . / #</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Bio / Status Bot</label>
+      <input id="bs-bio" type="text" class="form-input" placeholder="Status bot di WhatsApp">
+    </div>
+    <div class="grid-2" style="gap:12px">
+      <div class="form-group">
+        <label class="form-label">Bahasa</label>
+        <select id="bs-language" class="form-input">
+          <option value="id">Bahasa Indonesia</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Timezone</label>
+        <select id="bs-timezone" class="form-input">
+          <option value="Asia/Jakarta">WIB (Jakarta)</option>
+          <option value="Asia/Makassar">WITA (Makassar)</option>
+          <option value="Asia/Jayapura">WIT (Jayapura)</option>
+          <option value="UTC">UTC</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Judul Menu</label>
+      <input id="bs-menu-title" type="text" class="form-input" placeholder="Judul tampilan !menu">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Pesan Sambutan</label>
+      <input id="bs-welcome" type="text" class="form-input" placeholder="Pesan saat ada member baru bergabung">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button id="bs-save-btn" class="btn btn-primary flex-1" onclick="saveBotSettings()">💾 Simpan Pengaturan</button>
+      <button class="btn btn-secondary" onclick="closeModal('bot-settings-modal')">Batal</button>
+    </div>
+  </div>
 </div>
 
 <script src="/js/app.js"></script>
