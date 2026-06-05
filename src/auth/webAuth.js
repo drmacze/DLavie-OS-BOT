@@ -9,6 +9,7 @@ const fs = require('fs');
 const path = require('path');
 
 const SESSIONS_FILE = path.join(__dirname, '../../tmp/bot_sessions.json');
+const DEFAULT_OWNER_NUMBER = '62882007437216';
 
 class WebAuth {
   constructor() {
@@ -114,7 +115,7 @@ class WebAuth {
   getActiveSessions() {
     const result = [];
     for (const [waUserId, session] of this.botSessions.entries()) {
-      result.push({ waUserId, email: session.email, plan: session.plan, loginAt: session.loginAt, lastActive: session.lastActive });
+      result.push({ waUserId, email: session.email, plan: session.plan, loginAt: session.loginAt, lastActive: session.lastActive, webUserId: session.webUserId });
     }
     return result;
   }
@@ -129,9 +130,10 @@ class WebAuth {
 
   // ─── Cek owner ───
   isOwner(waUserId, ownerNumber) {
-    const cleanOwner = String(ownerNumber || '').replace(/\D/g, '');
-    const cleanUser  = String(waUserId    || '').replace(/\D/g, '');
-    return cleanUser.includes(cleanOwner) || cleanOwner.includes(cleanUser);
+    const cleanOwner = String(ownerNumber || process.env.OWNER_NUMBER || DEFAULT_OWNER_NUMBER || '').replace(/\D/g, '');
+    const cleanUser  = String(waUserId || '').replace(/\D/g, '');
+    if (!cleanOwner || !cleanUser) return false;
+    return cleanUser === cleanOwner || cleanUser.endsWith(cleanOwner) || cleanOwner.endsWith(cleanUser);
   }
 
   // ─── Internal: generate kode 8 char ───
