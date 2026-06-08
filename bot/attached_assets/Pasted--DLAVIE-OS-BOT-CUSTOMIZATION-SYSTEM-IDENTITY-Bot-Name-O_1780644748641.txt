@@ -1,0 +1,186 @@
+🎨 DLAVIE OS — BOT CUSTOMIZATION SYSTEM
+
+IDENTITY
+✓ Bot Name
+✓ Owner Name
+✓ Support Contact
+✓ Brand Name
+✓ Logo / Avatar
+✓ Website URL
+✓ Watermark
+✓ Copyright Text
+
+MENU SYSTEM
+✓ Text Menu
+✓ Category Menu
+✓ Number Menu
+✓ Button Menu
+✓ WhatsApp List Menu
+✓ Dashboard Menu
+✓ Search Menu
+✓ Hybrid Menu (Recommended)
+
+CATEGORY SETTINGS
+✓ Custom Category Name
+✓ Category Icon
+✓ Category Order
+✓ Hide Empty Category
+✓ Nested Category
+✓ Grid Category
+
+BUTTON SETTINGS
+✓ Button Text
+✓ Button Icon
+✓ Button Layout
+✓ Button Position
+✓ Button Count
+
+MENU FEATURES
+✓ Search Command
+✓ Favorite Commands
+✓ Recent Commands
+✓ Most Used Commands
+✓ Role-Based Menu
+✓ Pagination
+✓ Auto Suggest
+✓ Quick Access Menu
+
+HEADER CUSTOMIZATION
+✓ Header Text
+✓ Header Emoji
+✓ Header Image
+✓ Header Video
+✓ Header Banner
+✓ Welcome Header
+
+FOOTER CUSTOMIZATION
+✓ Footer Text
+✓ Footer Emoji
+✓ Footer Link
+✓ Footer Copyright
+✓ Footer Version
+
+THEME SYSTEM
+✓ DLavie Default
+✓ Minimal
+✓ Modern
+✓ Premium
+✓ Gaming
+✓ Cyberpunk
+✓ Neon
+✓ Hacker
+✓ Glass UI
+✓ Custom Theme
+
+BOT PERSONALITY
+✓ Friendly
+✓ Professional
+✓ Corporate
+✓ Developer
+✓ AI Assistant
+✓ Funny
+✓ Custom Personality
+
+LANGUAGE
+✓ Indonesia
+✓ English
+✓ Multi Language
+✓ Custom Language
+
+MESSAGE CUSTOMIZATION
+✓ Welcome Message
+✓ Goodbye Message
+✓ Error Message
+✓ Success Message
+✓ Ban Message
+✓ Premium Message
+✓ Maintenance Message
+
+COMMAND CUSTOMIZATION
+✓ Rename Command
+✓ Alias Command
+✓ Hide Command
+✓ Disable Command
+✓ Premium Only
+✓ VIP Only
+✓ Role Only
+
+PERMISSION SYSTEM
+✓ Owner
+✓ Admin
+✓ Moderator
+✓ Support
+✓ Developer
+✓ Premium
+✓ VIP
+✓ User
+
+AI SETTINGS
+✓ Primary AI
+✓ Secondary AI
+✓ Fallback AI
+✓ AI Personality
+✓ AI Response Style
+
+SECURITY SETTINGS
+✓ Anti Spam
+✓ Anti Flood
+✓ Anti Link
+✓ Anti Call
+✓ Anti Delete
+✓ Anti Crash
+✓ Anti Bot
+
+MULTIMEDIA SETTINGS
+✓ Text Menu
+✓ Image Menu
+✓ Video Menu
+✓ GIF Menu
+✓ Audio Menu
+✓ Document Menu
+✓ Thumbnail URL
+✓ Thumbnail Upload
+
+WEB PANEL SETTINGS
+✓ Dashboard Widgets
+✓ Popup Announcement
+✓ Maintenance Mode
+✓ Live Notifications
+✓ Live Preview
+
+PLUGIN SETTINGS
+✓ Enable Plugin
+✓ Disable Plugin
+✓ Hidden Plugin
+✓ Premium Plugin
+✓ VIP Plugin
+
+BOT BLUEPRINTS
+✓ Gaming Bot
+✓ AI Assistant Bot
+✓ Store Bot
+✓ Community Bot
+✓ Support Bot
+✓ Custom Blueprint
+
+ADVANCED DLAVIE FEATURES
+✓ Export Bot Profile
+✓ Import Bot Profile
+✓ Clone Bot Configuration
+✓ Backup Configuration
+✓ Restore Configuration
+✓ One Click Apply Template
+✓ Live WhatsApp Preview
+✓ Sync Panel ↔ WhatsApp
+✓ Multi Bot Management
+✓ Cross Bot Configuration Sync
+
+⭐ RECOMMENDED DEFAULT
+Menu Type      : Hybrid
+Theme          : DLavie Default
+Navigation     : Search + Category
+Menu Features  : Favorites + Recent Commands
+AI             : ChatGPT → Gemini → Grok
+Role System    : Enabled
+Live Preview   : Enabled
+Sync Panel     : Enabled

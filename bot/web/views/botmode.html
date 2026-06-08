@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bot Mode Control — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<nav class="navbar">
+  <button class="btn btn-ghost btn-icon mobile-menu-btn" onclick="toggleMobileSidebar()" title="Menu" style="flex-shrink:0">☰</button>
+  <a href="/" class="navbar-brand">
+    <div class="brand-icon">⚡</div>
+    <span>DLavie<span class="gradient-text"> OS</span></span>
+  </a>
+  <div class="navbar-actions">
+    <button class="theme-toggle" title="Toggle theme">☀️</button>
+    <button class="btn btn-ghost btn-sm" onclick="logout()" style="color:var(--text-3)">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">Menu Utama</div>
+    <a href="/dashboard" class="sidebar-item" data-page="dashboard"><span class="icon">📊</span>Dashboard</a>
+    <a href="/bots"      class="sidebar-item" data-page="bots"><span class="icon">🤖</span>Bot Manager</a>
+    <a href="/tokens"    class="sidebar-item" data-page="tokens"><span class="icon">🪙</span>Token & Topup</a>
+    <a href="/terminal"  class="sidebar-item" data-page="terminal"><span class="icon">💻</span>Terminal</a>
+    <div class="sidebar-section">Premium</div>
+    <a href="/files"     class="sidebar-item" data-page="files"><span class="icon">📁</span>File Manager</a>
+    <a href="/logs"      class="sidebar-item" data-page="logs"><span class="icon">📋</span>Bot Logs</a>
+    <a href="/analytics" class="sidebar-item" data-page="analytics"><span class="icon">📈</span>Analytics</a>
+    <div class="sidebar-section">Pengaturan</div>
+    <a href="/customize" class="sidebar-item" data-page="customize"><span class="icon">🎨</span>Customize Bot</a>
+    <a href="/settings"  class="sidebar-item" data-page="settings"><span class="icon">⚙️</span>Settings</a>
+    <a href="/botmode"   class="sidebar-item active" data-page="botmode"><span class="icon">⚡</span>Bot Mode</a>
+    <a href="/pricing"   class="sidebar-item" data-page="pricing"><span class="icon">💳</span>Upgrade Plan</a>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="window.location.href='/settings'">
+        <div class="sidebar-avatar" id="sidebar-avatar">U</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">User</div>
+          <div class="sidebar-user-plan" id="sidebar-user-plan">FREE</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="mb-24">
+      <h2>⚡ Bot Mode Control</h2>
+      <p style="margin-top:4px;font-size:.875rem;color:var(--text-2)">
+        Ubah mode operasi seluruh sistem DLavie OS.
+        <span style="background:rgba(99,102,241,.15);color:#818cf8;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:700;margin-left:6px">DEV ONLY</span>
+      </p>
+    </div>
+
+    <!-- STATUS CARD -->
+    <div class="card mb-24">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:.8rem;color:var(--text-3);margin-bottom:4px">MODE AKTIF SAAT INI</div>
+          <div id="current-mode-display" style="font-size:1.5rem;font-weight:800;letter-spacing:-.03em">—</div>
+          <div id="current-mode-desc" style="font-size:.8rem;color:var(--text-2);margin-top:4px">—</div>
+        </div>
+        <div id="mode-indicator" style="width:16px;height:16px;border-radius:50%;background:var(--primary);box-shadow:0 0 0 4px rgba(99,102,241,.2)"></div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="gap:20px;align-items:start">
+      <!-- MULTIBOT MODE -->
+      <div class="card" id="card-multibot" style="cursor:pointer;transition:.2s;border-width:2px" onclick="changeBotMode('multibot')">
+        <div style="font-size:2.5rem;margin-bottom:12px">🤖</div>
+        <h3 style="margin-bottom:6px">Multi Control Bot</h3>
+        <p style="font-size:.82rem;color:var(--text-2);margin-bottom:16px">
+          Mode standar platform DLavie OS. Mengelola multiple WhatsApp bot, relay command, monitor, terminal, plugins, dan semua fitur kontrol.
+        </p>
+        <ul style="font-size:.8rem;color:var(--text-3);list-style:none;padding:0;margin:0 0 16px;display:flex;flex-direction:column;gap:6px">
+          <li>✅ Multi-bot management</li>
+          <li>✅ Command relay</li>
+          <li>✅ System monitoring</li>
+          <li>✅ Plugin marketplace</li>
+          <li>✅ Terminal access</li>
+          <li>✅ Token system</li>
+          <li>⬛ Game RPG (dinonaktifkan)</li>
+        </ul>
+        <button id="btn-multibot" class="btn btn-secondary btn-full">Pilih Mode Ini</button>
+      </div>
+
+      <!-- GAME MODE -->
+      <div class="card" id="card-game" style="cursor:pointer;transition:.2s;border-width:2px" onclick="changeBotMode('game')">
+        <div style="font-size:2.5rem;margin-bottom:12px">🎮</div>
+        <h3 style="margin-bottom:6px">Game Mode — DLavie RPG</h3>
+        <p style="font-size:.82rem;color:var(--text-2);margin-bottom:16px">
+          Aktifkan sistem RPG penuh "Dunia Aethoria" langsung di WhatsApp. Pemain bisa membuat karakter, bertualang, dan bersaing di leaderboard.
+        </p>
+        <ul style="font-size:.8rem;color:var(--text-3);list-style:none;padding:0;margin:0 0 16px;display:flex;flex-direction:column;gap:6px">
+          <li>✅ 5 kelas karakter</li>
+          <li>✅ Story Mode (3+ chapter)</li>
+          <li>✅ Exploration (4 zona)</li>
+          <li>✅ Classic Hunt (7 monster)</li>
+          <li>✅ PVP Battle Arena</li>
+          <li>✅ Leaderboard global</li>
+          <li>⚠️ Multi-bot control: terbatas</li>
+        </ul>
+        <button id="btn-game" class="btn btn-secondary btn-full">Pilih Mode Ini</button>
+      </div>
+    </div>
+
+    <!-- CHANGE LOG -->
+    <div class="card" style="margin-top:20px">
+      <h4 style="margin-bottom:12px">⚠️ Catatan Perubahan Mode</h4>
+      <ul style="font-size:.82rem;color:var(--text-2);list-style:none;padding:0;display:flex;flex-direction:column;gap:8px">
+        <li>• Perubahan mode berlaku <strong>langsung</strong> tanpa restart bot</li>
+        <li>• Saat Game Mode aktif, perintah <code>!play</code> akan mengarahkan ke RPG</li>
+        <li>• Semua data pemain RPG tersimpan di database dan tidak hilang saat mode diubah</li>
+        <li>• Bot yang sudah terhubung tetap online saat mode berubah</li>
+      </ul>
+      <div id="change-msg" style="margin-top:14px;padding:10px;border-radius:8px;font-size:.83rem;display:none"></div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+const MODE_INFO = {
+  multibot: {
+    label: '🤖 Multi Control Bot',
+    desc: 'Platform manajemen multi-bot standar',
+    color: 'var(--primary)',
+  },
+  game: {
+    label: '🎮 Game Mode — DLavie RPG',
+    desc: 'Dunia Aethoria aktif di WhatsApp',
+    color: '#a855f7',
+  },
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.guardDashboard()) return;
+  const userEmail = Auth.user?.email || '';
+  if (userEmail !== 'dev@dlavie.com') {
+    window.location.href = '/settings';
+    return;
+  }
+  setEl('user-name', Auth.user?.name || '');
+  await loadBotMode();
+});
+
+async function loadBotMode() {
+  try {
+    const data = await API.get('/api/botmode');
+    renderMode(data.mode);
+  } catch (err) {
+    console.error(err);
+    toast('Gagal memuat Bot Mode', 'error');
+  }
+}
+
+function renderMode(mode) {
+  const info = MODE_INFO[mode] || { label: mode, desc: '', color: 'var(--primary)' };
+  setEl('current-mode-display', info.label);
+  setEl('current-mode-desc', info.desc);
+  const ind = document.getElementById('mode-indicator');
+  if (ind) { ind.style.background = info.color; ind.style.boxShadow = `0 0 0 4px ${info.color}33`; }
+
+  ['multibot','game'].forEach(m => {
+    const card = document.getElementById(`card-${m}`);
+    const btn  = document.getElementById(`btn-${m}`);
+    if (!card || !btn) return;
+    const active = m === mode;
+    card.style.borderColor = active ? info.color : 'var(--border-dim)';
+    card.style.background  = active ? `${info.color}0a` : '';
+    btn.className = 'btn btn-full ' + (active ? 'btn-primary' : 'btn-secondary');
+    btn.textContent = active ? '✅ Mode Aktif' : 'Pilih Mode Ini';
+  });
+}
+
+async function changeBotMode(mode) {
+  const msgEl = document.getElementById('change-msg');
+  try {
+    await API.put('/api/botmode', { mode });
+    renderMode(mode);
+    const labels = { multibot: '🤖 Multi Control Bot', game: '🎮 Game Mode' };
+    if (msgEl) {
+      msgEl.style.display = 'block';
+      msgEl.style.background = 'rgba(74,222,128,.1)';
+      msgEl.style.color = '#4ade80';
+      msgEl.style.border = '1px solid rgba(74,222,128,.3)';
+      msgEl.textContent = `✅ Mode berhasil diubah ke: ${labels[mode] || mode}`;
+    }
+    toast(`✅ Bot Mode → ${labels[mode] || mode}`, 'success');
+  } catch (err) {
+    if (msgEl) {
+      msgEl.style.display = 'block';
+      msgEl.style.background = 'rgba(239,68,68,.1)';
+      msgEl.style.color = '#f87171';
+      msgEl.style.border = '1px solid rgba(239,68,68,.3)';
+      msgEl.textContent = `❌ ${err.message}`;
+    }
+    toast(err.message, 'error');
+  }
+}
+</script>
+</body>
+</html>

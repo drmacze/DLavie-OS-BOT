@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Top Up Token — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="/" class="navbar-brand"><span>⚡</span><span>DLavie<span style="color:var(--primary-l)"> OS</span></span></a>
+  <div class="navbar-links">
+    <a href="/dashboard" class="navbar-link">Dashboard</a>
+    <a href="/pricing" class="navbar-link">Pricing</a>
+  </div>
+  <div class="navbar-actions">
+    <a href="/" class="btn btn-secondary btn-sm" onclick="logout();return false;">Logout</a>
+  </div>
+</nav>
+
+<section style="padding-top:calc(var(--header-h) + 40px);padding-bottom:40px;">
+  <div class="container" style="max-width:720px">
+    <div class="section-badge">🪙 Top Up</div>
+    <h2 style="margin:16px 0 8px">Beli <span class="gradient-text">Token</span></h2>
+    <p class="dimmed">Pilih paket token, bayar QRIS, dan token langsung masuk setelah diverifikasi owner.</p>
+
+    <div id="topup-grid" class="grid-2 mt-24" style="gap:20px">
+      <div class="card text-center" style="padding:48px;grid-column:1/-1">
+        <div class="spinner" style="width:32px;height:32px;margin:0 auto"></div>
+        <p class="mt-16">Memuat paket...</p>
+      </div>
+    </div>
+
+    <div class="card mt-24" style="padding:24px">
+      <h4 style="margin-bottom:12px">📋 Riwayat Transaksi</h4>
+      <div id="tx-history">
+        <p class="dimmed">Belum ada transaksi.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="/js/app.js"></script>
+<script>
+async function initTopup() {
+  try {
+    const data = await API.get('/api/payment/topup-options', false);
+    const grid = document.getElementById('topup-grid');
+    if (!grid) return;
+
+    grid.innerHTML = data.options.map(opt => {
+      const price = Number(opt.priceIdr).toLocaleString('id-ID');
+      return `
+        <div class="card text-center" style="padding:32px">
+          <div style="font-size:2rem">🪙</div>
+          <div style="font-size:1.5rem;font-weight:800;margin:8px 0">${Number(opt.tokens).toLocaleString('id-ID')} Token</div>
+          <div style="font-size:1.25rem;font-weight:700;color:var(--primary)">Rp ${price}</div>
+          <div style="font-size:0.8rem;color:var(--text-2);margin-top:8px">
+            ${opt.tokens >= 100000 ? '🔥 Hemat' : opt.tokens >= 25000 ? '⭐ Populer' : 'Starter'}
+          </div>
+          <button class="btn btn-primary btn-full mt-16"
+            onclick="startPayment('topup', null, ${opt.priceIdr}, ${opt.tokens})">
+            Beli Token
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    // Load history
+    loadHistory();
+  } catch (err) {
+    console.error('Topup load error:', err);
+  }
+}
+
+function startPayment(type, plan, amount, tokens) {
+  const params = new URLSearchParams({ type, amount, tokens: tokens || '' });
+  if (plan) params.set('plan', plan);
+  window.location.href = `/payment?${params.toString()}`;
+}
+
+async function loadHistory() {
+  try {
+    const data = await API.get('/api/payment/history');
+    const container = document.getElementById('tx-history');
+    if (!data.transactions || data.transactions.length === 0) {
+      container.innerHTML = '<p class="dimmed">Belum ada transaksi.</p>';
+      return;
+    }
+    container.innerHTML = data.transactions.map(tx => {
+      const statusClass = 'status-' + tx.status;
+      const statusText = tx.status.toUpperCase();
+      return `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-weight:600">${tx.type === 'topup' ? 'Top Up' : 'Plan ' + tx.plan} — Rp ${Number(tx.amount).toLocaleString('id-ID')}</div>
+            <div style="font-size:0.8rem;color:var(--text-2)">${tx.struk_id} • ${new Date(tx.created_at).toLocaleDateString('id-ID')}</div>
+          </div>
+          <span class="status-badge ${statusClass}">${statusText}</span>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('History load error:', err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!Auth.token) { window.location.href = '/login'; return; }
+  initTopup();
+});
+</script>
+</body>
+</html>

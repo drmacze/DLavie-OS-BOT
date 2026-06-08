@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<nav class="navbar">
+  <button class="btn btn-ghost btn-icon mobile-menu-btn" onclick="toggleMobileSidebar()" title="Menu" style="flex-shrink:0">☰</button>
+  <a href="/" class="navbar-brand">
+    <div class="brand-icon">⚡</div>
+    <span>DLavie<span class="gradient-text"> OS</span></span>
+  </a>
+  <div class="navbar-actions">
+    <button class="theme-toggle" title="Toggle theme">☀️</button>
+    <button class="btn btn-ghost btn-sm" onclick="logout()" style="color:var(--text-3)">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">Menu Utama</div>
+    <a href="/dashboard" class="sidebar-item" data-page="dashboard"><span class="icon">📊</span>Dashboard</a>
+    <a href="/bots"      class="sidebar-item" data-page="bots"><span class="icon">🤖</span>Bot Manager</a>
+    <a href="/tokens"    class="sidebar-item" data-page="tokens"><span class="icon">🪙</span>Token & Topup</a>
+    <a href="/terminal"  class="sidebar-item" data-page="terminal"><span class="icon">💻</span>Terminal</a>
+    <div class="sidebar-section">Premium</div>
+    <a href="/files"     class="sidebar-item" data-page="files"><span class="icon">📁</span>File Manager</a>
+    <a href="/logs"      class="sidebar-item" data-page="logs"><span class="icon">📋</span>Bot Logs</a>
+    <a href="/analytics" class="sidebar-item" data-page="analytics"><span class="icon">📈</span>Analytics</a>
+    <div class="sidebar-section">Pengaturan</div>
+    <a href="/customize" class="sidebar-item" data-page="customize"><span class="icon">🎨</span>Customize Bot</a>
+    <a href="/settings"  class="sidebar-item active" data-page="settings"><span class="icon">⚙️</span>Settings</a>
+    <a href="/pricing"   class="sidebar-item" data-page="pricing"><span class="icon">💳</span>Upgrade Plan</a>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="window.location.href='/settings'">
+        <div class="sidebar-avatar" id="sidebar-avatar">U</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">User</div>
+          <div class="sidebar-user-plan" id="sidebar-user-plan">FREE</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="mb-24">
+      <h2>Profile & Settings</h2>
+      <p style="margin-top:4px;font-size:0.875rem">Kelola profil, keamanan akun, dan konfigurasi DLavie OS</p>
+    </div>
+
+    <div class="grid-2" style="align-items:start;gap:24px">
+      <!-- LEFT -->
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <!-- PROFILE FORM -->
+        <div class="card">
+          <h4 style="margin-bottom:20px">👤 Informasi Profil</h4>
+          <form id="settings-form">
+            <div class="form-group">
+              <label class="form-label">Nama Lengkap</label>
+              <input id="settings-name" type="text" class="form-input" placeholder="Nama kamu">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input id="settings-email" type="email" class="form-input" placeholder="email@kamu.com" disabled style="opacity:0.5;cursor:not-allowed">
+              <div class="form-hint">Email tidak bisa diubah</div>
+            </div>
+            <hr class="divider">
+            <h4 style="margin-bottom:16px">🔒 Ganti Password</h4>
+            <div class="form-group">
+              <label class="form-label">Password Sekarang</label>
+              <input id="settings-current-pass" type="password" class="form-input" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password Baru</label>
+              <input id="settings-new-pass" type="password" class="form-input" placeholder="Min. 8 karakter" autocomplete="new-password">
+              <div class="form-hint">Kosongkan jika tidak ingin ganti password</div>
+            </div>
+            <button type="submit" id="settings-save-btn" class="btn btn-primary btn-full">Simpan Perubahan</button>
+          </form>
+        </div>
+
+        <!-- GITHUB REPO -->
+        <div class="card">
+          <h4 style="margin-bottom:8px">🔗 GitHub Repository</h4>
+          <p style="font-size:0.875rem;color:var(--text-2);margin-bottom:16px">URL repo GitHub untuk fitur <code>!update</code> — update bot otomatis dari GitHub.</p>
+          <div class="form-group">
+            <label class="form-label">Repository URL</label>
+            <input id="github-repo-url" type="text" class="form-input" placeholder="https://github.com/username/repo">
+            <div class="form-hint">Contoh: https://github.com/kamu/dlavie-os</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="saveGithubRepo()">💾 Simpan GitHub Repo</button>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <!-- ACCESS KEY -->
+        <div class="card">
+          <h4 style="margin-bottom:12px">🔑 Access Key Bot</h4>
+          <p style="font-size:0.875rem;color:var(--text-2);margin-bottom:16px">
+            Access key untuk autentikasi bot ke API DLavie OS.
+          </p>
+          <div id="access-key-display" style="font-family:var(--font-mono);font-size:0.78rem;background:var(--bg-2);padding:12px;border-radius:8px;border:1px solid var(--border-dim);color:var(--primary-l);word-break:break-all">
+            Login ke bot terlebih dahulu dengan <code>!login KODE</code>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn btn-secondary btn-sm" onclick="loadAccessKey()">🔄 Refresh</button>
+            <button class="btn btn-ghost btn-sm" onclick="copyText(document.getElementById('access-key-display').textContent,'Access Key')">Copy</button>
+          </div>
+        </div>
+
+        <!-- ACCOUNT INFO -->
+        <div class="card">
+          <h4 style="margin-bottom:12px">📦 Informasi Akun</h4>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:0.875rem">
+            <div class="flex justify-between">
+              <span class="dimmed">Plan Aktif</span>
+              <span id="info-plan" class="badge badge-primary">FREE</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="dimmed">Token Tersedia</span>
+              <span id="info-tokens" style="font-weight:600">—</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="dimmed">User ID</span>
+              <span id="info-userid" style="font-family:monospace;font-size:0.75rem;color:var(--text-2)">—</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="dimmed">Tanggal Daftar</span>
+              <span id="info-created">—</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="dimmed">Login Terakhir</span>
+              <span id="info-lastlogin">—</span>
+            </div>
+          </div>
+          <hr class="divider">
+          <a href="/pricing" class="btn btn-outline btn-full btn-sm">⚡ Upgrade Plan</a>
+        </div>
+
+        <!-- QUICK LINKS -->
+        <div class="card">
+          <h4 style="margin-bottom:12px">🚀 Quick Links</h4>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <a href="/bots" class="btn btn-ghost btn-sm" style="text-align:left">🤖 Bot Manager</a>
+            <a href="/tokens" class="btn btn-ghost btn-sm" style="text-align:left">🪙 Topup Token</a>
+            <a href="/customize" class="btn btn-ghost btn-sm" style="text-align:left">🎨 Customize Bot</a>
+            <a href="/terminal" class="btn btn-ghost btn-sm" style="text-align:left">💻 Terminal (Owner)</a>
+          </div>
+        </div>
+
+        <!-- BOT MODE — only for dev@dlavie.com -->
+        <div class="card" id="botmode-card" style="display:none;border-color:rgba(99,102,241,.35)">
+          <h4 style="margin-bottom:4px">⚡ Bot Mode Control <span style="font-size:.65rem;background:rgba(99,102,241,.15);color:#818cf8;padding:2px 8px;border-radius:12px;font-weight:700;margin-left:6px">DEV ONLY</span></h4>
+          <p style="font-size:.8rem;color:var(--text-2);margin-bottom:16px">Ubah mode operasi seluruh bot. Perubahan langsung berlaku.</p>
+          <div id="current-mode-badge" style="font-size:.85rem;font-weight:600;margin-bottom:12px;color:var(--text-2)">Mode aktif: <span id="current-mode-label" style="color:var(--primary-l)">—</span></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button id="btn-multibot" class="btn btn-secondary" onclick="changeBotMode('multibot')">
+              🤖 Multi Control Bot — Platform multi-bot standar
+            </button>
+            <button id="btn-game" class="btn btn-secondary" onclick="changeBotMode('game')">
+              🎮 Game Mode — Aktifkan DLavie RPG (Dunia Aethoria)
+            </button>
+          </div>
+          <div id="botmode-msg" style="margin-top:12px;font-size:.82rem;display:none"></div>
+        </div>
+
+        <!-- DANGER ZONE -->
+        <div class="card" style="border-color:rgba(239,68,68,0.2)">
+          <h4 style="margin-bottom:8px;color:var(--error)">⚠️ Zona Berbahaya</h4>
+          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:12px">
+            Logout dari semua sesi akan memutus koneksi bot dari DLavie OS.
+          </p>
+          <button class="btn btn-danger btn-sm" onclick="confirmLogoutAll()">Logout dari Semua Sesi</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.guardDashboard()) return;
+  setEl('user-name', Auth.user?.name || '');
+  initSettings();
+
+  // Load account info
+  try {
+    const data = await API.get('/api/auth/me');
+    const u = data.user;
+    setEl('info-plan', (u.plan || 'free').toUpperCase());
+    setEl('info-tokens', fmtNumber(u.tokens));
+    setEl('info-userid', u.userId || '-');
+    setEl('info-created', u.createdAt ? fmtDate(u.createdAt) : '—');
+    setEl('info-lastlogin', u.lastLogin ? fmtTime(u.lastLogin) : 'Baru pertama kali');
+    const planEl = document.getElementById('info-plan');
+    if (planEl) planEl.className = 'badge ' + (u.plan === 'pro' || u.plan === 'enterprise' ? 'badge-success' : 'badge-primary');
+  } catch (err) { console.error(err); }
+
+  // Load GitHub repo
+  try {
+    const data = await API.get('/api/settings');
+    if (data.github?.repo) document.getElementById('github-repo-url').value = data.github.repo;
+  } catch (_) {}
+
+  // Bot Mode Panel — only for dev@dlavie.com
+  const userEmail = Auth.user?.email || '';
+  if (userEmail === 'dev@dlavie.com') {
+    const card = document.getElementById('botmode-card');
+    if (card) card.style.display = 'block';
+    loadBotMode();
+  }
+});
+
+async function loadBotMode() {
+  try {
+    const data = await API.get('/api/botmode');
+    const labels = { multibot: '🤖 Multi Control Bot', game: '🎮 Game Mode (DLavie RPG)' };
+    setEl('current-mode-label', labels[data.mode] || data.mode);
+    const btnM = document.getElementById('btn-multibot');
+    const btnG = document.getElementById('btn-game');
+    if (btnM) btnM.className = 'btn ' + (data.mode === 'multibot' ? 'btn-primary' : 'btn-secondary');
+    if (btnG) btnG.className = 'btn ' + (data.mode === 'game'     ? 'btn-primary' : 'btn-secondary');
+  } catch (err) { console.error('loadBotMode:', err); }
+}
+
+async function changeBotMode(mode) {
+  const msgEl = document.getElementById('botmode-msg');
+  try {
+    await API.put('/api/botmode', { mode });
+    const labels = { multibot: '🤖 Multi Control Bot', game: '🎮 Game Mode (DLavie RPG)' };
+    if (msgEl) { msgEl.style.display = 'block'; msgEl.style.color = '#4ade80'; msgEl.textContent = `✅ Mode berhasil diubah ke: ${labels[mode] || mode}`; }
+    toast(`✅ Bot Mode → ${labels[mode] || mode}`, 'success');
+    loadBotMode();
+  } catch (err) {
+    if (msgEl) { msgEl.style.display = 'block'; msgEl.style.color = '#f87171'; msgEl.textContent = `❌ ${err.message}`; }
+    toast(err.message, 'error');
+  }
+}
+
+async function loadAccessKey() {
+  try {
+    const data = await API.get('/api/bot/sessions');
+    const el = document.getElementById('access-key-display');
+    if (!el) return;
+    if (data.sessions?.length) {
+      el.textContent = data.sessions[0].accessKey || '(no key)';
+    } else {
+      el.textContent = 'Belum ada sesi aktif. Login ke bot dengan !login KODE.';
+    }
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function saveGithubRepo() {
+  const repo = document.getElementById('github-repo-url')?.value?.trim();
+  if (!repo) { toast('Masukkan URL repo GitHub', 'error'); return; }
+  try {
+    await API.put('/api/settings/github', { repo });
+    toast('✅ GitHub repo berhasil disimpan!', 'success');
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+function confirmLogoutAll() {
+  if (!confirm('Yakin ingin logout dari semua sesi? Bot kamu akan terputus dari DLavie OS.')) return;
+  Auth.clear();
+  window.location.href = '/login';
+}
+</script>
+</body>
+</html>

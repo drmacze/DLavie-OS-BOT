@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pembayaran — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+.payment-container { max-width: 520px; margin: 0 auto; }
+.qris-card { background: #fff; border-radius: 16px; padding: 32px; text-align: center; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+.qris-img { width: 280px; height: 280px; border-radius: 12px; margin: 16px auto; }
+.timer { font-size: 2rem; font-weight: 800; color: var(--danger); margin: 16px 0; }
+.proof-form { margin-top: 24px; }
+.proof-form input, .proof-form textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.95rem; margin-bottom: 12px; background: var(--bg-1); color: var(--text-1); }
+.file-input { display: none; }
+.file-label { display: block; padding: 16px; border: 2px dashed var(--border); border-radius: 12px; text-align: center; cursor: pointer; color: var(--text-2); margin-bottom: 12px; transition: all 0.2s; }
+.file-label:hover { border-color: var(--primary); color: var(--primary); }
+.file-label.has-file { border-color: var(--success); color: var(--success); }
+.status-badge { display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+.status-pending { background: #fff3cd; color: #856404; }
+.status-paid { background: #d4edda; color: #155724; }
+.status-approved { background: #d1e7dd; color: #0f5132; }
+.status-rejected { background: #f8d7da; color: #721c24; }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="/" class="navbar-brand"><span>⚡</span><span>DLavie<span style="color:var(--primary-l)"> OS</span></span></a>
+  <div class="navbar-links">
+    <a href="/dashboard" class="navbar-link">Dashboard</a>
+    <a href="/pricing" class="navbar-link">Pricing</a>
+  </div>
+  <div class="navbar-actions">
+    <a href="/" class="btn btn-secondary btn-sm" onclick="logout();return false;">Logout</a>
+  </div>
+</nav>
+
+<section style="padding-top:calc(var(--header-h) + 40px);padding-bottom:40px;">
+  <div class="container payment-container">
+    <div class="section-badge">💳 Pembayaran</div>
+    <h2 style="margin:16px 0 8px">Bayar dengan <span class="gradient-text">QRIS</span></h2>
+    <p class="dimmed">Scan QRIS, upload bukti, dan klik "Saya Sudah Bayar"</p>
+
+    <div id="payment-content" class="qris-card mt-24">
+      <div class="spinner" style="width:32px;height:32px;margin:0 auto"></div>
+      <p class="mt-16">Memuat form pembayaran...</p>
+    </div>
+  </div>
+</section>
+
+<script src="/js/app.js"></script>
+<script>
+let paymentState = { strukId: null, timer: null, expiresAt: null };
+
+function getParams() {
+  const p = new URLSearchParams(window.location.search);
+  return { type: p.get('type'), plan: p.get('plan'), amount: p.get('amount'), tokens: p.get('tokens') };
+}
+
+async function initPayment() {
+  const params = getParams();
+  const container = document.getElementById('payment-content');
+
+  if (!params.type || !params.amount) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:40px">
+        <div style="font-size:3rem">⚠️</div>
+        <h3>Parameter tidak lengkap</h3>
+        <p class="dimmed mt-8">Kembali ke <a href="/pricing">Pricing</a> atau <a href="/topup">Top Up</a></p>
+      </div>`;
+    return;
+  }
+
+  // Buat transaksi
+  try {
+    const res = await API.post('/api/payment/create', {
+      type: params.type,
+      plan: params.plan || null,
+      amount: parseInt(params.amount),
+      amountTokens: params.tokens ? parseInt(params.tokens) : null,
+      nama: Auth.user?.name || '',
+    });
+    if (!res.success) throw new Error(res.error);
+
+    paymentState.strukId = res.strukId;
+    paymentState.expiresAt = new Date(res.expiredAt).getTime();
+    renderPayment(params, res.strukId);
+    startTimer();
+  } catch (err) {
+    container.innerHTML = `<div style="text-align:center;color:var(--danger)">
+      <p>Gagal membuat transaksi: ${err.message}</p>
+      <a href="/pricing" class="btn btn-primary mt-16">Kembali</a>
+    </div>`;
+  }
+}
+
+function renderPayment(params, strukId) {
+  const container = document.getElementById('payment-content');
+  const isPlan = params.type === 'plan';
+  const title = isPlan ? `Upgrade ke ${(params.plan || '').toUpperCase()}` : `Top Up ${params.tokens || ''} Token`;
+  const amount = Number(params.amount).toLocaleString('id-ID');
+
+  container.innerHTML = `
+    <div style="margin-bottom:20px">
+      <div style="font-size:0.85rem;color:var(--text-2)">Struk ID</div>
+      <div style="font-size:1.1rem;font-weight:700;font-family:monospace">${strukId}</div>
+    </div>
+
+    <div style="margin-bottom:20px">
+      <div style="font-size:0.85rem;color:var(--text-2)">${isPlan ? 'Plan' : 'Item'}</div>
+      <div style="font-size:1.2rem;font-weight:700">${title}</div>
+    </div>
+
+    <div style="margin-bottom:20px">
+      <div style="font-size:0.85rem;color:var(--text-2)">Nominal</div>
+      <div style="font-size:1.5rem;font-weight:800;color:var(--primary)">Rp ${amount}</div>
+    </div>
+
+    <div class="timer" id="timer">05:00</div>
+    <div style="font-size:0.8rem;color:var(--danger);margin-bottom:16px">⏰ Bayar dalam waktu di atas</div>
+
+    <div style="border:2px solid var(--border);border-radius:12px;padding:16px;margin:16px 0">
+      <img src="/img/qris.png" alt="QRIS" class="qris-img" style="width:100%;max-width:280px;display:block;margin:0 auto">
+      <div style="margin-top:12px;font-size:0.85rem;color:var(--text-2)">
+        <div>• Buka aplikasi e-wallet / banking</div>
+        <div>• Pilih scan QRIS</div>
+        <div>• Scan QR di atas</div>
+        <div>• Masukkan nominal Rp ${amount}</div>
+      </div>
+    </div>
+
+    <div class="proof-form">
+      <input type="text" id="proof-name" placeholder="Nama lengkap (sesuai rekening)" required>
+      <textarea id="proof-note" rows="2" placeholder="Catatan (opsional)" style="resize:none"></textarea>
+
+      <input type="file" id="proof-file" class="file-input" accept="image/*" onchange="onFileSelect(this)">
+      <label for="proof-file" class="file-label" id="file-label">
+        📷 Klik untuk upload bukti transfer
+      </label>
+
+      <button class="btn btn-primary btn-full btn-lg" id="btn-bayar" onclick="submitProof()">
+        ✅ Saya Sudah Bayar
+      </button>
+    </div>
+  `;
+}
+
+function onFileSelect(input) {
+  const label = document.getElementById('file-label');
+  if (input.files && input.files[0]) {
+    label.textContent = `✅ ${input.files[0].name}`;
+    label.classList.add('has-file');
+  }
+}
+
+async function submitProof() {
+  const name = document.getElementById('proof-name').value.trim();
+  const file = document.getElementById('proof-file').files[0];
+  const btn = document.getElementById('btn-bayar');
+
+  if (!name) { toast('Nama lengkap wajib diisi', 'error'); return; }
+  if (!file) { toast('Upload bukti transfer dulu', 'error'); return; }
+  if (!paymentState.strukId) { toast('Struk tidak valid. Refresh halaman.', 'error'); return; }
+
+  setLoading(btn, true);
+  try {
+    const formData = new FormData();
+    formData.append('strukId', paymentState.strukId);
+    formData.append('proof', file);
+    formData.append('nama', name);
+    formData.append('note', document.getElementById('proof-note').value || '');
+
+    const res = await fetch('/api/payment/proof', {
+      method: 'POST',
+      headers: { 'x-token': Auth.token },
+      body: formData,
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+
+    clearInterval(paymentState.timer);
+    document.getElementById('payment-content').innerHTML = `
+      <div style="text-align:center;padding:24px">
+        <div style="font-size:3rem">✅</div>
+        <h3>Bukti Terkirim!</h3>
+        <p class="dimmed mt-8">Owner sedang memverifikasi pembayaran kamu.</p>
+        <p class="dimmed">Struk: <strong>${paymentState.strukId}</strong></p>
+        <div style="margin-top:24px">
+          <a href="/dashboard" class="btn btn-primary">Ke Dashboard</a>
+        </div>
+      </div>`;
+    toast('Bukti terkirim! Owner akan memverifikasi.', 'success', 5000);
+  } catch (err) {
+    toast('Gagal: ' + err.message, 'error');
+  } finally {
+    setLoading(btn, false);
+  }
+}
+
+function startTimer() {
+  const timerEl = document.getElementById('timer');
+  if (!timerEl) return;
+  paymentState.timer = setInterval(() => {
+    const remaining = Math.max(0, paymentState.expiresAt - Date.now());
+    const m = Math.floor(remaining / 60000);
+    const s = Math.floor((remaining % 60000) / 1000);
+    timerEl.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (remaining <= 0) {
+      clearInterval(paymentState.timer);
+      timerEl.textContent = '00:00';
+      document.getElementById('btn-bayar').disabled = true;
+      document.getElementById('btn-bayar').textContent = '⏰ Waktu Habis';
+      toast('Waktu pembayaran habis. Silakan buat transaksi baru.', 'error', 6000);
+    }
+  }, 1000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!Auth.token) { window.location.href = '/login'; return; }
+  initPayment();
+});
+</script>
+</body>
+</html>

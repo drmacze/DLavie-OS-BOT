@@ -1,0 +1,78 @@
+Kamu adalah seorang Senior Game Developer + WhatsApp Bot Engineer yang sangat berpengalaman. Tugasmu adalah membangun sebuah bot WhatsApp RPG bernama **"DLavie RPG"** dengan kualitas setara game console next-gen, bukan bot biasa.
+
+### Visi & Tujuan Utama
+Buat bot WhatsApp RPG yang terasa seperti game console sungguhan. Gameplay harus dalam, menarik, tidak membosankan, memiliki progresi jangka panjang, dan memberikan pengalaman premium kepada pemain. Bot harus terasa kompleks, detail, dan aesthetic.
+
+### Persyaratan Teknis Wajib
+- Gunakan @whiskeysockets/baileys versi terbaru
+- Wajib menggunakan **Pairing Code** (bukan QR Code)
+- Multi-device support
+- Struktur project profesional dan modular (core, commands, utils, data, config)
+- Auto Save system (data player tersimpan otomatis)
+- Bisa dijalankan di Replit
+- Harus stabil di WhatsApp iOS dan Android
+
+### Alur Permainan (Game Flow)
+
+1. **Pertama kali user mengetik `.play`**
+   - Bot menampilkan **Loading Screen** dengan progress bar text (contoh: [█████░░░░░] 50%)
+   - Setelah loading selesai, lanjut ke Login/Register
+
+2. **Login / Register**
+   - Jika belum punya akun → proses registrasi
+   - Jika sudah punya → langsung login
+
+3. **Character Creation (untuk player baru)**
+   - Pilih atau input nama karakter
+   - Pilih template attribute (banyak pilihan, misalnya: Warrior, Mage, Rogue, Balanced, dll)
+   - Customize sederhana jika memungkinkan
+   - Berikan sedikit intro story
+
+4. **Masuk ke LOBBY**
+   Lobby adalah pusat utama permainan. Di lobby harus ada pilihan:
+   - Play
+   - PVP
+   - Classic Mode
+   - Exploration
+   - Story Mode
+   - Rank / Leaderboard
+   - Profile
+   - Friends
+   - Invite Friends
+   - Settings
+
+5. **Mode Permainan**
+   - **Story Mode**: Alur cerita panjang, realistis, dan nyambung (bukan terbagi episode). Narasi harus immersive.
+   - **Exploration**: Eksplorasi dunia, event acak, discovery.
+   - **Classic Mode**: Mode standar (hunting, farming, dll).
+   - **PVP**: Bisa mengajak teman (invite friends).
+   - Hampir semua mode bisa invite friends, kecuali Story Mode.
+
+6. **Keluar**
+   - Bisa keluar kapan saja menggunakan perintah `.exit` atau melalui button/list.
+
+### UI/UX Requirements (Sangat Penting)
+- **Minimalkan** command yang harus diketik manual.
+- Gunakan **List Message + Category** untuk menu utama.
+- Gunakan **Button** untuk pilihan sederhana dan konfirmasi.
+- Tampilan harus rapi, aesthetic, dan terasa seperti game console.
+- Loading screen, lobby, dan menu harus terlihat premium.
+
+### Fitur Tambahan yang Diinginkan
+- **Settings Menu** yang kompleks (mirip game console).
+- **Theme / Style Changer** (banyak pilihan tampilan). Hanya Owner yang bisa mengganti theme global.
+- Auto Save setelah setiap aksi penting.
+- Sistem player data yang rapi dan mudah dikembangkan.
+- Multiplayer element melalui fitur invite friends.
+
+### Standar Kualitas Kode
+- Kode harus bersih, terstruktur, dan mudah dikembangkan.
+- Gunakan arsitektur modular.
+- Error handling yang baik.
+- Logging yang jelas.
+- Jangan membuat bot yang terasa murahan atau terburu-buru.
+
+### Instruksi Pengembangan
+Bangun bot ini secara bertahap dengan kualitas tinggi. Mulai dari fondasi yang kuat (Loading → Login/Register → Character Creation → Lobby), baru lanjut ke fitur gameplay lainnya. Jangan mengorbankan kualitas demi kecepatan.
+
+Sekarang, mulai buat project **DLavie RPG** dengan standar tertinggi.

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bot Manager — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<nav class="navbar">
+  <button class="btn btn-ghost btn-icon mobile-menu-btn" onclick="toggleMobileSidebar()" title="Menu" style="flex-shrink:0">☰</button>
+  <a href="/" class="navbar-brand">
+    <div class="brand-icon">⚡</div>
+    <span>DLavie<span class="gradient-text"> OS</span></span>
+  </a>
+  <div class="navbar-actions">
+    <button class="theme-toggle" title="Toggle theme">☀️</button>
+    <button class="btn btn-ghost btn-sm" onclick="logout()" style="color:var(--text-3)">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">Menu Utama</div>
+    <a href="/dashboard" class="sidebar-item" data-page="dashboard"><span class="icon">📊</span>Dashboard</a>
+    <a href="/bots"      class="sidebar-item active" data-page="bots"><span class="icon">🤖</span>Bot Manager</a>
+    <a href="/tokens"    class="sidebar-item" data-page="tokens"><span class="icon">🪙</span>Token & Topup</a>
+    <a href="/terminal"  class="sidebar-item" data-page="terminal"><span class="icon">💻</span>Terminal</a>
+    <div class="sidebar-section">Premium</div>
+    <a href="/files"     class="sidebar-item" data-page="files"><span class="icon">📁</span>File Manager</a>
+    <a href="/logs"      class="sidebar-item" data-page="logs"><span class="icon">📋</span>Bot Logs</a>
+    <a href="/analytics" class="sidebar-item" data-page="analytics"><span class="icon">📈</span>Analytics</a>
+    <div class="sidebar-section">Pengaturan</div>
+    <a href="/customize" class="sidebar-item" data-page="customize"><span class="icon">🎨</span>Customize Bot</a>
+    <a href="/settings"  class="sidebar-item" data-page="settings"><span class="icon">⚙️</span>Settings</a>
+    <a href="/pricing"   class="sidebar-item" data-page="pricing"><span class="icon">💳</span>Upgrade Plan</a>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="window.location.href='/settings'">
+        <div class="sidebar-avatar" id="sidebar-avatar">U</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">User</div>
+          <div class="sidebar-user-plan" id="sidebar-user-plan">FREE</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="flex items-center justify-between mb-24">
+      <div>
+        <h2>Bot Manager</h2>
+        <p style="margin-top:4px;font-size:0.875rem">Kelola semua bot yang terhubung ke DLavie OS</p>
+      </div>
+      <button class="btn btn-primary" onclick="generateConnectToken()">➕ Connect Bot Baru</button>
+    </div>
+
+    <!-- CONNECT TOKEN CARD (shown when token generated) -->
+    <div id="connect-token-card" class="card mb-24" style="display:none;border-color:rgba(99,102,241,0.5);background:rgba(99,102,241,0.07)">
+      <div class="flex items-center justify-between mb-12">
+        <h4>🔑 Token Koneksi</h4>
+        <button class="btn btn-ghost btn-sm" onclick="hideToken()">✕ Tutup</button>
+      </div>
+      <p style="font-size:0.875rem;margin-bottom:12px">Token ini berlaku <strong>24 jam</strong>. Kirim perintah berikut ke <strong>DLavie OS Bot</strong> dari bot kamu:</p>
+      <div style="background:var(--bg-2);border:1px solid var(--border-dim);border-radius:8px;padding:12px;display:flex;gap:8px;align-items:center;margin-bottom:12px">
+        <code id="connect-token-cmd" style="font-family:var(--font-mono);font-size:0.85rem;color:var(--primary-l);flex:1;word-break:break-all"></code>
+        <button class="btn btn-sm btn-secondary" onclick="copyToken()">Copy</button>
+      </div>
+      <div class="alert alert-info" style="font-size:0.82rem">
+        ℹ️ Dari nomor WA bot kamu, kirim pesan ini ke DLavie OS Bot (nomor: <span id="bot-number-hint">-</span>)
+      </div>
+    </div>
+
+    <!-- HOW TO CONNECT -->
+    <div class="card mb-24" style="border-color:rgba(99,102,241,0.3);background:rgba(99,102,241,0.05)">
+      <h4 style="margin-bottom:12px">🔌 Cara Menghubungkan Bot</h4>
+      <div class="grid-2">
+        <div>
+          <ol style="padding-left:20px;font-size:0.875rem;color:var(--text-2);display:flex;flex-direction:column;gap:10px">
+            <li>Klik tombol <strong>Connect Bot Baru</strong> di atas → dapat token koneksi</li>
+            <li>Dari nomor WA bot kamu, kirim ke DLavie OS Bot:<br>
+              <code style="background:rgba(99,102,241,0.15);padding:2px 8px;border-radius:6px;color:var(--primary-l)">!connect verify &lt;token&gt;</code>
+            </li>
+            <li>Bot langsung muncul di list di bawah ✅</li>
+          </ol>
+        </div>
+        <div style="padding:16px;background:var(--surface-2);border-radius:10px">
+          <div style="font-size:0.78rem;color:var(--text-3);margin-bottom:8px;font-weight:700">SETELAH TERHUBUNG</div>
+          <code style="font-size:0.8rem;color:var(--primary-l);display:block;line-height:1.8">
+            !relay bot_id restart<br>
+            !relay bot_id update<br>
+            !relay bot_id plugin list<br>
+            !relay bot_id status
+          </code>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTS LIST -->
+    <div class="card">
+      <div class="flex items-center justify-between mb-16">
+        <h4>Bot Terhubung <span id="bot-count" class="badge badge-primary" style="margin-left:8px">0</span></h4>
+        <button class="btn btn-sm btn-secondary" onclick="loadBots()">🔄 Refresh</button>
+      </div>
+      <div id="bots-list">
+        <div class="empty-state"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- BOT COMMANDS REFERENCE -->
+    <div class="card mt-24">
+      <h4 style="margin-bottom:16px">📚 Referensi Command Bot</h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Command</th><th>Fungsi</th><th>Token Cost</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>!token</code></td><td>Cek saldo token</td><td>Free</td></tr>
+            <tr><td><code>!status</code></td><td>Status bot & sistem</td><td>Free</td></tr>
+            <tr><td><code>!relay &lt;id&gt; restart</code></td><td>Restart bot tertentu</td><td>5</td></tr>
+            <tr><td><code>!relay &lt;id&gt; update</code></td><td>Update bot ke versi terbaru</td><td>60</td></tr>
+            <tr><td><code>!plugin install &lt;id&gt;</code></td><td>Install plugin</td><td>30</td></tr>
+            <tr><td><code>!shell &lt;cmd&gt;</code></td><td>Jalankan perintah shell (Pro)</td><td>10</td></tr>
+            <tr><td><code>!broadcast &lt;pesan&gt;</code></td><td>Broadcast ke semua kontak</td><td>30</td></tr>
+            <tr><td><code>!customize status</code></td><td>Lihat konfigurasi bot</td><td>Free</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- BOT ACTION MODAL -->
+<div id="bot-action-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div class="card" style="max-width:400px;width:90%">
+    <h4 style="margin-bottom:8px" id="modal-bot-title">Aksi Bot</h4>
+    <p id="modal-bot-info" style="font-size:0.82rem;color:var(--text-2);margin-bottom:16px"></p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-danger btn-sm" id="modal-disconnect-btn">🔌 Disconnect Bot</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('bot-action-modal')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+let currentBotId = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!Auth.guardDashboard()) return;
+  setEl('user-name', Auth.user?.name || '');
+  loadBots();
+});
+
+async function loadBots() {
+  document.getElementById('bots-list').innerHTML = '<div class="empty-state"><div class="spinner"></div></div>';
+  try {
+    const data = await API.get('/api/bots');
+    const bots = data.bots || [];
+    setEl('bot-count', bots.length);
+    renderBots(bots);
+  } catch (err) {
+    document.getElementById('bots-list').innerHTML = `<div class="empty-state"><p style="color:var(--error)">${err.message}</p></div>`;
+  }
+}
+
+function renderBots(bots) {
+  const el = document.getElementById('bots-list');
+  if (!bots.length) {
+    el.innerHTML = `<div class="empty-state" style="padding:40px">
+      <div style="font-size:2rem;margin-bottom:12px">🤖</div>
+      <p style="font-weight:600;margin-bottom:4px">Belum ada bot terhubung</p>
+      <p style="font-size:0.82rem;color:var(--text-3)">Klik "Connect Bot Baru" untuk menghubungkan bot pertamamu</p>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = bots.map(b => {
+    const connectedTime = b.connectedAt ? fmtTime(b.connectedAt) : '-';
+    const statusIcon    = b.status === 'active' ? '🟢' : '🔴';
+    const planBadge     = `<span class="badge badge-${b.plan === 'pro' || b.plan === 'enterprise' ? 'success' : 'primary'}" style="font-size:0.7rem">${(b.plan||'free').toUpperCase()}</span>`;
+    return `<div class="flex items-center justify-between" style="padding:14px;border:1px solid var(--border-dim);border-radius:10px;margin-bottom:8px">
+      <div>
+        <div style="font-weight:600;font-size:0.9rem">${statusIcon} ${b.botId}</div>
+        <div style="font-size:0.8rem;color:var(--text-2);margin-top:3px">
+          📱 ${b.botNumber || '-'} &nbsp;|&nbsp; 🕐 ${connectedTime} &nbsp;|&nbsp; ${planBadge}
+        </div>
+      </div>
+      <button class="btn btn-sm btn-ghost" onclick="openBotAction('${b.botId}','${b.botNumber||''}')">⋮</button>
+    </div>`;
+  }).join('');
+}
+
+async function generateConnectToken() {
+  try {
+    const data = await API.post('/api/connect/generate', {});
+    const token = data.token;
+    const cmd   = `!connect verify ${token}`;
+
+    document.getElementById('connect-token-cmd').textContent = cmd;
+    document.getElementById('bot-number-hint').textContent   = '(lihat nomor DLavie OS di WhatsApp kamu)';
+    document.getElementById('connect-token-card').style.display = 'block';
+    document.getElementById('connect-token-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    toast(`Token koneksi berhasil dibuat! Berlaku ${data.expiresInHours || 24} jam.`, 'success');
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+function hideToken() {
+  document.getElementById('connect-token-card').style.display = 'none';
+}
+
+function copyToken() {
+  const text = document.getElementById('connect-token-cmd').textContent;
+  copyText(text, 'Command connect');
+}
+
+function openBotAction(botId, botNumber) {
+  currentBotId = botId;
+  setEl('modal-bot-title', `Bot: ${botId}`);
+  setEl('modal-bot-info', `Nomor: ${botNumber || '-'}`);
+  document.getElementById('modal-disconnect-btn').onclick = () => disconnectBot(botId);
+  document.getElementById('bot-action-modal').style.display = 'flex';
+}
+
+async function disconnectBot(botId) {
+  if (!confirm(`Yakin ingin disconnect bot ${botId}? Bot tidak bisa dikontrol dari DLavie OS lagi.`)) return;
+  try {
+    await API.delete(`/api/bots/${botId}`);
+    closeModal('bot-action-modal');
+    toast('Bot berhasil didisconnect', 'success');
+    loadBots();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terminal — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+.terminal-wrap { background:#0a0a0f; border-radius:12px; border:1px solid rgba(99,102,241,0.2); overflow:hidden; }
+.terminal-bar { background:rgba(255,255,255,0.04); padding:10px 14px; display:flex; align-items:center; gap:6px; border-bottom:1px solid rgba(255,255,255,0.06); }
+.terminal-dot { width:12px; height:12px; border-radius:50%; }
+.terminal-body { padding:16px; min-height:300px; max-height:48vh; overflow-y:auto; font-family:'JetBrains Mono',monospace; font-size:0.82rem; line-height:1.6; }
+.terminal-line { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:2px; }
+.terminal-line.cmd { color:#a5b4fc; }
+.terminal-line.out { color:#d1d5db; white-space:pre-wrap; word-break:break-all; }
+.terminal-line.err { color:#fca5a5; }
+.terminal-line.sys { color:#6b7280; font-style:italic; }
+.terminal-line.ok  { color:#6ee7b7; }
+.terminal-input-row { background:rgba(255,255,255,0.03); border-top:1px solid rgba(255,255,255,0.06); padding:10px 14px; display:flex; gap:8px; align-items:center; }
+.terminal-prompt { color:#818cf8; font-family:'JetBrains Mono',monospace; font-size:0.82rem; white-space:nowrap; }
+.terminal-input { flex:1; background:transparent; border:none; outline:none; color:#f3f4f6; font-family:'JetBrains Mono',monospace; font-size:0.82rem; caret-color:#818cf8; }
+.file-item { padding:6px 10px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:0.82rem; transition:background 0.15s; }
+.file-item:hover { background:rgba(99,102,241,0.1); }
+.file-item.dir { color:#818cf8; }
+.file-item.file { color:#d1d5db; }
+.file-content { background:#0a0a0f; border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:12px; font-family:'JetBrains Mono',monospace; font-size:0.78rem; line-height:1.6; color:#d1d5db; max-height:380px; overflow:auto; white-space:pre-wrap; }
+.tier-badge { display:inline-flex; align-items:center; gap:4px; font-size:0.72rem; padding:3px 8px; border-radius:20px; font-weight:600; }
+.tier-free { background:rgba(107,114,128,0.2); color:#9ca3af; }
+.tier-starter { background:rgba(59,130,246,0.15); color:#60a5fa; }
+.tier-pro { background:rgba(99,102,241,0.15); color:#818cf8; }
+.tier-enterprise { background:rgba(245,158,11,0.15); color:#fbbf24; }
+.tier-owner { background:rgba(239,68,68,0.15); color:#f87171; }
+.sandbox-info { background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); border-radius:8px; padding:12px 14px; font-size:0.82rem; color:#fbbf24; }
+.cmd-chip { display:inline-flex; align-items:center; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:3px 8px; font-family:monospace; font-size:0.75rem; color:#d1d5db; cursor:pointer; transition:background 0.15s; }
+.cmd-chip:hover { background:rgba(99,102,241,0.15); color:#a5b4fc; }
+</style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<nav class="navbar">
+  <button class="btn btn-ghost btn-icon mobile-menu-btn" onclick="toggleMobileSidebar()" title="Menu" style="flex-shrink:0">☰</button>
+  <a href="/" class="navbar-brand"><div class="brand-icon">⚡</div><span>DLavie<span class="gradient-text"> OS</span></span></a>
+  <div class="navbar-actions">
+    <button class="btn btn-ghost btn-sm notif-btn" onclick="window.location.href='/analytics'" title="Analytics" style="color:var(--text-3)">📊</button>
+    <button class="theme-toggle" title="Toggle theme">☀️</button>
+    <button class="btn btn-ghost btn-sm" onclick="logout()" style="color:var(--text-3)">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">Menu Utama</div>
+    <a href="/dashboard" class="sidebar-item" data-page="dashboard"><span class="icon">📊</span>Dashboard</a>
+    <a href="/bots"      class="sidebar-item" data-page="bots"><span class="icon">🤖</span>Bot Manager</a>
+    <a href="/tokens"    class="sidebar-item" data-page="tokens"><span class="icon">🪙</span>Token & Topup</a>
+    <a href="/terminal"  class="sidebar-item active" data-page="terminal"><span class="icon">💻</span>Terminal</a>
+    <div class="sidebar-section">Premium</div>
+    <a href="/files"     class="sidebar-item" data-page="files"><span class="icon">📁</span>File Manager</a>
+    <a href="/logs"      class="sidebar-item" data-page="logs"><span class="icon">📋</span>Bot Logs</a>
+    <a href="/analytics" class="sidebar-item" data-page="analytics"><span class="icon">📈</span>Analytics</a>
+    <div class="sidebar-section">Pengaturan</div>
+    <a href="/customize" class="sidebar-item" data-page="customize"><span class="icon">🎨</span>Customize Bot</a>
+    <a href="/settings"  class="sidebar-item" data-page="settings"><span class="icon">⚙️</span>Settings</a>
+    <a href="/pricing"   class="sidebar-item" data-page="pricing"><span class="icon">💳</span>Upgrade Plan</a>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="window.location.href='/settings'">
+        <div class="sidebar-avatar" id="sidebar-avatar">U</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">User</div>
+          <div class="sidebar-user-plan" id="sidebar-user-plan">FREE</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="mb-24" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h2>Terminal</h2>
+        <p style="margin-top:4px;font-size:0.875rem;color:var(--text-2)" id="terminal-subtitle">Shell akses & developer tools</p>
+      </div>
+      <div id="tier-badge-wrap"></div>
+    </div>
+
+    <!-- FREE: upgrade prompt -->
+    <div id="panel-free" class="card" style="display:none;text-align:center;padding:48px 32px">
+      <div style="font-size:3rem;margin-bottom:16px">🔒</div>
+      <h3 style="margin-bottom:8px">Terminal Perlu Plan Berbayar</h3>
+      <p style="color:var(--text-2);font-size:0.9rem;max-width:420px;margin:0 auto 24px">Terminal tersedia mulai plan <strong>Starter</strong>. Upgrade sekarang dan dapatkan akses shell, sandbox command, dan monitoring sistem.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <a href="/pricing" class="btn btn-primary">⬆ Upgrade Plan</a>
+        <a href="/logs" class="btn btn-secondary">📋 Lihat Bot Logs</a>
+      </div>
+      <div style="margin-top:28px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:480px;margin:28px auto 0">
+        <div class="card" style="padding:14px;text-align:center">
+          <div style="font-size:1.4rem">🔵</div>
+          <div style="font-weight:600;font-size:0.82rem;margin-top:6px">Starter</div>
+          <div style="font-size:0.75rem;color:var(--text-2);margin-top:4px">Sandbox shell</div>
+        </div>
+        <div class="card" style="padding:14px;text-align:center">
+          <div style="font-size:1.4rem">💜</div>
+          <div style="font-weight:600;font-size:0.82rem;margin-top:6px">Pro</div>
+          <div style="font-size:0.75rem;color:var(--text-2);margin-top:4px">Shell + File manager</div>
+        </div>
+        <div class="card" style="padding:14px;text-align:center">
+          <div style="font-size:1.4rem">🏆</div>
+          <div style="font-weight:600;font-size:0.82rem;margin-top:6px">Enterprise</div>
+          <div style="font-size:0.75rem;color:var(--text-2);margin-top:4px">Full akses penuh</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAID: terminal panel -->
+    <div id="panel-paid" style="display:none">
+      <!-- Sandbox notice -->
+      <div id="sandbox-notice" class="sandbox-info mb-16" style="display:none">
+        ⚠️ <strong>Mode Sandbox</strong> — Command dibatasi untuk keamanan. Upgrade ke Enterprise untuk shell penuh.
+        <span id="sandbox-allowed-hint" style="display:block;margin-top:6px;font-size:0.78rem;opacity:0.8">
+          Allowed: ls, pwd, cat, head, tail, git status/log, npm list, df, free, ps, uptime, uname, date
+        </span>
+      </div>
+
+      <!-- Terminal -->
+      <div class="card mb-24 p-0">
+        <div class="terminal-wrap">
+          <div class="terminal-bar">
+            <div class="terminal-dot" style="background:#ff5f57"></div>
+            <div class="terminal-dot" style="background:#ffbd2e"></div>
+            <div class="terminal-dot" style="background:#28c840"></div>
+            <span style="font-size:0.78rem;color:#6b7280;margin-left:8px;font-family:monospace" id="terminal-title">DLavie OS — Web Terminal</span>
+            <div style="margin-left:auto;display:flex;gap:6px">
+              <button class="btn btn-ghost btn-sm" style="font-size:0.75rem" onclick="clearTerminal()">🗑 Clear</button>
+            </div>
+          </div>
+          <div class="terminal-body" id="terminal-output"></div>
+          <div class="terminal-input-row">
+            <span class="terminal-prompt" id="terminal-prompt">dlavie@os:~$</span>
+            <input type="text" id="terminal-input" class="terminal-input" placeholder="Ketik command..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            <button class="btn btn-sm btn-secondary" onclick="runTerminalCmd()">↵</button>
+          </div>
+        </div>
+        <!-- Quick commands -->
+        <div style="padding:10px 14px;border-top:1px solid rgba(255,255,255,0.04)">
+          <div style="font-size:0.72rem;color:var(--text-3);margin-bottom:6px">Quick commands:</div>
+          <div id="quick-cmds" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+      </div>
+
+      <!-- File Manager (Pro+) -->
+      <div id="file-manager-panel" class="card" style="display:none">
+        <div class="flex items-center justify-between mb-16">
+          <h4>📁 File Manager <span id="fm-access-badge" class="tier-badge" style="margin-left:8px"></span></h4>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span id="current-path" style="font-family:monospace;font-size:0.8rem;color:var(--text-2)">.</span>
+            <button class="btn btn-ghost btn-sm" onclick="goUp()">⬆</button>
+            <button class="btn btn-ghost btn-sm" onclick="refreshFiles()">🔄</button>
+          </div>
+        </div>
+        <div id="file-list" style="max-height:320px;overflow-y:auto">
+          <div class="empty-state"><div class="spinner"></div></div>
+        </div>
+
+        <!-- File viewer -->
+        <div id="file-viewer" style="display:none;margin-top:16px">
+          <div class="flex items-center justify-between mb-8">
+            <span id="file-viewer-name" style="font-family:monospace;font-size:0.82rem;color:var(--primary-l);font-weight:600"></span>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-sm btn-secondary" id="btn-edit-file" style="display:none" onclick="enableFileEdit()">✏️ Edit</button>
+              <button class="btn btn-sm btn-secondary" onclick="copyFileContent()">Copy</button>
+              <button class="btn btn-sm btn-ghost" onclick="document.getElementById('file-viewer').style.display='none'">✕</button>
+            </div>
+          </div>
+          <div class="file-content" id="file-viewer-content"></div>
+          <!-- Edit mode (owner only) -->
+          <div id="file-editor" style="display:none;margin-top:8px">
+            <textarea id="file-editor-content" style="width:100%;min-height:240px;background:#0a0a0f;color:#d1d5db;border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;resize:vertical;outline:none" spellcheck="false"></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn btn-primary btn-sm" onclick="saveFile()">💾 Simpan</button>
+              <button class="btn btn-ghost btn-sm" onclick="cancelEdit()">Batal</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upgrade prompt for file manager (starter) -->
+      <div id="file-manager-upgrade" class="card" style="display:none;text-align:center;padding:32px">
+        <div style="font-size:2rem;margin-bottom:10px">📁</div>
+        <h4 style="margin-bottom:6px">File Manager</h4>
+        <p style="color:var(--text-2);font-size:0.85rem;margin-bottom:16px">File Manager tersedia untuk plan <strong>Pro</strong> ke atas.</p>
+        <a href="/pricing" class="btn btn-primary btn-sm">Upgrade ke Pro</a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+let currentFilePath = '.';
+const cmdHistory = [];
+let historyIdx = -1;
+let canWriteFiles = false;
+let isSandbox = false;
+
+const QUICK_CMDS_SANDBOX = [
+  { label: 'ls', cmd: 'ls -la' },
+  { label: 'pwd', cmd: 'pwd' },
+  { label: 'git status', cmd: 'git status' },
+  { label: 'git log', cmd: 'git log --oneline -8' },
+  { label: 'npm list', cmd: 'npm list --depth=0 2>/dev/null' },
+  { label: 'df', cmd: 'df -h' },
+  { label: 'free', cmd: 'free -m' },
+  { label: 'uptime', cmd: 'uptime' },
+  { label: 'uname', cmd: 'uname -a' },
+];
+const QUICK_CMDS_FULL = [
+  ...QUICK_CMDS_SANDBOX,
+  { label: 'ps node', cmd: 'ps aux | grep node' },
+  { label: 'cat package.json', cmd: 'cat package.json' },
+  { label: 'git diff', cmd: 'git diff --stat' },
+];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.guardDashboard()) return;
+  const user = Auth.user;
+
+  setEl('sidebar-user-name', user?.name || 'User');
+  setEl('sidebar-user-plan', (user?.plan || 'free').toUpperCase());
+  if (user?.name) { const av = document.getElementById('sidebar-avatar'); if (av) av.textContent = user.name[0].toUpperCase(); }
+  Theme.init();
+
+  // Get terminal capabilities
+  let caps;
+  try {
+    caps = await API.get('/api/terminal/capabilities');
+  } catch (_) {
+    caps = { shell: user?.role === 'owner', fullShell: user?.role === 'owner', fileManager: user?.role === 'owner', fileWrite: user?.role === 'owner', sandbox: false, plan: user?.plan || 'free', role: user?.role || 'user' };
+  }
+
+  const plan = caps.plan || user?.plan || 'free';
+  const role = caps.role || user?.role || 'user';
+  isSandbox = !!caps.sandbox;
+  canWriteFiles = !!caps.fileWrite;
+
+  // Render tier badge
+  const tierLabels = { free: '🔘 Free', starter: '🔵 Starter', pro: '💜 Pro', enterprise: '🏆 Enterprise' };
+  const tierClasses = { free: 'tier-free', starter: 'tier-starter', pro: 'tier-pro', enterprise: 'tier-enterprise' };
+  const badgeHtml = role === 'owner'
+    ? `<span class="tier-badge tier-owner">👑 Owner — Full Access</span>`
+    : `<span class="tier-badge ${tierClasses[plan] || 'tier-free'}">${tierLabels[plan] || plan}</span>`;
+  const badgeWrap = document.getElementById('tier-badge-wrap');
+  if (badgeWrap) badgeWrap.innerHTML = badgeHtml;
+
+  if (!caps.shell) {
+    // Show FREE upgrade panel
+    document.getElementById('panel-free').style.display = 'block';
+    document.getElementById('terminal-subtitle').textContent = '🔒 Perlu plan berbayar';
+    return;
+  }
+
+  // Show paid panel
+  document.getElementById('panel-paid').style.display = 'block';
+
+  if (isSandbox) {
+    document.getElementById('sandbox-notice').style.display = 'block';
+  }
+
+  // Prompt
+  const prompt = role === 'owner' ? 'root@dlavie:~#' : `${user.email?.split('@')[0] || 'user'}@dlavie:~$`;
+  setEl('terminal-prompt', prompt);
+
+  // Title
+  const modeLabel = caps.fullShell ? 'Full Shell' : 'Sandbox Shell';
+  setEl('terminal-title', `DLavie OS — ${modeLabel} [${plan.toUpperCase()}]`);
+
+  // Subtitle
+  document.getElementById('terminal-subtitle').textContent = caps.fullShell ? '🟢 Full Shell — Akses penuh tersedia' : '🟡 Sandbox Mode — Command dibatasi';
+
+  // Welcome messages
+  addLine('sys', `DLavie OS Terminal — Connected as ${user.email} [${plan.toUpperCase()}]`);
+  addLine('sys', caps.fullShell ? 'Full shell access. Semua command tersedia.' : 'Sandbox mode aktif. Ketik "help" untuk daftar command yang diizinkan.');
+  addLine('sys', '');
+
+  // Quick commands
+  const qcmds = caps.fullShell ? QUICK_CMDS_FULL : QUICK_CMDS_SANDBOX;
+  const qContainer = document.getElementById('quick-cmds');
+  qcmds.forEach(({ label, cmd }) => {
+    const chip = document.createElement('button');
+    chip.className = 'cmd-chip';
+    chip.textContent = label;
+    chip.onclick = () => quickCmd(cmd);
+    qContainer.appendChild(chip);
+  });
+
+  // File manager
+  if (caps.fileManager) {
+    document.getElementById('file-manager-panel').style.display = 'block';
+    if (canWriteFiles) {
+      const badge = document.getElementById('fm-access-badge');
+      if (badge) { badge.textContent = '✏️ Read/Write'; badge.className = 'tier-badge tier-owner'; }
+    } else {
+      const badge = document.getElementById('fm-access-badge');
+      if (badge) { badge.textContent = '👁 Read Only'; badge.className = 'tier-badge tier-pro'; }
+    }
+    loadFiles('.');
+  } else {
+    document.getElementById('file-manager-upgrade').style.display = 'block';
+  }
+
+  // Input events
+  document.getElementById('terminal-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { runTerminalCmd(); return; }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (historyIdx < cmdHistory.length - 1) { historyIdx++; document.getElementById('terminal-input').value = cmdHistory[cmdHistory.length - 1 - historyIdx]; }
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIdx > 0) { historyIdx--; document.getElementById('terminal-input').value = cmdHistory[cmdHistory.length - 1 - historyIdx]; }
+      else { historyIdx = -1; document.getElementById('terminal-input').value = ''; }
+    }
+  });
+
+  // Focus input
+  setTimeout(() => document.getElementById('terminal-input')?.focus(), 200);
+});
+
+function addLine(type, text) {
+  const el = document.getElementById('terminal-output');
+  const line = document.createElement('div');
+  line.className = `terminal-line ${type}`;
+  line.textContent = text;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function clearTerminal() {
+  document.getElementById('terminal-output').innerHTML = '';
+  addLine('sys', 'Terminal cleared. Type "help" for available commands.');
+}
+
+function quickCmd(cmd) {
+  document.getElementById('terminal-input').value = cmd;
+  runTerminalCmd();
+}
+
+async function runTerminalCmd() {
+  const input = document.getElementById('terminal-input');
+  const cmd = input.value.trim();
+  if (!cmd) return;
+  cmdHistory.push(cmd);
+  historyIdx = -1;
+  input.value = '';
+  addLine('cmd', `$ ${cmd}`);
+
+  if (cmd === 'clear') { clearTerminal(); return; }
+  if (cmd === 'help') {
+    addLine('sys', '─── Available commands ─────────────────────────────────────────');
+    if (isSandbox) {
+      addLine('out', 'ls [-la]  pwd  echo <text>  cat <file>  head <file>  tail <file>');
+      addLine('out', 'git status  git log [--oneline]  git diff  git branch  git show');
+      addLine('out', 'npm list  npm outdated  node -v  npm -v  df -h  free -m');
+      addLine('out', 'ps  uptime  which  whoami  date  env  uname  hostname');
+      addLine('sys', '─── Blocked (upgrade to Enterprise for full access) ────────────');
+      addLine('err', 'rm  chmod  chown  curl  wget  ssh  sudo  npm install  kill  node <script>');
+    } else {
+      addLine('out', 'Full shell access — semua command tersedia (hindari rm -rf /)');
+      addLine('out', 'Quick: ls, cat, git, npm, df, free, ps, kill, node, curl, ...');
+    }
+    addLine('sys', '─────────────────────────────────────────────────────────────────');
+    return;
+  }
+
+  try {
+    const data = await API.post('/api/terminal/exec', { command: cmd, cwd: currentFilePath });
+    if (data.stdout) {
+      const lines = data.stdout.split('\n');
+      lines.forEach((line, i) => { if (i < lines.length - 1 || line) addLine('out', line); });
+    }
+    if (data.stderr) {
+      data.stderr.split('\n').filter(l => l.trim()).forEach(line => addLine('err', line));
+    }
+    if (data.exitCode !== 0 && data.exitCode !== null && data.exitCode !== undefined) {
+      addLine('err', `[Exit ${data.exitCode}]`);
+    }
+  } catch (err) {
+    addLine('err', `✗ ${err.message}`);
+  }
+}
+
+// ─── File Manager ────────────────────────────────────────
+async function loadFiles(filePath) {
+  currentFilePath = filePath;
+  setEl('current-path', filePath || '.');
+  document.getElementById('file-list').innerHTML = '<div class="empty-state"><div class="spinner"></div></div>';
+  document.getElementById('file-viewer').style.display = 'none';
+  document.getElementById('file-editor').style.display = 'none';
+  try {
+    const data = await API.get(`/api/terminal/files?path=${encodeURIComponent(filePath)}`);
+    if (data.type === 'file') { showFileContent(filePath, data.content); return; }
+    renderFiles(data.items || [], filePath);
+  } catch (err) {
+    document.getElementById('file-list').innerHTML = `<div class="empty-state" style="color:var(--error)">${err.message}</div>`;
+  }
+}
+
+function renderFiles(items, basePath) {
+  const el = document.getElementById('file-list');
+  if (!items.length) { el.innerHTML = '<div class="empty-state">Folder kosong</div>'; return; }
+  el.innerHTML = items.map(item => {
+    const icon = item.type === 'dir' ? '📁' : getFileIcon(item.name);
+    const size = item.type === 'file' ? `<span style="color:var(--text-3);margin-left:auto;font-size:0.75rem">${fmtBytes(item.size)}</span>` : '';
+    const mod = item.modified ? `<span style="color:var(--text-3);font-size:0.72rem;margin-left:6px">${new Date(item.modified).toLocaleDateString('id-ID')}</span>` : '';
+    return `<div class="file-item ${item.type}" onclick="${item.type==='dir'?`loadFiles('${item.path.replace(/'/g,"\\'")}')`:` viewFile('${item.path.replace(/'/g,"\\'")}')` }">
+      <span>${icon}</span><span style="flex:1">${item.name}</span>${mod}${size}
+    </div>`;
+  }).join('');
+}
+
+function getFileIcon(name) {
+  if (/\.(js|mjs|cjs)$/.test(name)) return '🟨';
+  if (/\.json$/.test(name)) return '📋';
+  if (/\.html$/.test(name)) return '🌐';
+  if (/\.css$/.test(name)) return '🎨';
+  if (/\.md$/.test(name)) return '📝';
+  if (/\.sql$/.test(name)) return '🗄️';
+  if (/\.(png|jpg|jpeg|gif|svg|webp)$/.test(name)) return '🖼️';
+  if (name.startsWith('.') || name.endsWith('.env')) return '🔧';
+  return '📄';
+}
+
+async function viewFile(filePath) {
+  try {
+    const data = await API.get(`/api/terminal/files?path=${encodeURIComponent(filePath)}`);
+    if (data.type === 'file') showFileContent(filePath, data.content);
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+function showFileContent(filePath, content) {
+  document.getElementById('file-viewer').style.display = 'block';
+  setEl('file-viewer-name', filePath);
+  setEl('file-viewer-content', content);
+  document.getElementById('file-editor').style.display = 'none';
+  const editBtn = document.getElementById('btn-edit-file');
+  if (editBtn) editBtn.style.display = canWriteFiles ? 'inline-flex' : 'none';
+  document.getElementById('file-viewer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function enableFileEdit() {
+  const content = document.getElementById('file-viewer-content').textContent;
+  document.getElementById('file-editor-content').value = content;
+  document.getElementById('file-editor').style.display = 'block';
+  document.getElementById('file-viewer-content').style.display = 'none';
+  document.getElementById('btn-edit-file').style.display = 'none';
+}
+
+function cancelEdit() {
+  document.getElementById('file-editor').style.display = 'none';
+  document.getElementById('file-viewer-content').style.display = 'block';
+  document.getElementById('btn-edit-file').style.display = canWriteFiles ? 'inline-flex' : 'none';
+}
+
+async function saveFile() {
+  const filePath = document.getElementById('file-viewer-name').textContent;
+  const content = document.getElementById('file-editor-content').value;
+  try {
+    await API.put('/api/terminal/files', { filePath, content });
+    toast('File berhasil disimpan!', 'success');
+    cancelEdit();
+    document.getElementById('file-viewer-content').textContent = content;
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+function copyFileContent() {
+  const content = document.getElementById('file-viewer-content').textContent;
+  copyText(content, 'Konten file');
+}
+
+function goUp() {
+  const parts = currentFilePath.split('/').filter(p => p && p !== '.');
+  if (!parts.length) return;
+  parts.pop();
+  loadFiles(parts.length ? parts.join('/') : '.');
+}
+
+function refreshFiles() { loadFiles(currentFilePath); }
+
+function setEl(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+function copyText(text, label) {
+  navigator.clipboard.writeText(text).then(() => toast(`${label} disalin!`, 'success')).catch(() => toast('Gagal copy', 'error'));
+}
+function logout() { Auth.clear(); window.location.href = '/login'; }
+function toggleMobileSidebar() {
+  document.querySelector('.sidebar')?.classList.toggle('mobile-open');
+  document.getElementById('sidebar-overlay')?.classList.toggle('active');
+}
+document.getElementById('sidebar-overlay')?.addEventListener('click', () => {
+  document.querySelector('.sidebar')?.classList.remove('mobile-open');
+  document.getElementById('sidebar-overlay')?.classList.remove('active');
+});
+document.querySelectorAll('.theme-toggle').forEach(b => b.addEventListener('click', () => Theme.toggle()));
+</script>
+</body>
+</html>

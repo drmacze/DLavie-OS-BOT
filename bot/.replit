@@ -1,0 +1,81 @@
+# .replit - DLavie OS WhatsApp Bot
+
+run = "npm start"
+
+hidden = ["node_modules", "auth_info_baileys", ".config"]
+modules = ["web", "nodejs-20"]
+
+[env]
+BOT_NUMBER = ""
+OWNER_NUMBER = ""
+BOT_NAME = "DLavie OS"
+
+[nix]
+channel = "stable-25_05"
+
+[gitHubImport]
+requiredFiles = [".replit", "replit.nix", "package.json"]
+
+[agent]
+expertMode = true
+stack = "BEST_EFFORT_FALLBACK"
+integrations = ["javascript_log_in_with_replit:2.0.0", "javascript_object_storage:2.0.0"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "DLavie WA Bot"
+
+[[workflows.workflow]]
+name = "DLavie WA Bot"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm start"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[ports]]
+localPort = 5000
+externalPort = 5000
+
+[[ports]]
+localPort = 8080
+externalPort = 80
+
+[userenv]
+
+[userenv.shared]
+WEB_PORT = "5000"
+API_PORT = "8080"
+API_HOST = "0.0.0.0"
+JWT_EXPIRY = "7d"
+DLAVIE_STARTUP_REPAIR = "true"
+DLAVIE_AI_AUTOFIX = "false"
+DLAVIE_AUTOFIX_INSTALL_MISSING = "false"
+DLAVIE_DEFAULT_FREE_TOKENS = "5000"
+DLAVIE_MAX_BOTS_PER_USER = "5"
+DLAVIE_HEARTBEAT_INTERVAL = "30"
+DLAVIE_AUTO_RECONNECT = "true"
+DLAVIE_STEALTH_MODE = "false"
+DLAVIE_EMERGENCY_LOCKDOWN = "false"
+DLAVIE_MAX_LOGIN_ATTEMPTS = "5"
+DLAVIE_LOCKOUT_DURATION = "3600"
+DLAVIE_HEALTH_CHECK_INTERVAL = "60"
+BOT_NAME = "DLavie OS"
+BOT_NUMBER = "6285725483343"
+OWNER_NUMBER = "62882007437216"
+NODE_ENV = "production"
+JWT_SECRET = "8f700854b96df848eae8666198019b294226789e8e362eb794d96c3ef8096549e8b5a0995dd7be9aac0633d07722b45a"
+
+[deployment]
+deploymentTarget = "cloudrun"

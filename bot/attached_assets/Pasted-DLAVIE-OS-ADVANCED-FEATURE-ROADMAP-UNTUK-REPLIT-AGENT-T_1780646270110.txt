@@ -1,0 +1,539 @@
+DLAVIE OS — ADVANCED FEATURE ROADMAP UNTUK REPLIT AGENT
+
+TUJUAN:
+Kembangkan DLavie OS menjadi WhatsApp Bot Operating System, bukan sekadar bot WhatsApp biasa. Sistem harus mendukung multi-bot control, customization, AI operator, plugin marketplace, recovery engine, payment, dashboard panel, dan automation.
+
+ATURAN WAJIB:
+1. Jangan membuat ulang project dari nol.
+2. Jangan membuat command/plugin duplikat.
+3. Perbaiki file existing jika fitur sudah ada.
+4. Jangan hapus session WhatsApp/auth tanpa konfirmasi.
+5. Jangan commit .env/API key/session/logs.
+6. Buat backup/checkpoint sebelum perubahan besar.
+7. Jalankan safety check setelah patch.
+8. Pastikan fitur tetap kompatibel dengan bot WhatsApp + web panel.
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE MULTI-BOT HIVE
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Mengelola banyak bot WhatsApp dari satu panel pusat.
+
+FITUR:
+- List semua bot terhubung.
+- Group bot berdasarkan user/plan/project.
+- Bulk command ke banyak bot.
+- Bulk update plugin.
+- Bulk restart/reload.
+- Status online/offline realtime.
+- Health score per bot.
+
+CONTOH KERJA:
+Owner membuka panel DLavie → pilih 10 bot → klik “Update Plugin Menu” → sistem mengirim update ke semua bot → panel menampilkan hasil sukses/gagal per bot.
+
+COMMAND:
+!hive list
+!hive group create StoreBots
+!hive update all
+!hive restart bot_123
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE AI OPERATOR
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+AI internal yang memahami sistem bot, log, plugin, config, payment, panel, dan error.
+
+FITUR:
+- Analisis error.
+- Analisis performa.
+- Rekomendasi fix.
+- Eksekusi fix dengan konfirmasi owner.
+- Membaca log dan status bot.
+- Menjelaskan penyebab masalah.
+
+CONTOH KERJA:
+Owner: “kenapa bot lambat?”
+AI Operator membaca CPU, RAM, queue, error log → menjawab:
+“Plugin monitor terlalu berat, latency naik 320ms, saya sarankan disable sementara.”
+Owner ketik “fix” → sistem backup → disable plugin → reload.
+
+COMMAND:
+!operator ask kenapa bot lambat
+!operator diagnose
+!operator fix confirm
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE DIGITAL TWIN
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Setiap bot memiliki “salinan digital” berisi konfigurasi, plugin, permission, menu, theme, history, dan health state.
+
+FITUR:
+- Snapshot config bot.
+- Restore bot dari twin.
+- Clone bot dari twin.
+- Compare sebelum/sesudah update.
+- Simpan history perubahan.
+
+CONTOH KERJA:
+Bot rusak setelah update. Owner klik “Restore Digital Twin” → sistem mengembalikan setting, plugin, menu, dan permission ke kondisi stabil terakhir.
+
+COMMAND:
+!twin snapshot bot_123
+!twin restore bot_123
+!twin compare bot_123 latest
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE BLUEPRINT MARKETPLACE
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Template siap pakai untuk membuat tipe bot tertentu dalam 1 klik.
+
+JENIS BLUEPRINT:
+- Store Bot
+- Customer Service Bot
+- AI Assistant Bot
+- Community Bot
+- School Bot
+- Gaming Bot
+- Agency Bot
+- Support Bot
+
+ISI BLUEPRINT:
+- Menu
+- Plugin
+- Permission
+- Theme
+- AI persona
+- Auto reply
+- Welcome message
+- Security rules
+
+CONTOH KERJA:
+User pilih “Store Bot Blueprint” → sistem otomatis mengaktifkan katalog, order, payment, auto reply, admin menu, dan theme toko.
+
+COMMAND:
+!blueprint list
+!blueprint apply store bot_123
+!blueprint export bot_123
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE AUTONOMOUS RECOVERY ENGINE
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Bot otomatis mendeteksi error, memperbaiki masalah aman, restart jika perlu, dan memberi laporan ke owner.
+
+FITUR:
+- Detect crash.
+- Detect plugin error.
+- Auto backup.
+- Deterministic fix.
+- AI fallback jika diperlukan.
+- Auto restart.
+- Verify setelah restart.
+- Rollback jika gagal.
+
+CONTOH KERJA:
+Plugin menu error → sistem membaca error → mencocokkan fingerprint → memperbaiki file/config → reload command → tes !menu → kirim laporan ke owner.
+
+COMMAND:
+!recovery status
+!recovery scan
+!recovery apply
+!recovery rollback
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE SAFE UPDATE ENGINE
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Mengganti sistem update biasa menjadi update aman dengan backup, validasi, test, dan rollback.
+
+FLOW:
+1. Backup ZIP.
+2. Git pull.
+3. Install dependency.
+4. Run safety check.
+5. Test command penting.
+6. Reload bot.
+7. Jika gagal, rollback.
+
+CONTOH KERJA:
+Owner ketik !update safe → bot backup project → pull GitHub → npm install → npm run safety:check → reload → jika error, balik ke backup.
+
+COMMAND:
+!update safe
+!update check
+!update rollback
+!update changelog
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE SANDBOX LAB
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Plugin baru diuji dulu di sandbox sebelum aktif di bot utama.
+
+TEST SANDBOX:
+- Syntax test.
+- Dependency test.
+- Permission test.
+- Conflict test.
+- Memory leak test.
+- Command collision test.
+- Security scan.
+
+CONTOH KERJA:
+User install plugin baru → plugin masuk sandbox → sistem test 30 detik → jika aman, baru muncul tombol “Activate Plugin”.
+
+COMMAND:
+!sandbox test PLG-MENU
+!sandbox activate PLG-MENU
+!sandbox reject PLG-MENU
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE COMMAND GRAPH
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Sistem mempelajari hubungan dan penggunaan command.
+
+FITUR:
+- Command paling sering dipakai.
+- Command yang sering error.
+- Command rekomendasi.
+- Command shortcut otomatis.
+- Command dependency map.
+
+CONTOH KERJA:
+User sering memakai !status lalu !errorlog. Sistem menyarankan shortcut:
+“Tambahkan Quick Action: Status + Errorlog?”
+
+COMMAND:
+!graph stats
+!graph popular
+!graph errors
+!graph recommend
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE SELF-EVOLVING MENU
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Menu bot otomatis berubah sesuai role, kebiasaan user, command populer, dan kondisi bot.
+
+FITUR:
+- Role-based menu.
+- Recent command.
+- Favorite command.
+- Smart recommendation.
+- Error-aware menu.
+- Contextual menu.
+
+CONTOH KERJA:
+Jika ada error plugin, menu owner otomatis menampilkan:
+1. Errorlog
+2. Recovery
+3. Reload
+4. Safe Update
+
+COMMAND:
+!menu smart
+!menu recent
+!menu favorite add status
+!menu reset
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE HEALTH SCORE V2
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Memberikan skor kesehatan untuk bot, plugin, AI, security, update, dan database.
+
+SKOR:
+- Bot Health Score
+- Plugin Health Score
+- AI Health Score
+- Security Score
+- Update Score
+- Database Score
+- Payment Score
+- Queue Score
+
+CONTOH KERJA:
+Panel menampilkan:
+Bot Health: 94/100
+Plugin: 88/100
+Security: 97/100
+Saran: “Plugin broadcast lambat, optimalkan queue.”
+
+COMMAND:
+!health
+!health plugin
+!health security
+!health report
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE KNOWLEDGE ENGINE
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Memori sistem untuk menyimpan preferensi, riwayat error, config, keputusan owner, dan pola penggunaan.
+
+FITUR:
+- Memory per bot.
+- Memory per owner.
+- Error memory.
+- Config history.
+- Decision history.
+- AI context memory.
+
+CONTOH KERJA:
+Bot pernah error karena alias duplikat. Saat error serupa muncul lagi, sistem langsung mengenali dan memberi fix otomatis.
+
+COMMAND:
+!memory search menu error
+!memory save note
+!memory clear bot_123
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE POLICY ENGINE
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Rule builder no-code untuk mengatur otomatisasi dan keamanan.
+
+CONTOH RULE:
+- Jika CPU > 90%, restart worker.
+- Jika plugin error > 5x, disable plugin.
+- Jika spam terdeteksi, mute user.
+- Jika payment approved, tambah token.
+- Jika bot offline 3 menit, restart.
+
+CONTOH KERJA:
+Owner buat rule:
+“When bot offline > 3 minutes → restart bot → notify owner.”
+
+COMMAND:
+!policy create
+!policy list
+!policy enable rule_1
+!policy disable rule_1
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE AI SECURITY CENTER
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Pusat keamanan berbasis AI untuk menganalisis plugin, file, command, permission, dan API key leak.
+
+FITUR:
+- Scan plugin berbahaya.
+- Scan command risky.
+- Detect API key leak.
+- Detect session leak.
+- Permission audit.
+- Security report.
+
+CONTOH KERJA:
+Sebelum plugin aktif, AI Security membaca kode plugin dan memberi skor risiko:
+“High risk: plugin mencoba akses child_process.”
+
+COMMAND:
+!security scan
+!security plugin PLG-ID
+!security report
+!security lockdown
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE COMMAND MARKETPLACE
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Marketplace command individual, bukan hanya plugin besar.
+
+FITUR:
+- Install command.
+- Update command.
+- Rating command.
+- Health score command.
+- Version command.
+- Premium command.
+- Command preview.
+
+CONTOH KERJA:
+User membuka marketplace → cari “invoice” → install command invoice → command muncul di menu bot.
+
+COMMAND:
+!market search invoice
+!market install invoice
+!market update all
+!market remove invoice
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE BOT APP STORE
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Marketplace lengkap untuk plugin, theme, blueprint, AI persona, menu template, dan widget.
+
+KATEGORI:
+- Plugin
+- Command
+- Theme
+- Blueprint
+- AI Persona
+- Menu Template
+- Dashboard Widget
+- Automation Rule
+
+CONTOH KERJA:
+User install “Premium Store Theme” → menu, footer, header, dan dashboard berubah otomatis.
+
+COMMAND:
+!store
+!store install theme premium-store
+!store install persona cs-pro
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE MISSION CONTROL
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Dashboard pusat untuk memantau semua bot, user, plugin, payment, error, update, dan revenue.
+
+WIDGET:
+- Total bot.
+- Bot online/offline.
+- Error live.
+- Revenue.
+- Payment pending.
+- Plugin health.
+- Queue status.
+- CPU/RAM.
+- Active users.
+
+CONTOH KERJA:
+Owner membuka Mission Control → melihat 100 bot, 3 error, 2 payment pending → klik “Fix All Safe”.
+
+COMMAND:
+!mission
+!mission report
+!mission fixall
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE EVENT BUS
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Sistem event internal agar semua modul saling terhubung.
+
+EVENT:
+- bot.connected
+- bot.disconnected
+- plugin.error
+- payment.approved
+- update.failed
+- recovery.success
+- user.registered
+- security.alert
+
+CONTOH KERJA:
+Payment approved → Event Bus mengirim event ke Token Engine, Notification Center, Audit Log, dan Dashboard.
+
+COMMAND:
+!events recent
+!events listen plugin.error
+!events replay event_id
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE AI WORKFLOW BUILDER
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Automation builder seperti n8n/Zapier khusus bot WhatsApp.
+
+CONTOH WORKFLOW:
+User register
+→ Kirim welcome
+→ Beri 5000 token
+→ Buat trial bot
+→ Kirim panduan
+→ Catat audit log
+
+FITUR:
+- Drag & drop.
+- Trigger.
+- Condition.
+- Action.
+- Delay.
+- Webhook.
+- AI action.
+
+COMMAND:
+!workflow list
+!workflow run onboarding
+!workflow enable onboarding
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE OBSERVABILITY PLATFORM
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Monitoring enterprise untuk logs, metrics, traces, events, dan errors.
+
+FITUR:
+- Live logs.
+- Metrics CPU/RAM.
+- Command latency.
+- Plugin latency.
+- Error tracing.
+- API performance.
+- Queue performance.
+
+CONTOH KERJA:
+Saat !menu lambat, sistem menunjukkan trace:
+WA message received → commandLoader → menu plugin → sendMessage = 1.8s.
+
+COMMAND:
+!observe status
+!observe trace menu
+!observe logs
+!observe latency
+
+━━━━━━━━━━━━━━━━━━━━
+1. DLAVIE AUTONOMOUS ENGINE
+━━━━━━━━━━━━━━━━━━━━
+
+FUNGSI:
+Mode autopilot untuk menjaga bot tetap online, aman, cepat, dan stabil.
+
+FITUR:
+- Monitor otomatis.
+- Diagnose otomatis.
+- Fix otomatis untuk masalah aman.
+- Notify owner.
+- Rollback otomatis.
+- Security lock otomatis.
+- Performance tuning otomatis.
+
+CONTOH KERJA:
+Owner aktifkan autopilot:
+!autopilot on
+
+Setelah itu sistem menjaga bot:
+crash → repair → restart
+plugin error → disable sementara
+CPU tinggi → optimize queue
+payment masuk → notify owner
+
+COMMAND:
+!autopilot on
+!autopilot off
+!autopilot status
+!autopilot report

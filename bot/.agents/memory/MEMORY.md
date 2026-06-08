@@ -1,0 +1,15 @@
+- [DLavie OS v2.0 architecture](dlavie-os-v2.md) — Multi-bot WA platform with token, RBAC, monitoring, plugin, auto-fix. Engine never crashes.
+- [Supabase integration pattern](supabase-pattern.md) — Use local mode fallback if Supabase unconfigured. RLS policies for all tables.
+- [AI fallback order](ai-fallback-order.md) — Default order: grok,gemini,chatgpt. Owner confirms before applying fix.
+- [Token engine model](token-engine.md) — Free 5K tokens, rate limit 100/10min, feature-based costs, referral bonus.
+- [Website integration config](website-integration.md) — REST API port 8080, WebSocket /ws, Supabase realtime, JWT auth.
+- [WhatsApp Baileys reconnect](baileys-reconnect.md) — 5s reconnect delay, 428/405 = session conflict with another device.
+- [WA Business JID device suffix fix](wa-jid-fix.md) — WA Business multi-device sends JID with :0 suffix; must strip before digitsOnly. Shared utility: src/utils/ownerUtils.js.
+- [Owner detection architecture](owner-detection.md) — All owner checks must use ownerUtils.js isOwnerMsg/isOwnerById. Never use digitsOnly(JID) directly. Auto-owner emails in AUTO_OWNER_EMAILS list.
+- [Database schema initialization](db-schema-init.md) — Missing tables cause silent failures: all dlavie_* tables must be created before app runs. `config/replit-schema.sql` is the canonical schema.
+- [Bot customization sync](bot-customization-sync.md) — `getBotCustomization()` singleton caches config in-memory. Must call `_reloadIfStale()` before every read to pick up changes from web panel. File mtime check is the mechanism.
+- [Terminal tier system](terminal-tier.md) — FREE=blocked, Starter/Pro=sandbox shell, Enterprise/Owner=full shell. File manager: Pro+=read-only, Owner=read+write. All in web/server.js PLAN_TIER map.
+- [Object Storage integration](object-storage.md) — Replit bucket via @google-cloud/storage + sidecar at 127.0.0.1:1106. Wrapper: src/core/objectStorage.js. Routes: /api/storage/*. Serve files at /objects/:path.
+- [Premium dashboard pages](premium-pages.md) — /files (upload manager), /logs (bot activity), /analytics (system stats). All gated by plan tier. Sidebar now has "Premium" section in all views.
+- [Relay ownership bug fix](relay-ownership-fix.md) — botEntry uses `ownerPhone`+`ownerWebUserId`, NOT `ownerUserId`. relay.js must check all three fields via isBotOwner() helper.
+- [Menu system v3.0](menu-v3.md) — 20 menu types in commands/menu.js. Recent/Favorite stored in tmp/menu_history.json + tmp/menu_favorites.json keyed by userId. Theme header + personality greeting are separate functions.

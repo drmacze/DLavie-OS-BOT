@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File Manager — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+.file-card { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); transition:all 0.15s; cursor:default; }
+.file-card:hover { background:rgba(99,102,241,0.08); border-color:rgba(99,102,241,0.2); }
+.file-icon { width:40px; height:40px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex-shrink:0; }
+.file-info { flex:1; min-width:0; }
+.file-name { font-weight:600; font-size:0.875rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.file-meta { font-size:0.75rem; color:var(--text-2); margin-top:2px; }
+.upload-zone { border:2px dashed rgba(99,102,241,0.3); border-radius:12px; padding:40px; text-align:center; cursor:pointer; transition:all 0.2s; }
+.upload-zone:hover, .upload-zone.drag-over { border-color:rgba(99,102,241,0.7); background:rgba(99,102,241,0.05); }
+.upload-zone input[type=file] { display:none; }
+.plan-feature { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+.plan-feature:last-child { border-bottom:none; }
+.plan-feature-icon { width:32px; height:32px; border-radius:8px; background:rgba(99,102,241,0.1); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.storage-bar { height:6px; border-radius:3px; background:rgba(255,255,255,0.08); overflow:hidden; margin-top:8px; }
+.storage-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--primary),var(--accent)); transition:width 0.5s ease; }
+</style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<nav class="navbar">
+  <button class="btn btn-ghost btn-icon mobile-menu-btn" onclick="toggleMobileSidebar()" style="flex-shrink:0">☰</button>
+  <a href="/" class="navbar-brand"><div class="brand-icon">⚡</div><span>DLavie<span class="gradient-text"> OS</span></span></a>
+  <div class="navbar-actions">
+    <button class="theme-toggle" title="Toggle theme">☀️</button>
+    <button class="btn btn-ghost btn-sm" onclick="Auth.clear();window.location.href='/login'" style="color:var(--text-3)">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">Menu Utama</div>
+    <a href="/dashboard" class="sidebar-item"><span class="icon">📊</span>Dashboard</a>
+    <a href="/bots"      class="sidebar-item"><span class="icon">🤖</span>Bot Manager</a>
+    <a href="/tokens"    class="sidebar-item"><span class="icon">🪙</span>Token & Topup</a>
+    <a href="/terminal"  class="sidebar-item"><span class="icon">💻</span>Terminal</a>
+    <div class="sidebar-section">Premium</div>
+    <a href="/files"     class="sidebar-item active"><span class="icon">📁</span>File Manager</a>
+    <a href="/logs"      class="sidebar-item"><span class="icon">📋</span>Bot Logs</a>
+    <a href="/analytics" class="sidebar-item"><span class="icon">📈</span>Analytics</a>
+    <div class="sidebar-section">Pengaturan</div>
+    <a href="/customize" class="sidebar-item"><span class="icon">🎨</span>Customize Bot</a>
+    <a href="/settings"  class="sidebar-item"><span class="icon">⚙️</span>Settings</a>
+    <a href="/pricing"   class="sidebar-item"><span class="icon">💳</span>Upgrade Plan</a>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="window.location.href='/settings'">
+        <div class="sidebar-avatar" id="sidebar-avatar">U</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">User</div>
+          <div class="sidebar-user-plan" id="sidebar-user-plan">FREE</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="mb-24" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h2>📁 File Manager</h2>
+        <p style="margin-top:4px;font-size:0.875rem;color:var(--text-2)">Upload & kelola file bot Anda via Replit Object Storage</p>
+      </div>
+      <button class="btn btn-primary" onclick="document.getElementById('upload-trigger').click()" id="btn-upload" style="display:none">
+        + Upload File
+      </button>
+    </div>
+
+    <!-- FREE upgrade prompt -->
+    <div id="panel-free" class="card" style="display:none;padding:40px;text-align:center">
+      <div style="font-size:3rem;margin-bottom:16px">☁️</div>
+      <h3 style="margin-bottom:8px">Cloud File Storage</h3>
+      <p style="color:var(--text-2);font-size:0.9rem;margin-bottom:24px;max-width:400px;margin-left:auto;margin-right:auto">Upload plugin, media, dan konfigurasi bot ke cloud. Tersedia untuk plan <strong>Starter</strong>+.</p>
+      <a href="/pricing" class="btn btn-primary">⬆ Upgrade Sekarang</a>
+      <div style="margin-top:28px">
+        <div class="plan-feature"><div class="plan-feature-icon">🔵</div><div><div style="font-weight:600;font-size:0.85rem">Starter — 100MB storage</div><div style="font-size:0.78rem;color:var(--text-2)">Upload file plugin & config</div></div></div>
+        <div class="plan-feature"><div class="plan-feature-icon">💜</div><div><div style="font-weight:600;font-size:0.85rem">Pro — 1GB storage</div><div style="font-size:0.78rem;color:var(--text-2)">Upload media, thumbnail, audio</div></div></div>
+        <div class="plan-feature"><div class="plan-feature-icon">🏆</div><div><div style="font-weight:600;font-size:0.85rem">Enterprise — Unlimited</div><div style="font-size:0.78rem;color:var(--text-2)">Full storage + CDN delivery</div></div></div>
+      </div>
+    </div>
+
+    <!-- No storage configured -->
+    <div id="panel-no-storage" class="card" style="display:none;padding:40px;text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:14px">🗄️</div>
+      <h4 style="margin-bottom:8px">Object Storage Aktif</h4>
+      <p style="color:var(--text-2);font-size:0.85rem;margin-bottom:16px">Replit Object Storage sudah dikonfigurasi dan siap digunakan.</p>
+      <div class="badge badge-success">✓ Bucket Terhubung</div>
+    </div>
+
+    <!-- Main file panel -->
+    <div id="panel-main" style="display:none">
+
+      <!-- Storage info bar -->
+      <div class="card mb-24" id="storage-info-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-weight:600;margin-bottom:4px">☁️ Replit Object Storage</div>
+            <div style="font-size:0.82rem;color:var(--text-2)" id="storage-stat-text">Memuat...</div>
+          </div>
+          <div id="storage-badge" class="badge badge-success" style="display:none">✓ Terhubung</div>
+        </div>
+        <div class="storage-bar" style="margin-top:12px">
+          <div class="storage-bar-fill" id="storage-bar-fill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Upload zone -->
+      <div class="card mb-24">
+        <h4 style="margin-bottom:14px">Upload File Baru</h4>
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('upload-trigger').click()">
+          <input type="file" id="upload-trigger" multiple onchange="handleFileSelect(event)">
+          <div style="font-size:2.5rem;margin-bottom:10px">📤</div>
+          <div style="font-weight:600;margin-bottom:6px">Klik atau drag & drop file di sini</div>
+          <div style="font-size:0.82rem;color:var(--text-2)">Maks 50MB per file · Plugin (.js), Config (.json), Media, Dokumen</div>
+        </div>
+
+        <!-- Upload progress -->
+        <div id="upload-progress-list" style="margin-top:16px"></div>
+      </div>
+
+      <!-- File list -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <h4>File Anda</h4>
+          <button class="btn btn-ghost btn-sm" onclick="loadFiles()">🔄 Refresh</button>
+        </div>
+        <div id="file-list">
+          <div class="empty-state"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+let storageAvailable = false;
+let userPlan = 'free';
+let userRole = 'user';
+
+const PLAN_TIER = { free: 0, starter: 1, pro: 2, enterprise: 3 };
+const MAX_SIZES = { starter: 100, pro: 1024, enterprise: 99999 };
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.guardDashboard()) return;
+  const user = Auth.user;
+  userPlan = user?.plan || 'free';
+  userRole = user?.role || 'user';
+
+  document.getElementById('sidebar-user-name').textContent = user?.name || 'User';
+  document.getElementById('sidebar-user-plan').textContent = userPlan.toUpperCase();
+  const av = document.getElementById('sidebar-avatar');
+  if (av && user?.name) av.textContent = user.name[0].toUpperCase();
+  Theme.init();
+
+  const tier = PLAN_TIER[userPlan] ?? 0;
+  const isOwner = userRole === 'owner';
+
+  if (!isOwner && tier === 0) {
+    document.getElementById('panel-free').style.display = 'block';
+    return;
+  }
+
+  // Check storage availability
+  let storStatus;
+  try {
+    storStatus = await API.get('/api/storage/status');
+    storageAvailable = storStatus.available;
+  } catch (_) {
+    storageAvailable = false;
+  }
+
+  if (!storageAvailable) {
+    document.getElementById('panel-no-storage').style.display = 'block';
+    document.getElementById('panel-main').style.display = 'block';
+    document.getElementById('storage-info-card').style.display = 'none';
+    document.getElementById('upload-zone').style.opacity = '0.5';
+    document.getElementById('upload-zone').style.pointerEvents = 'none';
+    document.querySelector('.card:has(#upload-zone) h4').textContent = 'Upload File (Object Storage tidak tersedia)';
+    renderLocalInfo();
+    return;
+  }
+
+  document.getElementById('panel-main').style.display = 'block';
+  document.getElementById('btn-upload').style.display = 'inline-flex';
+  document.getElementById('storage-badge').style.display = 'inline-flex';
+
+  const maxMB = isOwner ? 99999 : (MAX_SIZES[userPlan] || 100);
+  document.getElementById('storage-stat-text').textContent = `Plan ${userPlan.toUpperCase()} · Maks ${maxMB < 9999 ? maxMB + 'MB' : 'Unlimited'} storage`;
+
+  setupDragDrop();
+  loadFiles();
+});
+
+function renderLocalInfo() {
+  document.getElementById('file-list').innerHTML = `
+    <div style="text-align:center;padding:24px;color:var(--text-2)">
+      <div style="font-size:1.5rem;margin-bottom:8px">⚙️</div>
+      <div style="font-size:0.85rem">Object Storage perlu dikonfigurasi. Bucket ID: <code style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">${'Terkonfigurasi'}</code></div>
+    </div>`;
+}
+
+async function loadFiles() {
+  const el = document.getElementById('file-list');
+  el.innerHTML = '<div class="empty-state"><div class="spinner"></div></div>';
+  try {
+    const data = await API.get('/api/storage/files');
+    if (!data.files || !data.files.length) {
+      el.innerHTML = '<div class="empty-state" style="padding:32px"><div style="font-size:2rem;margin-bottom:8px">📭</div><div>Belum ada file yang diupload</div><div style="font-size:0.78rem;color:var(--text-2);margin-top:4px">Upload file pertama Anda di atas</div></div>';
+      document.getElementById('storage-bar-fill').style.width = '0%';
+      return;
+    }
+    const totalSize = data.files.reduce((s, f) => s + (f.size || 0), 0);
+    const isOwner = userRole === 'owner';
+    const maxBytes = isOwner ? Infinity : (MAX_SIZES[userPlan] || 100) * 1024 * 1024;
+    const pct = maxBytes === Infinity ? 5 : Math.min(99, (totalSize / maxBytes) * 100);
+    document.getElementById('storage-bar-fill').style.width = pct + '%';
+    document.getElementById('storage-stat-text').textContent = `${fmtBytes(totalSize)} digunakan · ${data.files.length} file`;
+
+    el.innerHTML = data.files.map(f => `
+      <div class="file-card mb-12" id="fc-${f.name}">
+        <div class="file-icon">${getIcon(f.contentType, f.name)}</div>
+        <div class="file-info">
+          <div class="file-name">${f.name}</div>
+          <div class="file-meta">${fmtBytes(f.size)} · ${f.contentType} · ${f.createdAt ? new Date(f.createdAt).toLocaleDateString('id-ID') : ''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <a href="${f.path}" target="_blank" class="btn btn-ghost btn-sm btn-icon" title="Download/Open">⬇️</a>
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="copyText('${window.location.origin}${f.path}','URL')" title="Copy URL">🔗</button>
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="deleteFile('${f.path}','${f.name}')" title="Hapus" style="color:var(--error)">🗑</button>
+        </div>
+      </div>`).join('');
+  } catch (err) {
+    el.innerHTML = `<div class="empty-state" style="color:var(--error)">${err.message}</div>`;
+  }
+}
+
+function getIcon(ct, name) {
+  if (!ct && name) ct = name.endsWith('.js') ? 'application/javascript' : '';
+  if (!ct) return '📄';
+  if (ct.startsWith('image/')) return '🖼️';
+  if (ct.includes('javascript') || name?.endsWith('.js')) return '🟨';
+  if (ct.includes('json')) return '📋';
+  if (ct.startsWith('audio/')) return '🎵';
+  if (ct.startsWith('video/')) return '🎬';
+  if (ct.includes('pdf')) return '📕';
+  if (ct.includes('zip') || ct.includes('compressed')) return '🗜️';
+  return '📄';
+}
+
+// Upload handlers
+function handleFileSelect(event) {
+  const files = Array.from(event.target.files || []);
+  if (!files.length) return;
+  files.forEach(uploadFile);
+  event.target.value = '';
+}
+
+function setupDragDrop() {
+  const zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const files = Array.from(e.dataTransfer.files || []);
+    files.forEach(uploadFile);
+  });
+}
+
+async function uploadFile(file) {
+  const MAX_BYTES = 50 * 1024 * 1024;
+  if (file.size > MAX_BYTES) { toast(`${file.name}: File terlalu besar (maks 50MB)`, 'error'); return; }
+
+  const id = 'up_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+  const progressEl = document.createElement('div');
+  progressEl.id = id;
+  progressEl.style.cssText = 'background:rgba(255,255,255,0.04);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:0.82rem;';
+  progressEl.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <span style="font-weight:500">${file.name}</span>
+      <span id="${id}-status" style="color:var(--text-2)">⏳ Mempersiapkan...</span>
+    </div>
+    <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden">
+      <div id="${id}-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:2px;transition:width 0.3s ease"></div>
+    </div>`;
+  document.getElementById('upload-progress-list').appendChild(progressEl);
+
+  const setStatus = (txt, color='var(--text-2)') => { const el = document.getElementById(id+'-status'); if (el) { el.textContent = txt; el.style.color = color; } };
+  const setBar = (pct) => { const el = document.getElementById(id+'-bar'); if (el) el.style.width = pct + '%'; };
+
+  try {
+    setStatus('🔑 Meminta URL...'); setBar(10);
+    const { uploadUrl, objectPath } = await API.post('/api/storage/upload-url', {
+      name: file.name, contentType: file.type || 'application/octet-stream', size: file.size,
+    });
+
+    setStatus('📤 Mengupload...'); setBar(30);
+
+    const uploadRes = await fetch(uploadUrl, {
+      method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    });
+    if (!uploadRes.ok) throw new Error('Upload gagal: ' + uploadRes.status);
+
+    setBar(100);
+    setStatus('✅ Selesai!', 'var(--success)');
+    setTimeout(() => { progressEl.remove(); loadFiles(); }, 2000);
+    toast(`${file.name} berhasil diupload!`, 'success');
+  } catch (err) {
+    setStatus('❌ ' + err.message, 'var(--error)');
+    setTimeout(() => progressEl.remove(), 5000);
+  }
+}
+
+async function deleteFile(objectPath, name) {
+  if (!confirm(`Hapus file "${name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+  try {
+    await API.post('/api/storage/files', {}); // actually delete:
+    await API.request('DELETE', '/api/storage/files', { objectPath });
+    toast(`${name} dihapus.`, 'success');
+    const fc = document.getElementById('fc-' + name);
+    if (fc) fc.remove();
+    loadFiles();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+function fmtBytes(b) {
+  if (!b) return '0B';
+  if (b < 1024) return b + 'B';
+  if (b < 1048576) return (b/1024).toFixed(1) + 'KB';
+  if (b < 1073741824) return (b/1048576).toFixed(1) + 'MB';
+  return (b/1073741824).toFixed(1) + 'GB';
+}
+function copyText(text, label) {
+  navigator.clipboard.writeText(text).then(() => toast(`${label} disalin!`, 'success')).catch(() => toast('Gagal copy', 'error'));
+}
+function toggleMobileSidebar() {
+  document.querySelector('.sidebar')?.classList.toggle('mobile-open');
+  document.getElementById('sidebar-overlay')?.classList.toggle('active');
+}
+document.getElementById('sidebar-overlay')?.addEventListener('click', () => {
+  document.querySelector('.sidebar')?.classList.remove('mobile-open');
+  document.getElementById('sidebar-overlay')?.classList.remove('active');
+});
+document.querySelectorAll('.theme-toggle').forEach(b => b.addEventListener('click', () => Theme.toggle()));
+</script>
+</body>
+</html>

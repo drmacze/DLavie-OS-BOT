@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <button class="btn btn-ghost btn-icon mobile-menu-btn" onclick="toggleMobileSidebar()" title="Menu" style="flex-shrink:0">☰</button>
+  <a href="/" class="navbar-brand">
+    <div class="brand-icon">⚡</div>
+    <span>DLavie<span class="gradient-text"> OS</span></span>
+  </a>
+  <div class="navbar-actions">
+    <span id="user-name" style="color:var(--text-3);font-size:0.82rem;display:none" class="mobile-hide"></span>
+    <span id="user-plan-badge" class="badge badge-primary" style="display:none"></span>
+    <button class="theme-toggle" title="Toggle theme">☀️</button>
+    <button class="btn btn-ghost btn-sm" onclick="logout()" style="color:var(--text-3)">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section" style="margin-top:0">Menu Utama</div>
+    <a href="/dashboard" class="sidebar-item active" data-page="dashboard"><span class="icon">📊</span>Dashboard</a>
+    <a href="/bots"      class="sidebar-item" data-page="bots"><span class="icon">🤖</span>Bot Manager</a>
+    <a href="/tokens"    class="sidebar-item" data-page="tokens"><span class="icon">🪙</span>Token & Topup</a>
+    <a href="/terminal"  class="sidebar-item" data-page="terminal"><span class="icon">💻</span>Terminal</a>
+    <div class="sidebar-section">Premium</div>
+    <a href="/files"     class="sidebar-item" data-page="files"><span class="icon">📁</span>File Manager</a>
+    <a href="/logs"      class="sidebar-item" data-page="logs"><span class="icon">📋</span>Bot Logs</a>
+    <a href="/analytics" class="sidebar-item" data-page="analytics"><span class="icon">📈</span>Analytics</a>
+    <div class="sidebar-section">Konfigurasi</div>
+    <a href="/customize" class="sidebar-item" data-page="customize"><span class="icon">🎨</span>Customize Bot</a>
+    <a href="/settings"  class="sidebar-item" data-page="settings"><span class="icon">⚙️</span>Settings</a>
+    <a href="/pricing"   class="sidebar-item" data-page="pricing"><span class="icon">💳</span>Upgrade Plan</a>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="window.location.href='/settings'">
+        <div class="sidebar-avatar" id="sidebar-avatar">U</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">User</div>
+          <div class="sidebar-user-plan" id="sidebar-user-plan">FREE</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content page-enter">
+    <div class="flex items-center justify-between mb-24" style="flex-wrap:wrap;gap:12px">
+      <div>
+        <h2 style="letter-spacing:-0.03em">Dashboard</h2>
+        <p style="margin-top:3px;font-size:0.845rem">Selamat datang di DLavie OS Control Panel</p>
+      </div>
+      <button class="btn btn-primary" id="gen-code-btn" onclick="generateBotCode()">
+        🔑 Get Bot Code
+      </button>
+    </div>
+
+    <!-- BOT CODE -->
+    <div id="code-section" style="display:none;margin-bottom:24px">
+      <div class="code-display">
+        <div style="font-size:0.78rem;color:var(--text-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700">Kode Login Bot</div>
+        <div class="code-value" id="bot-code-value" onclick="copyText(this.textContent,'Kode')" style="cursor:pointer" title="Klik untuk copy">XXXXXXXX</div>
+        <div class="code-timer">Berlaku: <span id="code-timer" style="font-weight:700;color:var(--warning)">10:00</span> &nbsp;• klik kode untuk copy</div>
+        <div class="code-instruction mt-14">
+          <strong>Cara login bot:</strong>
+          <ol>
+            <li>Cari kontak <strong>DLavie OS Bot</strong> di WhatsApp</li>
+            <li>Kirim: <code>!login <span id="code-hint">KODE</span></code></li>
+            <li>Kemudian hubungkan bot: <code>!connect generate</code></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="grid-4 mb-24" style="gap:14px">
+      <div class="stat-card">
+        <div class="icon">🪙</div>
+        <div class="value" id="stat-tokens">—</div>
+        <div class="label">Token Saldo</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">🤖</div>
+        <div class="value" id="stat-bots">—</div>
+        <div class="label">Total Bot</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">🟢</div>
+        <div class="value" id="stat-active">—</div>
+        <div class="label">Bot Aktif</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">⚡</div>
+        <div class="value" id="stat-commands">—</div>
+        <div class="label">Command Hari Ini</div>
+      </div>
+    </div>
+
+    <!-- BOTS -->
+    <div class="card mb-24">
+      <div class="flex items-center justify-between mb-16">
+        <h4>Bot Terhubung</h4>
+        <a href="/bots" class="btn btn-sm btn-ghost">Kelola Semua →</a>
+      </div>
+      <div id="recent-bots">
+        <div class="empty-state"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- QUICK START -->
+    <div class="card">
+      <h4 style="margin-bottom:16px">🚀 Quick Start</h4>
+      <div class="grid-3" style="gap:12px">
+        <div style="padding:14px;background:var(--surface-2);border-radius:10px;border:1px solid var(--border-dim)">
+          <div style="font-weight:700;font-size:0.88rem;margin-bottom:5px">1. Login Bot</div>
+          <p style="font-size:0.78rem;margin-bottom:8px">Klik Get Bot Code → kirim ke DLavie OS Bot</p>
+          <code style="font-size:0.72rem;color:var(--primary-l)">!login KODE</code>
+        </div>
+        <div style="padding:14px;background:var(--surface-2);border-radius:10px;border:1px solid var(--border-dim)">
+          <div style="font-weight:700;font-size:0.88rem;margin-bottom:5px">2. Connect Bot</div>
+          <p style="font-size:0.78rem;margin-bottom:8px">Generate token → verifikasi dari bot user</p>
+          <code style="font-size:0.72rem;color:var(--primary-l)">!connect generate</code>
+        </div>
+        <div style="padding:14px;background:var(--surface-2);border-radius:10px;border:1px solid var(--border-dim)">
+          <div style="font-weight:700;font-size:0.88rem;margin-bottom:5px">3. Kontrol Bot</div>
+          <p style="font-size:0.78rem;margin-bottom:8px">Relay command ke bot kamu</p>
+          <code style="font-size:0.72rem;color:var(--primary-l)">!relay bot_id cmd</code>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!Auth.guardDashboard()) return;
+  const u = Auth.user;
+  if (u) {
+    const nameEl = document.getElementById('user-name');
+    const planEl = document.getElementById('user-plan-badge');
+    if (nameEl) { nameEl.textContent = u.name; nameEl.style.display = ''; }
+    if (planEl) { planEl.textContent = (u.plan||'free').toUpperCase(); planEl.style.display = ''; }
+  }
+  initDashboard();
+});
+</script>
+</body>
+</html>

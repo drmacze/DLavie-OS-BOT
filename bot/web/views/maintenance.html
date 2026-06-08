@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maintenance — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<meta http-equiv="refresh" content="60">
+</head>
+<body>
+<div style="position:fixed;top:14px;right:14px;z-index:10">
+  <button class="theme-toggle">☀️</button>
+</div>
+
+<div class="maintenance-page">
+  <div class="maintenance-card">
+    <div class="maintenance-icon">🔧</div>
+
+    <h2 id="mtc-title" style="margin-bottom:10px;letter-spacing:-0.03em">Maintenance</h2>
+    <p id="mtc-desc" style="margin-bottom:28px;max-width:380px;margin-left:auto;margin-right:auto">
+      Sistem sedang dalam maintenance. Mohon tunggu sebentar.
+    </p>
+
+    <div id="mtc-schedule-block" style="display:none;margin-bottom:20px">
+      <div style="background:var(--warning-dim);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:14px 18px;font-size:0.84rem;color:var(--text-2)">
+        <div style="font-weight:700;color:var(--warning);margin-bottom:4px;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em">📅 Jadwal</div>
+        <div id="mtc-schedule"></div>
+      </div>
+    </div>
+
+    <div id="mtc-time-block" style="display:none;margin-bottom:24px">
+      <div style="background:var(--info-dim);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:14px 18px;font-size:0.84rem;color:var(--text-2)">
+        <div style="font-weight:700;color:var(--info);margin-bottom:4px;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em">⏱ Estimasi Selesai</div>
+        <div id="mtc-time"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;color:var(--text-3);font-size:0.82rem;margin-bottom:24px">
+      <div class="spinner" style="width:14px;height:14px;border-width:2px"></div>
+      Halaman ini otomatis refresh setiap 60 detik
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;justify-content:center">
+      <div class="brand-icon" style="width:26px;height:26px;background:var(--grad-primary);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:0.75rem">⚡</div>
+      <span style="font-weight:700;color:var(--text-2);font-size:0.88rem">DLavie <span class="gradient-text">OS</span></span>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const res  = await fetch('/api/public/maintenance');
+    const data = await res.json();
+    if (data.title)       document.getElementById('mtc-title').textContent  = data.title;
+    if (data.description) document.getElementById('mtc-desc').textContent   = data.description;
+    if (data.schedule) {
+      document.getElementById('mtc-schedule').textContent = data.schedule;
+      document.getElementById('mtc-schedule-block').style.display = '';
+    }
+    if (data.estimatedEnd) {
+      document.getElementById('mtc-time').textContent = data.estimatedEnd;
+      document.getElementById('mtc-time-block').style.display = '';
+    }
+    if (data.active === false) {
+      setTimeout(() => window.location.href = '/', 1500);
+    }
+  } catch (_) {}
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+.metric-card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:20px; }
+.metric-label { font-size:0.78rem; color:var(--text-2); text-transform:uppercase; letter-spacing:0.06em; font-weight:600; margin-bottom:8px; }
+.metric-value { font-size:2rem; font-weight:800; letter-spacing:-0.02em; }
+.metric-sub { font-size:0.78rem; color:var(--text-2); margin-top:4px; }
+.health-bar { height:8px; border-radius:4px; background:rgba(255,255,255,0.08); overflow:hidden; margin:8px 0; }
+.health-fill { height:100%; border-radius:4px; transition:width 0.6s ease; }
+.health-fill.green { background:linear-gradient(90deg,#10b981,#059669); }
+.health-fill.yellow { background:linear-gradient(90deg,#f59e0b,#d97706); }
+.health-fill.red { background:linear-gradient(90deg,#ef4444,#dc2626); }
+.section-title { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-3); font-weight:600; margin-bottom:12px; }
+.wa-status-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px; }
+.wa-status-dot.connected { background:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,0.2); animation:pulse-dot 2s infinite; }
+.wa-status-dot.disconnected { background:#6b7280; }
+@keyframes pulse-dot { 0%,100%{ opacity:1; } 50%{ opacity:0.5; } }
+.info-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.85rem; }
+.info-row:last-child { border-bottom:none; }
+.info-key { color:var(--text-2); }
+.info-val { font-weight:600; font-family:'JetBrains Mono',monospace; font-size:0.8rem; }
+.upgrade-strip { background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1)); border:1px solid rgba(99,102,241,0.2); border-radius:12px; padding:20px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<nav class="navbar">
+  <button class="btn btn-ghost btn-icon mobile-menu-btn" onclick="toggleMobileSidebar()" style="flex-shrink:0">☰</button>
+  <a href="/" class="navbar-brand"><div class="brand-icon">⚡</div><span>DLavie<span class="gradient-text"> OS</span></span></a>
+  <div class="navbar-actions">
+    <button class="theme-toggle" title="Toggle theme">☀️</button>
+    <button class="btn btn-ghost btn-sm" onclick="Auth.clear();window.location.href='/login'" style="color:var(--text-3)">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">Menu Utama</div>
+    <a href="/dashboard" class="sidebar-item"><span class="icon">📊</span>Dashboard</a>
+    <a href="/bots"      class="sidebar-item"><span class="icon">🤖</span>Bot Manager</a>
+    <a href="/tokens"    class="sidebar-item"><span class="icon">🪙</span>Token & Topup</a>
+    <a href="/terminal"  class="sidebar-item"><span class="icon">💻</span>Terminal</a>
+    <div class="sidebar-section">Premium</div>
+    <a href="/files"     class="sidebar-item"><span class="icon">📁</span>File Manager</a>
+    <a href="/logs"      class="sidebar-item"><span class="icon">📋</span>Bot Logs</a>
+    <a href="/analytics" class="sidebar-item active"><span class="icon">📈</span>Analytics</a>
+    <div class="sidebar-section">Pengaturan</div>
+    <a href="/customize" class="sidebar-item"><span class="icon">🎨</span>Customize Bot</a>
+    <a href="/settings"  class="sidebar-item"><span class="icon">⚙️</span>Settings</a>
+    <a href="/pricing"   class="sidebar-item"><span class="icon">💳</span>Upgrade Plan</a>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="window.location.href='/settings'">
+        <div class="sidebar-avatar" id="sidebar-avatar">U</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">User</div>
+          <div class="sidebar-user-plan" id="sidebar-user-plan">FREE</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="mb-24" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h2>📈 Analytics</h2>
+        <p style="margin-top:4px;font-size:0.875rem;color:var(--text-2)">Monitoring sistem, penggunaan token, dan statistik bot</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:0.78rem;color:var(--text-3)" id="last-updated"></span>
+        <button class="btn btn-ghost btn-sm" onclick="loadAnalytics()">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <!-- Pro gate -->
+    <div id="panel-gate" class="card" style="display:none;text-align:center;padding:40px">
+      <div style="font-size:3rem;margin-bottom:14px">📈</div>
+      <h3 style="margin-bottom:8px">Analytics & Monitoring</h3>
+      <p style="color:var(--text-2);font-size:0.9rem;margin-bottom:24px;max-width:400px;margin-left:auto;margin-right:auto">Analytics tersedia untuk plan <strong>Pro</strong> ke atas. Pantau performa bot dan penggunaan token secara real-time.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <a href="/pricing" class="btn btn-primary">⬆ Upgrade ke Pro</a>
+        <a href="/logs" class="btn btn-secondary">📋 Lihat Bot Logs</a>
+      </div>
+    </div>
+
+    <!-- Main analytics panel -->
+    <div id="panel-main" style="display:none">
+
+      <!-- Top metrics -->
+      <div class="grid grid-4 mb-24">
+        <div class="metric-card">
+          <div class="metric-label">Token Tersisa</div>
+          <div class="metric-value gradient-text" id="m-tokens">—</div>
+          <div class="metric-sub">dari limit plan Anda</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Token Digunakan Hari Ini</div>
+          <div class="metric-value" id="m-tokens-today">—</div>
+          <div class="metric-sub">dalam 24 jam terakhir</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Command Hari Ini</div>
+          <div class="metric-value" id="m-cmds-today">—</div>
+          <div class="metric-sub">total eksekusi command</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Uptime Server</div>
+          <div class="metric-value" id="m-uptime">—</div>
+          <div class="metric-sub">sejak restart terakhir</div>
+        </div>
+      </div>
+
+      <!-- Owner-only metrics -->
+      <div id="owner-metrics" class="grid grid-4 mb-24" style="display:none">
+        <div class="metric-card">
+          <div class="metric-label">Total User</div>
+          <div class="metric-value" id="m-users">—</div>
+          <div class="metric-sub">terdaftar di platform</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">User Berbayar</div>
+          <div class="metric-value" style="color:var(--success)" id="m-paid">—</div>
+          <div class="metric-sub">plan starter ke atas</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total Token Sistem</div>
+          <div class="metric-value" id="m-total-tokens">—</div>
+          <div class="metric-sub">seluruh user</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Node.js</div>
+          <div class="metric-value" id="m-node" style="font-size:1.2rem">—</div>
+          <div class="metric-sub">runtime version</div>
+        </div>
+      </div>
+
+      <div class="grid grid-2 mb-24">
+        <!-- WhatsApp status -->
+        <div class="card">
+          <div class="section-title">WhatsApp Connection</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+            <span class="wa-status-dot" id="wa-dot"></span>
+            <span style="font-weight:700;font-size:1.1rem" id="wa-status-text">Mengecek...</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Bot Name</span>
+            <span class="info-val" id="wa-bot-name">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Status</span>
+            <span class="info-val" id="wa-connecting">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Retries</span>
+            <span class="info-val" id="wa-retries">—</span>
+          </div>
+        </div>
+
+        <!-- Memory usage -->
+        <div class="card">
+          <div class="section-title">Memory Usage</div>
+          <div class="info-row">
+            <span class="info-key">Heap Used</span>
+            <span class="info-val" id="mem-heap-used">—</span>
+          </div>
+          <div id="mem-bar-heap" class="health-bar"><div class="health-fill green" id="mem-heap-fill" style="width:0%"></div></div>
+          <div class="info-row">
+            <span class="info-key">Heap Total</span>
+            <span class="info-val" id="mem-heap-total">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">RSS</span>
+            <span class="info-val" id="mem-rss">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Object Storage</span>
+            <span class="info-val" id="storage-avail">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- System info -->
+      <div class="card mb-24">
+        <div class="section-title">Informasi Sistem</div>
+        <div class="info-row">
+          <span class="info-key">Platform</span>
+          <span class="info-val">DLavie OS v2.0 (Replit)</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Node.js Runtime</span>
+          <span class="info-val" id="sys-node">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Server Uptime</span>
+          <span class="info-val" id="sys-uptime">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">WhatsApp Library</span>
+          <span class="info-val">@whiskeysockets/baileys ^6.7.23</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Plan Aktif</span>
+          <span class="info-val" id="sys-plan">—</span>
+        </div>
+      </div>
+
+      <!-- Upgrade prompt for non-enterprise -->
+      <div id="upgrade-strip" class="upgrade-strip" style="display:none">
+        <div>
+          <div style="font-weight:700;margin-bottom:4px">🏆 Upgrade ke Enterprise</div>
+          <div style="font-size:0.82rem;color:var(--text-2)">Dapatkan terminal akses penuh, unlimited storage, priority support, dan lebih banyak lagi.</div>
+        </div>
+        <a href="/pricing" class="btn btn-primary" style="flex-shrink:0">Lihat Paket ↗</a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+const PLAN_TIER = { free: 0, starter: 1, pro: 2, enterprise: 3 };
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.guardDashboard()) return;
+  const user = Auth.user;
+  const plan = user?.plan || 'free';
+  const role = user?.role || 'user';
+
+  document.getElementById('sidebar-user-name').textContent = user?.name || 'User';
+  document.getElementById('sidebar-user-plan').textContent = plan.toUpperCase();
+  const av = document.getElementById('sidebar-avatar'); if (av && user?.name) av.textContent = user.name[0].toUpperCase();
+  Theme.init();
+
+  const tier = PLAN_TIER[plan] ?? 0;
+  const isOwner = role === 'owner';
+
+  if (!isOwner && tier < 2) {
+    document.getElementById('panel-gate').style.display = 'block';
+    return;
+  }
+
+  document.getElementById('panel-main').style.display = 'block';
+  if (isOwner) document.getElementById('owner-metrics').style.display = 'grid';
+  if (!isOwner && tier < 3) document.getElementById('upgrade-strip').style.display = 'flex';
+
+  document.getElementById('sys-plan').textContent = isOwner ? 'Owner (Enterprise)' : plan.charAt(0).toUpperCase() + plan.slice(1);
+
+  await loadAnalytics();
+  setInterval(loadAnalytics, 60000);
+});
+
+async function loadAnalytics() {
+  try {
+    const data = await API.get('/api/analytics/overview');
+    const s = data.summary || {};
+    const wa = data.waStatus || {};
+    const mem = data.memory || {};
+
+    // Metrics
+    setText('m-tokens', (s.totalTokens || 0).toLocaleString('id-ID'));
+    setText('m-tokens-today', (s.tokensUsedToday || 0).toLocaleString('id-ID'));
+    setText('m-cmds-today', (s.commandsToday || 0).toLocaleString('id-ID'));
+    setText('m-uptime', fmtUptime(data.uptime || 0));
+    setText('m-node', data.node || '—');
+    setText('sys-node', data.node || '—');
+    setText('sys-uptime', fmtUptime(data.uptime || 0));
+
+    // Owner
+    if (s.totalUsers !== undefined) { setText('m-users', s.totalUsers.toLocaleString('id-ID')); }
+    if (s.paidUsers !== undefined)  { setText('m-paid', s.paidUsers.toLocaleString('id-ID')); }
+    if (s.totalTokens !== undefined) { setText('m-total-tokens', s.totalTokens.toLocaleString('id-ID')); }
+
+    // WA
+    const dot = document.getElementById('wa-dot');
+    const statusText = document.getElementById('wa-status-text');
+    if (wa.connected) {
+      dot.className = 'wa-status-dot connected';
+      statusText.textContent = 'Terhubung ✓';
+      statusText.style.color = 'var(--success)';
+    } else {
+      dot.className = 'wa-status-dot disconnected';
+      statusText.textContent = wa.connecting ? 'Menghubungkan...' : 'Terputus';
+      statusText.style.color = wa.connecting ? 'var(--warning)' : 'var(--error)';
+    }
+    setText('wa-bot-name', wa.bot || '—');
+    setText('wa-connecting', wa.connecting ? 'Menghubungkan' : (wa.connected ? 'Aktif' : 'Offline'));
+    setText('wa-retries', wa.retries || '—');
+
+    // Memory
+    if (mem.heapUsedMB) {
+      setText('mem-heap-used', mem.heapUsedMB + ' MB');
+      setText('mem-heap-total', mem.heapTotalMB + ' MB');
+      setText('mem-rss', mem.rssMB + ' MB');
+      const pct = Math.min(100, Math.round((mem.heapUsedMB / (mem.heapTotalMB || 512)) * 100));
+      const fill = document.getElementById('mem-heap-fill');
+      if (fill) {
+        fill.style.width = pct + '%';
+        fill.className = 'health-fill ' + (pct > 80 ? 'red' : pct > 60 ? 'yellow' : 'green');
+      }
+    }
+
+    // Storage
+    setText('storage-avail', data.storageAvailable ? '✓ Aktif' : '✗ Tidak tersedia');
+    document.getElementById('storage-avail').style.color = data.storageAvailable ? 'var(--success)' : 'var(--error)';
+
+    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString('id-ID');
+  } catch (err) {
+    console.error('Analytics error:', err.message);
+    if (err.message.includes('403')) {
+      document.getElementById('panel-main').style.display = 'none';
+      document.getElementById('panel-gate').style.display = 'block';
+    }
+  }
+}
+
+function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+
+function fmtUptime(seconds) {
+  if (!seconds) return '0s';
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function toggleMobileSidebar() {
+  document.querySelector('.sidebar')?.classList.toggle('mobile-open');
+  document.getElementById('sidebar-overlay')?.classList.toggle('active');
+}
+document.getElementById('sidebar-overlay')?.addEventListener('click', () => {
+  document.querySelector('.sidebar')?.classList.remove('mobile-open');
+  document.getElementById('sidebar-overlay')?.classList.remove('active');
+});
+document.querySelectorAll('.theme-toggle').forEach(b => b.addEventListener('click', () => Theme.toggle()));
+</script>
+</body>
+</html>

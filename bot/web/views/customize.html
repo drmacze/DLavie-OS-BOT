@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customize Bot — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+.section-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin:20px 0 10px;border-bottom:1px solid var(--border-dim);padding-bottom:6px}
+.preview-box{background:var(--bg-2);border:1px solid var(--border-dim);border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.7;max-height:260px;overflow:auto;color:var(--text-2);white-space:pre-wrap;word-break:break-word}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.65rem;font-weight:600;margin-left:6px;background:rgba(99,102,241,.15);color:#818cf8}
+.badge.new{background:rgba(16,185,129,.15);color:#34d399}
+.thumb-preview{width:100%;height:120px;border-radius:8px;object-fit:cover;margin-top:8px;display:none;border:1px solid var(--border-dim)}
+select.form-input option{background:var(--bg-2);color:var(--text-1)}
+</style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<nav class="navbar">
+  <button class="btn btn-ghost btn-icon mobile-menu-btn" onclick="toggleMobileSidebar()" title="Menu" style="flex-shrink:0">☰</button>
+  <a href="/" class="navbar-brand">
+    <div class="brand-icon">⚡</div>
+    <span>DLavie<span class="gradient-text"> OS</span></span>
+  </a>
+  <div class="navbar-actions">
+    <button class="theme-toggle" title="Toggle theme">☀️</button>
+    <button class="btn btn-ghost btn-sm" onclick="logout()" style="color:var(--text-3)">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">Menu Utama</div>
+    <a href="/dashboard" class="sidebar-item" data-page="dashboard"><span class="icon">📊</span>Dashboard</a>
+    <a href="/bots"      class="sidebar-item" data-page="bots"><span class="icon">🤖</span>Bot Manager</a>
+    <a href="/tokens"    class="sidebar-item" data-page="tokens"><span class="icon">🪙</span>Token & Topup</a>
+    <a href="/terminal"  class="sidebar-item" data-page="terminal"><span class="icon">💻</span>Terminal</a>
+    <div class="sidebar-section">Premium</div>
+    <a href="/files"     class="sidebar-item" data-page="files"><span class="icon">📁</span>File Manager</a>
+    <a href="/logs"      class="sidebar-item" data-page="logs"><span class="icon">📋</span>Bot Logs</a>
+    <a href="/analytics" class="sidebar-item" data-page="analytics"><span class="icon">📈</span>Analytics</a>
+    <div class="sidebar-section">Pengaturan</div>
+    <a href="/customize" class="sidebar-item active" data-page="customize"><span class="icon">🎨</span>Customize Bot</a>
+    <a href="/settings"  class="sidebar-item" data-page="settings"><span class="icon">⚙️</span>Settings</a>
+    <a href="/pricing"   class="sidebar-item" data-page="pricing"><span class="icon">💳</span>Upgrade Plan</a>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="window.location.href='/settings'">
+        <div class="sidebar-avatar" id="sidebar-avatar">U</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">User</div>
+          <div class="sidebar-user-plan" id="sidebar-user-plan">FREE</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="mb-24">
+      <h2>🎨 Customize Bot <span class="badge new">v2.0</span></h2>
+      <p style="margin-top:4px;font-size:.875rem;color:var(--text-2)">20 tipe menu · 15 tema · 7 bahasa · thumbnail · personality — semua langsung aktif</p>
+    </div>
+
+    <div id="pro-gate" class="card" style="display:none;text-align:center;padding:40px;border-color:rgba(99,102,241,.3)">
+      <div style="font-size:2.5rem;margin-bottom:12px">⭐</div>
+      <h4 style="margin-bottom:8px">Fitur Pro & Enterprise</h4>
+      <p style="color:var(--text-2);font-size:.875rem;margin-bottom:16px">Customisasi bot hanya untuk pengguna <strong>Pro</strong> dan <strong>Enterprise</strong>.</p>
+      <a href="/pricing" class="btn btn-primary">Upgrade Sekarang</a>
+    </div>
+
+    <div id="customize-panel">
+      <div class="grid-2" style="align-items:start;gap:24px">
+
+        <!-- LEFT COLUMN -->
+        <div style="display:flex;flex-direction:column;gap:20px">
+
+          <!-- Identitas -->
+          <div class="card">
+            <h4 style="margin-bottom:4px">🤖 Identitas Bot</h4>
+            <p style="font-size:.78rem;color:var(--text-3);margin-bottom:16px">Nama, brand, dan info kontak bot kamu</p>
+            <div class="form-group">
+              <label class="form-label">Nama Bot</label>
+              <input id="bot-name" type="text" class="form-input" placeholder="DLavie OS">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nama Owner</label>
+              <input id="owner-name" type="text" class="form-input" placeholder="Owner">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Brand Name</label>
+              <input id="brand-name" type="text" class="form-input" placeholder="DLavie OS">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tagline</label>
+              <input id="tagline" type="text" class="form-input" placeholder="Kelola Bot WhatsApp Tanpa Ribet">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Website URL</label>
+              <input id="website-url" type="text" class="form-input" placeholder="https://yourdomain.com">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Watermark / Footer Default</label>
+              <input id="watermark" type="text" class="form-input" placeholder="⚡ DLavie OS">
+              <div class="form-hint">Muncul di footer setiap pesan bot</div>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="saveSection('identity')">💾 Simpan Identitas</button>
+          </div>
+
+          <!-- Menu & Tampilan -->
+          <div class="card">
+            <h4 style="margin-bottom:4px">📋 Menu & Tampilan</h4>
+            <p style="font-size:.78rem;color:var(--text-3);margin-bottom:16px">Kustomisasi tipe, tema, bahasa, dan personality menu WhatsApp</p>
+
+            <div class="section-title">🗂️ Tipe Menu <span class="badge new">20 Tipe</span></div>
+            <div class="form-group">
+              <label class="form-label">Tipe Menu Aktif</label>
+              <select id="menu-type" class="form-input" style="cursor:pointer" onchange="updateMenuPreview()">
+                <optgroup label="── Standar ──">
+                  <option value="hybrid">🔀 Hybrid — Teks + Kategori (Rekomendasi)</option>
+                  <option value="text">📝 Text — Flat teks, paling stabil semua device</option>
+                  <option value="number">🔢 Number — User pilih angka</option>
+                  <option value="compact">⚡ Compact — Sangat pendek, akses cepat</option>
+                  <option value="full">📋 Full — Semua command lengkap</option>
+                </optgroup>
+                <optgroup label="── Interaktif ──">
+                  <option value="search">🔍 Search — Cari command (!menu search kata)</option>
+                  <option value="pagination">📄 Pagination — Halaman per halaman (!menu 2)</option>
+                  <option value="cmdpalette">🎯 Command Palette — Gaya VS Code (!menu cmd)</option>
+                  <option value="aiguided">🤖 AI Guided — Ketik kebutuhan, AI arahkan</option>
+                </optgroup>
+                <optgroup label="── Smart ──">
+                  <option value="dashboard">📊 Dashboard — Menu + status bot real-time</option>
+                  <option value="smart">🧠 Smart — Berubah otomatis sesuai kondisi bot</option>
+                  <option value="contextual">📍 Contextual — Beda menu grup vs private</option>
+                  <option value="rolebased">🎭 Role-Based — Berbeda per role (user/admin/owner)</option>
+                </optgroup>
+                <optgroup label="── Personal ──">
+                  <option value="recent">🕐 Recent — Command terakhir dipakai</option>
+                  <option value="favorite">⭐ Favorite — Command yang di-pin</option>
+                  <option value="quickaction">⚡ Quick Action — Command penting saja</option>
+                </optgroup>
+                <optgroup label="── Spesial ──">
+                  <option value="card">🃏 Card — Setiap fitur seperti kartu</option>
+                  <option value="media">🖼️ Media — Dengan thumbnail gambar</option>
+                  <option value="wizard">🧙 Wizard — Step-by-step setup guide</option>
+                  <option value="terminal">💻 Terminal — Tampilan seperti OS console</option>
+                </optgroup>
+                <optgroup label="── Interactive WA ──">
+                  <option value="button">🔘 Button — Tombol interaktif WA native (3 tombol)</option>
+                  <option value="buttoncat">📋 Button Category — List WA native dengan kategori</option>
+                </optgroup>
+              </select>
+              <div class="form-hint" id="menu-type-hint">Gunakan !menu untuk melihat hasilnya di WhatsApp</div>
+            </div>
+
+            <div class="section-title">🎨 Tema <span class="badge">15 Tema</span></div>
+            <div class="form-group">
+              <label class="form-label">Tema Visual Menu</label>
+              <select id="menu-theme" class="form-input" style="cursor:pointer" onchange="updateMenuPreview()">
+                <optgroup label="── Classic ──">
+                  <option value="dlavie_default">⚡ DLavie Default (╔══╗)</option>
+                  <option value="minimal">🔲 Minimal (teks bersih)</option>
+                  <option value="modern">📐 Modern (┌──┐)</option>
+                </optgroup>
+                <optgroup label="── Premium ──">
+                  <option value="premium">💎 Premium (╭─ ⋆)</option>
+                  <option value="royal">👑 Royal (♚ ♜)</option>
+                  <option value="space">🚀 Space (✦ ✦)</option>
+                </optgroup>
+                <optgroup label="── Gaming & Tech ──">
+                  <option value="gaming">🎮 Gaming (≪≪ ≫≫)</option>
+                  <option value="cyberpunk">🌆 Cyberpunk (▣ ↳)</option>
+                  <option value="neon">🌟 Neon (✦ ◈)</option>
+                  <option value="matrix">💚 Matrix (⟦ ⟧)</option>
+                  <option value="hacker">⌨️ Hacker ($ _)</option>
+                </optgroup>
+                <optgroup label="── Aesthetic ──">
+                  <option value="dark_knight">🦇 Dark Knight (██)</option>
+                  <option value="sakura">🌸 Sakura (～ ✿)</option>
+                  <option value="ocean">🌊 Ocean (≋≋)</option>
+                  <option value="fire">🔥 Fire (▲▲)</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <div class="section-title">🌍 Bahasa <span class="badge">7 Bahasa</span></div>
+            <div class="form-group">
+              <label class="form-label">Bahasa Menu</label>
+              <select id="menu-language" class="form-input" style="cursor:pointer">
+                <option value="id">🇮🇩 Indonesia</option>
+                <option value="en">🇬🇧 English</option>
+                <option value="ms">🇲🇾 Melayu</option>
+                <option value="ar">🇸🇦 العربية (Arabic)</option>
+                <option value="zh">🇨🇳 中文 (Chinese)</option>
+                <option value="jv">🏝️ Jawa (Javanese)</option>
+                <option value="su">🌄 Sunda (Sundanese)</option>
+              </select>
+            </div>
+
+            <div class="section-title">🎭 Personality</div>
+            <div class="form-group">
+              <label class="form-label">Personality Bot</label>
+              <select id="menu-personality" class="form-input" style="cursor:pointer" onchange="toggleCustomPersonality()">
+                <option value="friendly">😊 Friendly — Ramah dan hangat</option>
+                <option value="professional">💼 Professional — Formal dan elegan</option>
+                <option value="ai_assistant">🤖 AI Assistant — Tech dan akurat</option>
+                <option value="funny">😄 Funny — Lucu dan penuh emoji</option>
+                <option value="savage">😏 Savage — Snarky dan sarkastik</option>
+                <option value="kawaii">🌸 Kawaii — Imut dan anime style</option>
+                <option value="custom">✏️ Custom — Buat sendiri</option>
+              </select>
+            </div>
+            <div class="form-group" id="custom-personality-group" style="display:none">
+              <label class="form-label">Teks Greeting Custom</label>
+              <input id="custom-personality-text" type="text" class="form-input" placeholder="Halo {user}! Bot siap melayani 🚀">
+              <div class="form-hint">Variabel: {user}, {botName}, {plan}</div>
+            </div>
+
+            <div class="section-title">📐 Layout</div>
+            <div class="form-group">
+              <label class="form-label">Footer Menu</label>
+              <input id="menu-footer" type="text" class="form-input" placeholder="⚡ DLavie OS | Powered by DLavie">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ukuran Halaman (Pagination)</label>
+              <input id="page-size" type="number" class="form-input" placeholder="8" min="4" max="20">
+              <div class="form-hint">Jumlah command per halaman (tipe Pagination)</div>
+            </div>
+
+            <button class="btn btn-primary btn-full" onclick="saveSection('menu')">💾 Simpan Tampilan</button>
+          </div>
+
+          <!-- Thumbnail -->
+          <div class="card">
+            <h4 style="margin-bottom:4px">🖼️ Thumbnail & Media <span class="badge new">Baru</span></h4>
+            <p style="font-size:.78rem;color:var(--text-3);margin-bottom:16px">Tambahkan gambar/thumbnail ke menu bot kamu (berlaku untuk tipe Menu: Media)</p>
+            <div class="form-group">
+              <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                <input id="thumb-enabled" type="checkbox" style="width:16px;height:16px" onchange="toggleThumb()">
+                Aktifkan Thumbnail
+              </label>
+            </div>
+            <div id="thumb-options" style="display:none">
+              <div class="form-group">
+                <label class="form-label">Tipe Thumbnail</label>
+                <select id="thumb-type" class="form-input" style="cursor:pointer" onchange="onThumbTypeChange()">
+                  <option value="url">🔗 URL Gambar</option>
+                  <option value="emoji">😀 Emoji sebagai Header</option>
+                </select>
+              </div>
+              <div class="form-group" id="thumb-url-group">
+                <label class="form-label">URL Gambar / Video Thumbnail</label>
+                <input id="thumb-url" type="text" class="form-input" placeholder="https://example.com/image.jpg">
+                <div class="form-hint">Dukung: JPG, PNG, WebP, MP4 thumbnail. Harus URL publik yang dapat diakses.</div>
+                <img id="thumb-preview-img" class="thumb-preview" alt="Preview thumbnail">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Caption Thumbnail (opsional)</label>
+                <input id="thumb-caption" type="text" class="form-input" placeholder="Bot DLavie OS siap melayani 24/7">
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                  <input id="thumb-use-for-menu" type="checkbox" style="width:16px;height:16px">
+                  Tampilkan thumbnail di semua tipe menu (bukan hanya Media)
+                </label>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="saveThumbnail()">💾 Simpan Thumbnail</button>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div style="display:flex;flex-direction:column;gap:20px">
+
+          <!-- Menu Preview -->
+          <div class="card" style="border-color:rgba(99,102,241,.3)">
+            <div class="flex items-center justify-between mb-12">
+              <h4>👀 Preview Menu</h4>
+              <span style="font-size:.72rem;color:var(--text-3)">Preview tipe & tema yang dipilih</span>
+            </div>
+            <div class="preview-box" id="menu-preview-box">Pilih tipe & tema untuk preview...</div>
+          </div>
+
+          <!-- Custom Pesan -->
+          <div class="card">
+            <h4 style="margin-bottom:4px">💬 Custom Pesan</h4>
+            <p style="font-size:.78rem;color:var(--text-3);margin-bottom:16px">Variabel yang bisa dipakai: <code>{botName}</code> <code>{ownerName}</code></p>
+            <div class="form-group">
+              <label class="form-label">Pesan Welcome</label>
+              <input id="msg-welcome" type="text" class="form-input" placeholder="Selamat datang di {botName}!">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pesan Error</label>
+              <input id="msg-error" type="text" class="form-input" placeholder="❌ Terjadi kesalahan. Coba lagi.">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pesan Premium Required</label>
+              <input id="msg-premium" type="text" class="form-input" placeholder="⭐ Fitur ini khusus pengguna Premium.">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pesan Maintenance</label>
+              <input id="msg-maintenance" type="text" class="form-input" placeholder="🔧 Bot sedang maintenance.">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pesan Token Habis</label>
+              <input id="msg-token-low" type="text" class="form-input" placeholder="💰 Token hampir habis! Ketik !topup untuk isi ulang.">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pesan Command Tidak Ditemukan</label>
+              <input id="msg-not-found" type="text" class="form-input" placeholder="❓ Command tidak ditemukan. Ketik !menu">
+            </div>
+            <button class="btn btn-primary btn-full" onclick="saveMessages()">💾 Simpan Pesan</button>
+          </div>
+
+          <!-- AI Config -->
+          <div class="card">
+            <h4 style="margin-bottom:4px">⚡ AI Settings</h4>
+            <p style="font-size:.78rem;color:var(--text-3);margin-bottom:16px">Urutan provider AI untuk auto-fix dan fitur AI</p>
+            <div class="form-group">
+              <label class="form-label">Primary AI</label>
+              <select id="ai-primary" class="form-input" style="cursor:pointer">
+                <option value="chatgpt">🤖 ChatGPT (OpenAI)</option>
+                <option value="gemini">✨ Gemini (Google)</option>
+                <option value="grok">⚡ Grok (xAI)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Secondary AI (Backup)</label>
+              <select id="ai-secondary" class="form-input" style="cursor:pointer">
+                <option value="gemini">✨ Gemini (Google)</option>
+                <option value="chatgpt">🤖 ChatGPT (OpenAI)</option>
+                <option value="grok">⚡ Grok (xAI)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fallback AI</label>
+              <select id="ai-fallback" class="form-input" style="cursor:pointer">
+                <option value="grok">⚡ Grok (xAI)</option>
+                <option value="chatgpt">🤖 ChatGPT (OpenAI)</option>
+                <option value="gemini">✨ Gemini (Google)</option>
+              </select>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="saveSection('ai')">💾 Simpan AI Config</button>
+          </div>
+
+          <!-- Advanced -->
+          <div class="card">
+            <h4 style="margin-bottom:4px">🔧 Advanced</h4>
+            <p style="font-size:.78rem;color:var(--text-3);margin-bottom:16px">Pengaturan teknis dan developer</p>
+            <div class="form-group">
+              <label class="form-label">GitHub Repo URL</label>
+              <input id="github-repo" type="text" class="form-input" placeholder="https://github.com/username/repo">
+              <div class="form-hint">Untuk command !update — auto-pull dari repo ini</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Log Level</label>
+              <select id="log-level" class="form-input" style="cursor:pointer">
+                <option value="info">Info (default)</option>
+                <option value="debug">Debug (verbose)</option>
+                <option value="warn">Warn only</option>
+                <option value="error">Error only</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                <input id="plugin-sandbox" type="checkbox" style="width:16px;height:16px">
+                Plugin Sandbox Mode
+              </label>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                <input id="auto-update" type="checkbox" style="width:16px;height:16px">
+                Auto Update dari GitHub
+              </label>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                <input id="debug-mode" type="checkbox" style="width:16px;height:16px">
+                Debug Mode
+              </label>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="saveSection('advanced')">💾 Simpan Advanced</button>
+          </div>
+
+          <!-- Live Config JSON -->
+          <div class="card">
+            <div class="flex items-center justify-between mb-16">
+              <h4>📄 Live Config JSON</h4>
+              <button class="btn btn-sm btn-secondary" onclick="loadConfig()">🔄 Refresh</button>
+            </div>
+            <pre id="config-preview" class="preview-box">Loading...</pre>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+let currentConfig = {};
+
+const MENU_TYPE_HINTS = {
+  hybrid:      'Default terbaik. Kategori + shortcut. Ketik !menu',
+  text:        'Paling stabil untuk semua device Android & iOS. Ketik !menu',
+  number:      'User pilih angka dari daftar. Ketik !menu',
+  compact:     'Menu super singkat, cocok untuk grup. Ketik !menu',
+  full:        'Semua command ditampilkan lengkap. Ketik !menu',
+  search:      'Cari command spesifik. Ketik !menu search <kata>',
+  pagination:  'Menu halaman per halaman. Ketik !menu 1, !menu 2, ...',
+  cmdpalette:  'Gaya VS Code Command Palette. Ketik !menu cmd <kata>',
+  aiguided:    'Ketik kebutuhan, AI arahkan. Ketik !menu ai <kebutuhan>',
+  dashboard:   'Menu + status bot real-time. Ketik !menu',
+  smart:       'Otomatis tampilkan command relevan sesuai kondisi bot. Ketik !menu',
+  contextual:  'Beda tampilan di grup vs private chat. Ketik !menu',
+  rolebased:   'Menu berbeda untuk user / admin / owner. Ketik !menu',
+  recent:      'Menampilkan command terakhir yang kamu pakai. Ketik !menu',
+  favorite:    'Command yang kamu pin sebagai favorit. Ketik !menu, !fav add <cmd>',
+  quickaction: 'Hanya command terpenting. Ketik !menu',
+  card:        'Setiap fitur ditampilkan seperti kartu info. Ketik !menu',
+  media:       'Menu dengan thumbnail gambar (atur di bagian Thumbnail). Ketik !menu',
+  wizard:      'Panduan setup step-by-step. Ketik !menu wizard',
+  terminal:    'Tampilan seperti OS/console terminal. Ketik !menu',
+};
+
+const THEME_PREVIEWS = {
+  dlavie_default: '╔══════════════════════════╗\n║   ⚡  *DLavie OS*  ⚡\n║  Multi-Bot Control\n╚══════════════════════════╝',
+  minimal:        '*DLavie OS*\nMulti-Bot Control',
+  modern:         '┌──────────────────────────┐\n│ ⚡ *DLavie OS*\n│ Multi-Bot Control\n└──────────────────────────┘',
+  premium:        '╭─ ⋆ 💎 *DLavie OS* 💎 ⋆\n│ Multi-Bot Control\n╰───────────────────────────',
+  gaming:         '🎮 ≪≪ *DLavie OS* ≫≫ 🎮\n▸ Multi-Bot Control',
+  cyberpunk:      '▣ *DLavie OS*\n↳ Multi-Bot Control\n↳ SYSTEM/ONLINE',
+  neon:           '✦ ◈ *DLavie OS* ◈ ✦\n◈ Multi-Bot Control ◈',
+  dark_knight:    '🦇 ██ *DLavie OS* ██ 🦇\n▓ Multi-Bot Control ▓',
+  sakura:         '🌸 ～ *DLavie OS* ～ 🌸\n✿ Multi-Bot Control ✿',
+  ocean:          '🌊 ≋≋ *DLavie OS* ≋≋ 🌊\n〜 Multi-Bot Control 〜',
+  fire:           '🔥 ▲▲ *DLavie OS* ▲▲ 🔥\n▲ Multi-Bot Control ▲',
+  matrix:         '⟦ *DLavie OS* ⟧\n⟦ Multi-Bot Control ⟧',
+  hacker:         '$ _DLavie OS_\n> Multi-Bot Control\n> STATUS: ONLINE',
+  royal:          '👑 ♚ *DLavie OS* ♚ 👑\n♜ Multi-Bot Control ♜',
+  space:          '🚀 ✦ *DLavie OS* ✦ 🚀\n✦ Multi-Bot Control ✦',
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.guardDashboard()) return;
+  const uname = Auth.user?.name || '';
+  setEl('user-name', uname);
+  setEl('sidebar-user-name', uname);
+  setEl('sidebar-user-plan', (Auth.user?.plan || 'FREE').toUpperCase());
+  const av = document.getElementById('sidebar-avatar');
+  if (av) av.textContent = uname.charAt(0).toUpperCase() || 'U';
+
+  const isPro = ['pro','enterprise'].includes(Auth.user?.plan || '') || Auth.user?.role === 'owner';
+  if (!isPro) {
+    document.getElementById('pro-gate').style.display = 'block';
+    document.getElementById('customize-panel').style.display = 'none';
+    return;
+  }
+
+  await loadConfig();
+  updateMenuPreview();
+});
+
+async function loadConfig() {
+  try {
+    const data = await API.get('/api/customization');
+    currentConfig = data.config || {};
+    populateForm(currentConfig);
+    document.getElementById('config-preview').textContent = JSON.stringify(currentConfig, null, 2);
+    updateMenuPreview();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+function populateForm(c) {
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
+  const chk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
+
+  set('bot-name',    c.identity?.botName);
+  set('owner-name',  c.identity?.ownerName);
+  set('brand-name',  c.identity?.brandName);
+  set('tagline',     c.identity?.tagline);
+  set('website-url', c.identity?.websiteUrl);
+  set('watermark',   c.identity?.watermark);
+
+  set('menu-type',        c.menu?.type);
+  set('menu-theme',       c.menu?.theme);
+  set('menu-language',    c.menu?.language);
+  set('menu-personality', c.menu?.personality);
+  set('menu-footer',      c.menu?.footer);
+  set('page-size',        c.menu?.pageSize || 8);
+  set('custom-personality-text', c.menu?.customPersonalityText);
+
+  set('msg-welcome',   c.messages?.welcome);
+  set('msg-error',     c.messages?.error);
+  set('msg-premium',   c.messages?.premium);
+  set('msg-maintenance', c.messages?.maintenance);
+  set('msg-token-low', c.messages?.tokenLow);
+  set('msg-not-found', c.messages?.notFound);
+
+  set('ai-primary',   c.ai?.primary);
+  set('ai-secondary', c.ai?.secondary);
+  set('ai-fallback',  c.ai?.fallback);
+
+  set('github-repo',  c.advanced?.githubRepo);
+  set('log-level',    c.advanced?.logLevel || 'info');
+  chk('plugin-sandbox', c.advanced?.pluginSandbox);
+  chk('auto-update',    c.advanced?.autoUpdate);
+  chk('debug-mode',     c.advanced?.debugMode);
+
+  const th = c.thumbnail || {};
+  chk('thumb-enabled',      th.enabled);
+  set('thumb-type',         th.type || 'url');
+  set('thumb-url',          th.url);
+  set('thumb-caption',      th.caption);
+  chk('thumb-use-for-menu', th.useForMenu);
+
+  toggleCustomPersonality();
+  toggleThumb();
+  onThumbTypeChange();
+  updateMenuPreview();
+}
+
+function updateMenuPreview() {
+  const type  = document.getElementById('menu-type')?.value  || 'hybrid';
+  const theme = document.getElementById('menu-theme')?.value || 'dlavie_default';
+  const hint  = document.getElementById('menu-type-hint');
+  const box   = document.getElementById('menu-preview-box');
+
+  if (hint) hint.textContent = MENU_TYPE_HINTS[type] || 'Ketik !menu untuk melihat hasilnya';
+
+  const themeHeader = THEME_PREVIEWS[theme] || THEME_PREVIEWS['dlavie_default'];
+  const botName     = document.getElementById('bot-name')?.value || 'DLavie OS';
+  const header      = themeHeader.replace(/DLavie OS/g, botName);
+
+  const previews = {
+    hybrid:      `${header}\n\n😊 Halo Owner!\n\n👤 Owner | 📦 ENTERPRISE | 🪙 ∞\n\n━━━━━━━━━━━━━━━━━\n🔑 Autentikasi\n━━━━━━━━━━━━━━━━━\n\`!login KODE\`  — Login\n\`!logout\`      — Logout\n\n🤖 Bot Management\n━━━━━━━━━━━━━━━━━\n\`!connect\`     — Hubungkan bot\n\`!relay\`       — Kontrol bot\n\`!monitor\`     — Monitor sistem`,
+    text:        `${header}\n\n📝 Text Menu (paling stabil)\n\n\`!login\`  \`!logout\`  \`!connect\`  \`!relay\`\n\`!monitor\`  \`!bot\`  \`!shell\`  \`!plugin\`\n\`!fix\`  \`!schedule\`  \`!token\`  \`!status\``,
+    number:      `${header}\n\n🔢 Number Menu\n\n1. Login — Login dengan kode dari web\n2. Logout — Logout dari DLavie OS\n3. Connect — Hubungkan bot ke DLavie OS\n4. Relay — Kirim command ke bot\n5. Monitor — Monitor semua bot`,
+    compact:     `⚡ *${botName}*\n👤 Owner | 📦 ENTERPRISE | 🪙 ∞\n\n\`!status\` \`!connect\` \`!relay\` \`!fix\` \`!plugin\` \`!token\`\n\`!owner\` \`!approve\` \`!broadcast\``,
+    full:        `${header}\n\n📋 Full Command List\n\n━━━━━━━━━━━━━━━━━\n🔑 Autentikasi\n━━━━━━━━━━━━━━━━━\n• \`!login KODE\`\n  ↳ Login dengan kode dari web\n• \`!logout\`\n  ↳ Logout dari DLavie OS\n\n⚙️ Fitur Utama\n━━━━━━━━━━━━━━━━━\n• \`!fix\`\n  ↳ AI-powered auto-fix error`,
+    search:      `${header}\n\n🔍 Search Menu\n\nCari command: \`!menu search <kata>\`\nContoh: \`!menu search status\``,
+    dashboard:   `${header}\n\n📊 Dashboard\n\n🟢 Uptime: 5h 30m\n💾 Memory: 128 MB\n📡 WA: connected\n🪙 Token: ∞\n\n⚡ Quick Commands\n\`!status\` \`!info\` \`!ping\` \`!monitor\``,
+    quickaction: `${header}\n\n⚡ Quick Actions\n\n\`!status\`   — Cek status bot\n\`!connect\`  — Hubungkan bot\n\`!relay\`    — Kontrol bot\n\`!fix\`      — Auto-fix error\n\`!token\`    — Cek token`,
+    rolebased:   `${header}\n\n🎭 Role: 👑 Owner\n\n👑 Owner Panel\n\`!owner\`     — Panel kontrol owner\n\`!approve\`   — Approve payment\n\`!broadcast\` — Broadcast ke semua\n\`!lockdown\`  — Emergency lockdown`,
+    pagination:  `${header}\n\n📄 Menu — Halaman 1/4\n━━━━━━━━━━━━━━━━━\n1. \`!login KODE\` — Login\n2. \`!logout\` — Logout\n3. \`!connect\` — Hubungkan bot\n4. \`!relay\` — Kontrol bot\n\n▶ Next: \`!menu 2\``,
+    recent:      `${header}\n\n🕐 Recent Commands\n\n\`!status\` — Status sistem\n\`!relay\` — Kontrol bot\n\`!fix\` — Auto-fix error`,
+    favorite:    `${header}\n\n⭐ Favorites\n\n⭐ \`!status\` — Status sistem\n⭐ \`!relay\` — Kontrol bot\n\n💡 Tambah: \`!fav add status\``,
+    smart:       `${header}\n\n🧠 Smart Menu\n✅ Semua sistem normal\n\n✅ Command Populer\n\`!status\` \`!relay\` \`!plugin\` \`!fix\``,
+    contextual:  `${header}\n\n📍 Contextual — 👤 Personal\n\n\`!login\` \`!connect\` \`!relay\` \`!token\`\n\`!customize\` \`!fix\``,
+    cmdpalette:  `🎯 Command Palette\n\nCari: \`!menu cmd <kata>\`\nContoh: \`!menu cmd fix\`, \`!menu cmd plugin\``,
+    wizard:      `${header}\n\n🧙 Setup Wizard — Langkah 1/6\n\n1️⃣ Login ke DLavie OS\nCommand: \`!login KODE\`\nDapatkan kode dari web panel.\n\n▶ Selanjutnya: \`!menu wizard 1\``,
+    media:       `${header}\n[🖼️ Gambar thumbnail tampil di sini]\n\n📋 Fitur Utama\n\`!fix\` \`!plugin\` \`!schedule\` \`!token\``,
+    card:        `${header}\n\n┌─────────────────────────\n│ 🤖 *Bot Manager*\n│ Status: Active | Akses: All\n│ Command: \`!bot\`\n└─────────────────────────\n┌─────────────────────────\n│ 🔧 *Auto-Fix*\n│ Status: Ready | Akses: All\n│ Command: \`!fix\`\n└─────────────────────────`,
+    aiguided:    `🤖 AI Guided Menu\n\nKetik kebutuhanmu:\n\`!menu ai connect bot\`\n\`!menu ai fix error\`\n\`!menu ai cek token\``,
+    terminal:    '```\nDLavie OS v2.0 — Terminal Mode\nUser: Owner | Plan: ENTERPRISE\n────────────────────────────\n$ ls commands/\n  login        # Login ke DLavie OS\n  connect      # Hubungkan bot\n  relay        # Kontrol bot\n  fix          # Auto-fix error\n  plugin       # Plugin manager\n```',
+  };
+
+  if (box) box.textContent = previews[type] || previews['hybrid'];
+}
+
+function toggleCustomPersonality() {
+  const p = document.getElementById('menu-personality')?.value;
+  const g = document.getElementById('custom-personality-group');
+  if (g) g.style.display = p === 'custom' ? 'block' : 'none';
+}
+
+function toggleThumb() {
+  const enabled = document.getElementById('thumb-enabled')?.checked;
+  const opts    = document.getElementById('thumb-options');
+  if (opts) opts.style.display = enabled ? 'block' : 'none';
+}
+
+function onThumbTypeChange() {
+  const type = document.getElementById('thumb-type')?.value;
+  const urlG = document.getElementById('thumb-url-group');
+  if (urlG) urlG.style.display = type === 'url' ? 'block' : 'none';
+}
+
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'thumb-url') {
+    const url = e.target.value;
+    const img = document.getElementById('thumb-preview-img');
+    if (img && url.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)) {
+      img.src   = url;
+      img.style.display = 'block';
+      img.onerror = () => { img.style.display = 'none'; };
+    } else if (img) {
+      img.style.display = 'none';
+    }
+  }
+  if (e.target.id === 'bot-name' || e.target.id === 'menu-type' || e.target.id === 'menu-theme') {
+    updateMenuPreview();
+  }
+});
+
+function gatherSection(section) {
+  const get = (id) => document.getElementById(id)?.value || '';
+  const num = (id, def) => parseInt(document.getElementById(id)?.value || def, 10) || def;
+  const chk = (id) => document.getElementById(id)?.checked || false;
+
+  if (section === 'identity') {
+    return {
+      botName:       get('bot-name'),
+      ownerName:     get('owner-name'),
+      brandName:     get('brand-name'),
+      tagline:       get('tagline'),
+      websiteUrl:    get('website-url'),
+      watermark:     get('watermark'),
+    };
+  }
+  if (section === 'menu') {
+    return {
+      type:          get('menu-type'),
+      theme:         get('menu-theme'),
+      language:      get('menu-language'),
+      personality:   get('menu-personality'),
+      footer:        get('menu-footer'),
+      pageSize:      num('page-size', 8),
+      customPersonalityText: get('custom-personality-text'),
+    };
+  }
+  if (section === 'ai') {
+    return {
+      primary:   get('ai-primary'),
+      secondary: get('ai-secondary'),
+      fallback:  get('ai-fallback'),
+    };
+  }
+  if (section === 'advanced') {
+    return {
+      githubRepo:    get('github-repo'),
+      logLevel:      get('log-level'),
+      pluginSandbox: chk('plugin-sandbox'),
+      autoUpdate:    chk('auto-update'),
+      debugMode:     chk('debug-mode'),
+    };
+  }
+  return {};
+}
+
+async function saveSection(section) {
+  try {
+    const values = gatherSection(section);
+    await API.put('/api/customization', { section, config: { [section]: values } });
+    toast(`✅ ${section} berhasil disimpan!`, 'success');
+    await loadConfig();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function saveMessages() {
+  try {
+    const msgs = {
+      welcome:     document.getElementById('msg-welcome')?.value    || '',
+      error:       document.getElementById('msg-error')?.value      || '',
+      premium:     document.getElementById('msg-premium')?.value    || '',
+      maintenance: document.getElementById('msg-maintenance')?.value|| '',
+      tokenLow:    document.getElementById('msg-token-low')?.value  || '',
+      notFound:    document.getElementById('msg-not-found')?.value  || '',
+    };
+    await API.put('/api/customization', { section: 'messages', config: { messages: msgs } });
+    toast('✅ Pesan berhasil disimpan!', 'success');
+    await loadConfig();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function saveThumbnail() {
+  try {
+    const thumb = {
+      enabled:      document.getElementById('thumb-enabled')?.checked      || false,
+      type:         document.getElementById('thumb-type')?.value            || 'url',
+      url:          document.getElementById('thumb-url')?.value             || '',
+      caption:      document.getElementById('thumb-caption')?.value         || '',
+      useForMenu:   document.getElementById('thumb-use-for-menu')?.checked  || false,
+    };
+    await API.put('/api/customization', { section: 'thumbnail', config: { thumbnail: thumb } });
+    toast('✅ Thumbnail berhasil disimpan!', 'success');
+    await loadConfig();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Token & Topup — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<nav class="navbar">
+  <button class="btn btn-ghost btn-icon mobile-menu-btn" onclick="toggleMobileSidebar()" title="Menu" style="flex-shrink:0">☰</button>
+  <a href="/" class="navbar-brand">
+    <div class="brand-icon">⚡</div>
+    <span>DLavie<span class="gradient-text"> OS</span></span>
+  </a>
+  <div class="navbar-actions">
+    <button class="theme-toggle" title="Toggle theme">☀️</button>
+    <button class="btn btn-ghost btn-sm" onclick="logout()" style="color:var(--text-3)">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">Menu Utama</div>
+    <a href="/dashboard" class="sidebar-item" data-page="dashboard"><span class="icon">📊</span>Dashboard</a>
+    <a href="/bots"      class="sidebar-item" data-page="bots"><span class="icon">🤖</span>Bot Manager</a>
+    <a href="/tokens"    class="sidebar-item active" data-page="tokens"><span class="icon">🪙</span>Token & Topup</a>
+    <a href="/terminal"  class="sidebar-item" data-page="terminal"><span class="icon">💻</span>Terminal</a>
+    <div class="sidebar-section">Premium</div>
+    <a href="/files"     class="sidebar-item" data-page="files"><span class="icon">📁</span>File Manager</a>
+    <a href="/logs"      class="sidebar-item" data-page="logs"><span class="icon">📋</span>Bot Logs</a>
+    <a href="/analytics" class="sidebar-item" data-page="analytics"><span class="icon">📈</span>Analytics</a>
+    <div class="sidebar-section">Pengaturan</div>
+    <a href="/customize" class="sidebar-item" data-page="customize"><span class="icon">🎨</span>Customize Bot</a>
+    <a href="/settings"  class="sidebar-item" data-page="settings"><span class="icon">⚙️</span>Settings</a>
+    <a href="/pricing"   class="sidebar-item" data-page="pricing"><span class="icon">💳</span>Upgrade Plan</a>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="window.location.href='/settings'">
+        <div class="sidebar-avatar" id="sidebar-avatar">U</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">User</div>
+          <div class="sidebar-user-plan" id="sidebar-user-plan">FREE</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="mb-24">
+      <h2>Token & Topup</h2>
+      <p style="margin-top:4px;font-size:0.875rem">Kelola token dan isi ulang untuk menggunakan fitur DLavie OS</p>
+    </div>
+
+    <!-- BALANCE -->
+    <div class="grid-2 mb-24" style="grid-template-columns: 1fr 2fr;">
+      <div class="stat-card" style="justify-content:center;text-align:center;min-height:150px">
+        <div class="icon" style="margin:0 auto">🪙</div>
+        <div class="value" id="token-balance" style="font-size:2.5rem">—</div>
+        <div class="label">Token Tersedia</div>
+        <div class="badge badge-primary mt-8" id="token-plan" style="margin:0 auto">FREE</div>
+        <div style="font-size:0.75rem;color:var(--text-3);margin-top:6px">Digunakan hari ini: <span id="token-used-today">0</span></div>
+      </div>
+
+      <!-- TOKEN COSTS -->
+      <div class="card">
+        <h4 style="margin-bottom:16px">💡 Biaya Per Operasi</h4>
+        <div class="token-bar-container">
+          <div class="token-bar-row">
+            <span class="token-bar-label">Basic</span>
+            <div class="token-bar-track"><div class="token-bar-fill" style="width:1%"></div></div>
+            <span class="token-bar-val">1</span>
+          </div>
+          <div class="token-bar-row">
+            <span class="token-bar-label">Shell</span>
+            <div class="token-bar-track"><div class="token-bar-fill" style="width:7%"></div></div>
+            <span class="token-bar-val">10</span>
+          </div>
+          <div class="token-bar-row">
+            <span class="token-bar-label">Relay</span>
+            <div class="token-bar-track"><div class="token-bar-fill" style="width:3%"></div></div>
+            <span class="token-bar-val">5</span>
+          </div>
+          <div class="token-bar-row">
+            <span class="token-bar-label">Plugin</span>
+            <div class="token-bar-track"><div class="token-bar-fill" style="width:20%"></div></div>
+            <span class="token-bar-val">30</span>
+          </div>
+          <div class="token-bar-row">
+            <span class="token-bar-label">Update</span>
+            <div class="token-bar-track"><div class="token-bar-fill" style="width:40%"></div></div>
+            <span class="token-bar-val">60</span>
+          </div>
+          <div class="token-bar-row">
+            <span class="token-bar-label">Gen Plugin</span>
+            <div class="token-bar-track"><div class="token-bar-fill" style="width:67%"></div></div>
+            <span class="token-bar-val">100</span>
+          </div>
+          <div class="token-bar-row">
+            <span class="token-bar-label">AI Fix</span>
+            <div class="token-bar-track"><div class="token-bar-fill" style="width:100%"></div></div>
+            <span class="token-bar-val">150</span>
+          </div>
+        </div>
+        <p class="form-hint mt-16">Token gratis 100/10 menit untuk semua plan. Free token awal: 5.000</p>
+        <p class="form-hint" style="color:var(--primary-l);font-weight:600">💡 Rate topup: 1 IDR = 1 Token</p>
+      </div>
+    </div>
+
+    <!-- TOPUP PAKET -->
+    <div class="card mb-24">
+      <h4 style="margin-bottom:6px">💳 Topup Token</h4>
+      <p style="font-size:0.875rem;margin-bottom:20px;color:var(--text-2)">Pilih paket atau masukkan nominal custom. Rate: <strong>1 IDR = 1 Token</strong>. Bayar via QRIS, konfirmasi setelah upload bukti.</p>
+
+      <!-- PRESET PACKAGES -->
+      <div id="token-packages" class="grid-3 mb-20" style="gap:14px">
+        <div class="empty-state"><div class="spinner"></div></div>
+      </div>
+
+      <!-- CUSTOM AMOUNT -->
+      <div class="card" style="border-color:rgba(99,102,241,0.3);background:rgba(99,102,241,0.04)">
+        <h4 style="margin-bottom:12px;font-size:0.95rem">✏️ Topup Custom Amount</h4>
+        <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:14px">Masukkan nominal IDR berapapun. Minimum Rp 1.000 = 1.000 token.</p>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div style="flex:1;min-width:180px">
+            <label class="form-label" style="font-size:0.8rem">Nominal (IDR)</label>
+            <div style="display:flex;align-items:center;gap:0">
+              <span style="background:var(--surface-2);border:1px solid var(--border-dim);border-right:none;padding:10px 12px;border-radius:8px 0 0 8px;font-size:0.875rem;color:var(--text-2)">Rp</span>
+              <input id="custom-amount-input" type="number" class="form-input" placeholder="10000" min="1000" max="10000000" style="border-radius:0 8px 8px 0;flex:1">
+            </div>
+          </div>
+          <div style="flex:1;min-width:180px">
+            <label class="form-label" style="font-size:0.8rem">Token yang didapat</label>
+            <div id="custom-token-preview" style="background:var(--surface-2);border:1px solid var(--border-dim);padding:10px 12px;border-radius:8px;font-weight:700;color:var(--primary-l)">🪙 —</div>
+          </div>
+          <button class="btn btn-primary" onclick="topupCustom()">🚀 Buat Topup</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QRIS -->
+    <div class="card mb-24">
+      <h4 style="margin-bottom:12px">📱 Pembayaran QRIS</h4>
+      <div class="grid-2">
+        <div style="text-align:center">
+          <img id="qris-image" src="" alt="QRIS" style="display:none;max-width:240px;border-radius:12px;border:1px solid var(--border-dim)">
+          <div id="qris-placeholder" style="width:200px;height:200px;background:var(--surface-2);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto;border:1px dashed var(--border-dim)">
+            <span style="font-size:0.8rem;color:var(--text-3)">QRIS belum dikonfigurasi</span>
+          </div>
+        </div>
+        <div>
+          <h4>Cara Topup:</h4>
+          <ol style="padding-left:20px;margin-top:12px;display:flex;flex-direction:column;gap:10px;font-size:0.875rem;color:var(--text-2)">
+            <li>Pilih paket atau masukkan nominal custom (1 IDR = 1 Token)</li>
+            <li>Scan QRIS atau transfer sesuai nominal</li>
+            <li>Simpan bukti pembayaran</li>
+            <li>Upload bukti pembayaran di halaman ini</li>
+            <li>Token akan ditambahkan setelah owner konfirmasi</li>
+          </ol>
+          <div class="alert alert-info mt-16">
+            ℹ️ Topup dikonfirmasi manual oleh admin. Simpan Struk ID sebagai bukti.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSACTION HISTORY -->
+    <div class="card">
+      <div class="flex items-center justify-between mb-16">
+        <h4>📋 Riwayat Transaksi</h4>
+        <button class="btn btn-sm btn-secondary" onclick="loadHistory()">🔄 Refresh</button>
+      </div>
+      <div id="tx-history">
+        <div class="empty-state"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- TOPUP MODAL (after creating topup) -->
+<div id="topup-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div class="card" style="max-width:480px;width:90%">
+    <h4 style="margin-bottom:12px">✅ Topup Request Dibuat</h4>
+    <div style="font-size:0.875rem;color:var(--text-2);display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+      <div class="flex justify-between"><span>Nominal:</span> <strong id="modal-amount"></strong></div>
+      <div class="flex justify-between"><span>Token:</span> <strong id="modal-tokens" style="color:var(--primary-l)">🪙</strong></div>
+      <div class="flex justify-between"><span>Struk ID:</span> <code id="modal-struk-id" style="color:var(--primary-l);font-size:0.8rem"></code></div>
+    </div>
+    <div class="alert alert-warning mb-16">⚠️ Simpan Struk ID sebagai bukti pembayaran!</div>
+
+    <!-- UPLOAD PROOF -->
+    <div id="proof-upload-section">
+      <hr class="divider">
+      <h5 style="margin:12px 0 8px">📎 Upload Bukti Pembayaran</h5>
+      <input type="file" id="proof-file" accept="image/*" class="form-input" style="margin-bottom:8px">
+      <button class="btn btn-secondary btn-full btn-sm" onclick="uploadProof()">Upload Bukti Transfer</button>
+      <div id="upload-status" style="margin-top:8px;font-size:0.82rem"></div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary flex-1" onclick="copyText(document.getElementById('modal-struk-id').textContent,'Struk ID')">Copy Struk ID</button>
+      <button class="btn btn-secondary" onclick="closeModal('topup-modal');loadHistory()">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+let currentStrukId = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!Auth.guardDashboard()) return;
+  setEl('user-name', Auth.user?.name || '');
+  initTokens();
+  loadHistory();
+
+  // Custom amount preview
+  document.getElementById('custom-amount-input')?.addEventListener('input', function() {
+    const val = parseInt(this.value) || 0;
+    const el  = document.getElementById('custom-token-preview');
+    if (val >= 1000) {
+      el.textContent = `🪙 ${val.toLocaleString('id-ID')} Token`;
+      el.style.color = 'var(--primary-l)';
+    } else {
+      el.textContent = val > 0 ? '⚠️ Min. Rp 1.000' : '🪙 —';
+      el.style.color = val > 0 ? 'var(--warning)' : 'var(--text-3)';
+    }
+  });
+});
+
+async function initTokens() {
+  try {
+    const data = await API.get('/api/tokens');
+    setEl('token-balance', fmtNumber(data.balance || 0));
+    setEl('token-plan', (data.plan || 'free').toUpperCase());
+    setEl('token-used-today', fmtNumber(data.usageToday || 0));
+    const planEl = document.getElementById('token-plan');
+    if (planEl) planEl.className = 'badge ' + (data.plan === 'pro' || data.plan === 'enterprise' ? 'badge-success' : 'badge-primary');
+
+    // Render packages
+    renderPackages(data.packages || [], data.qrisImage);
+    if (data.qrisImage) {
+      const img = document.getElementById('qris-image');
+      const ph  = document.getElementById('qris-placeholder');
+      img.src = data.qrisImage;
+      img.style.display = 'block';
+      ph.style.display  = 'none';
+    }
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+function renderPackages(packages, qrisImage) {
+  const el = document.getElementById('token-packages');
+  el.innerHTML = packages.map(pkg => {
+    const rate = pkg.tokens / pkg.priceIdr;
+    return `<div class="card" style="cursor:pointer;border-color:rgba(99,102,241,0.2);text-align:center;padding:20px;transition:all 0.2s" onclick="topupPackage('${pkg.id}')" onmouseover="this.style.borderColor='rgba(99,102,241,0.6)'" onmouseout="this.style.borderColor='rgba(99,102,241,0.2)'">
+      <div style="font-size:1.5rem;margin-bottom:8px">🪙</div>
+      <div style="font-size:1.3rem;font-weight:800;color:var(--primary-l)">${fmtNumber(pkg.tokens)}</div>
+      <div style="font-size:0.75rem;color:var(--text-3);margin-bottom:6px">Token</div>
+      <div style="font-size:1rem;font-weight:700">Rp ${fmtNumber(pkg.priceIdr)}</div>
+      <div style="font-size:0.7rem;color:var(--text-3);margin-top:4px">${rate.toFixed(1)} token/IDR</div>
+      <button class="btn btn-primary btn-sm btn-full mt-12">Pilih Paket</button>
+    </div>`;
+  }).join('');
+}
+
+async function topupPackage(packageId) {
+  try {
+    const data = await API.post('/api/tokens/topup', { packageId });
+    showTopupModal(data);
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function topupCustom() {
+  const amt = parseInt(document.getElementById('custom-amount-input')?.value || 0);
+  if (!amt || amt < 1000) { toast('Minimal topup Rp 1.000', 'error'); return; }
+  try {
+    const data = await API.post('/api/tokens/topup', { customAmount: amt });
+    showTopupModal(data);
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+function showTopupModal(data) {
+  currentStrukId = data.strukId;
+  setEl('modal-amount', `Rp ${(data.priceIdr||0).toLocaleString('id-ID')}`);
+  setEl('modal-tokens', `🪙 ${(data.tokens||0).toLocaleString('id-ID')} Token`);
+  setEl('modal-struk-id', data.strukId || '-');
+  document.getElementById('proof-file').value = '';
+  setEl('upload-status', '');
+  document.getElementById('topup-modal').style.display = 'flex';
+}
+
+async function uploadProof() {
+  const file = document.getElementById('proof-file')?.files[0];
+  if (!file) { toast('Pilih file bukti transfer terlebih dahulu', 'error'); return; }
+  if (!currentStrukId) { toast('Struk ID tidak valid', 'error'); return; }
+
+  const statusEl = document.getElementById('upload-status');
+  statusEl.textContent = '⏳ Mengupload...';
+
+  try {
+    const formData = new FormData();
+    formData.append('proof', file);
+    formData.append('strukId', currentStrukId);
+
+    const token = localStorage.getItem('dlavie_token');
+    const res = await fetch('/api/payment/proof', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload gagal');
+    statusEl.innerHTML = `<span style="color:var(--success)">✅ Bukti berhasil diupload! Owner akan konfirmasi segera.</span>`;
+    toast('Bukti pembayaran berhasil diupload!', 'success');
+  } catch (err) {
+    statusEl.innerHTML = `<span style="color:var(--error)">❌ ${err.message}</span>`;
+    toast(err.message, 'error');
+  }
+}
+
+async function loadHistory() {
+  try {
+    const data = await API.get('/api/payment/history');
+    const txs  = data.transactions || [];
+    const el   = document.getElementById('tx-history');
+    if (!txs.length) {
+      el.innerHTML = '<div class="empty-state" style="padding:24px"><p style="color:var(--text-3)">Belum ada riwayat transaksi</p></div>';
+      return;
+    }
+    el.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Struk ID</th><th>Tipe</th><th>Nominal</th><th>Token</th><th>Status</th><th>Tanggal</th></tr></thead>
+      <tbody>${txs.map(tx => {
+        const s = tx.status === 'approved' ? 'badge-success' : tx.status === 'rejected' ? 'badge-danger' : tx.status === 'paid' ? 'badge-warning' : 'badge-primary';
+        const emoji = tx.status === 'approved' ? '✅' : tx.status === 'rejected' ? '❌' : tx.status === 'paid' ? '⏳' : '⏰';
+        return `<tr>
+          <td><code style="font-size:0.75rem">${tx.struk_id}</code></td>
+          <td>${tx.type === 'topup' ? '🪙 Topup' : `⬆ Plan ${tx.plan||''}`}</td>
+          <td>Rp ${fmtNumber(tx.amount)}</td>
+          <td>${tx.amount_tokens ? fmtNumber(tx.amount_tokens) : '-'}</td>
+          <td><span class="badge ${s}" style="font-size:0.7rem">${emoji} ${tx.status}</span></td>
+          <td style="font-size:0.78rem">${tx.created_at ? fmtTime(new Date(tx.created_at).getTime()) : '-'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`;
+  } catch (err) {
+    document.getElementById('tx-history').innerHTML = `<div class="empty-state" style="color:var(--error)">${err.message}</div>`;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,415 @@
+DLAVIE OS — CORE4X ENGINE SYSTEM
+
+TUJUAN:
+Setiap fitur DLavie OS tidak boleh hanya berjalan polos. Semua fitur wajib memiliki kecerdasan, backup, fallback, error draft, recovery, dan mode cadangan agar tetap bisa dipakai walaupun sebagian sistem error.
+
+KONSEP UTAMA:
+Setiap fitur berjalan melalui Core4X Engine:
+
+1. X1 — Primary Logic
+    Logika utama fitur.
+2. X2 — Backup Logic
+    Logika cadangan jika primary gagal.
+3. X3 — Draft Error + Recovery Queue
+    Error tidak hanya dikirim sebagai notif, tapi dicatat sebagai draft error untuk dianalisis, diperbaiki, dan diproses ulang.
+4. X4 — Fallback Runtime
+    Mode darurat agar fitur tetap bisa dipakai dengan versi minimal/safe mode.
+
+━━━━━━━━━━━━━━━━━━━━
+CORE4X ENGINE STRUCTURE
+━━━━━━━━━━━━━━━━━━━━
+
+src/core4x/
+├── core4xEngine.js
+├── featureRunner.js
+├── fallbackManager.js
+├── backupManager.js
+├── draftErrorManager.js
+├── recoveryQueue.js
+├── featureHealth.js
+├── featureMemory.js
+└── core4xPolicy.js
+
+data/core4x/
+├── feature-backups.json
+├── draft-errors.json
+├── recovery-queue.json
+├── feature-health.json
+└── feature-memory.json
+
+━━━━━━━━━━━━━━━━━━━━
+CARA KERJA SETIAP FITUR
+━━━━━━━━━━━━━━━━━━━━
+
+Semua fitur harus dijalankan seperti ini:
+
+User menjalankan command
+↓
+Core4X Engine mengecek kesehatan fitur
+↓
+Jalankan Primary Logic
+↓
+Jika sukses:
+simpan success log
+update health score
+↓
+Jika error:
+simpan ke Draft Error
+aktifkan Backup Logic
+↓
+Jika backup sukses:
+fitur tetap berjalan
+owner mendapat laporan ringan
+↓
+Jika backup gagal:
+aktifkan Fallback Runtime
+↓
+Jika fallback berjalan:
+fitur tetap bisa dipakai dalam mode minimal
+↓
+Recovery Queue mencoba memperbaiki fitur di background runtime
+↓
+Jika fix sukses:
+restore fitur utama
+update health score
+
+━━━━━━━━━━━━━━━━━━━━
+CONTOH KERJA: FITUR MENU ERROR
+━━━━━━━━━━━━━━━━━━━━
+
+User:
+!menu
+
+Primary Logic:
+Menampilkan menu premium/category/button.
+
+Jika error:
+
+* Error masuk ke draft-errors.json
+* Core4X menjalankan backup menu dari snapshot terakhir.
+* Jika backup menu ada, bot tetap menampilkan menu cadangan.
+* Jika backup tidak ada, bot menampilkan fallback text menu minimal.
+
+Contoh fallback:
+“Menu utama sedang recovery. Berikut command penting:
+!ping
+!status
+!help
+!owner”
+
+Sistem tetap mencatat:
+
+* fitur: menu
+* pluginId: PLG-MENU-18AF3EEA
+* error message
+* stack trace
+* waktu error
+* user pemicu
+* fallback yang dipakai
+* status recovery
+
+━━━━━━━━━━━━━━━━━━━━
+CONTOH KERJA: FITUR UPDATE ERROR
+━━━━━━━━━━━━━━━━━━━━
+
+User:
+!update safe
+
+Primary Logic:
+Git pull + npm install + safety check + reload.
+
+Jika error:
+
+* Sistem tidak langsung mati.
+* Backup project sebelum update dipakai.
+* Update gagal masuk ke Draft Error.
+* Recovery Queue membuat restore point.
+* Bot memberi laporan:
+    “Update gagal, sistem sudah rollback ke versi aman.”
+
+Fallback:
+Bot tetap aktif dengan versi sebelum update.
+
+━━━━━━━━━━━━━━━━━━━━
+CONTOH KERJA: FITUR PAYMENT ERROR
+━━━━━━━━━━━━━━━━━━━━
+
+User submit bukti QRIS.
+
+Primary Logic:
+Simpan payment + kirim notif owner.
+
+Jika error:
+
+* Bukti payment disimpan ke draft payment.
+* Jika notif WA gagal, sistem simpan ke pending notification.
+* Jika database gagal, simpan ke file backup tmp/payments-draft.json.
+* Owner bisa cek:
+    !payment draft
+    !approve draft PAY_ID
+
+Fallback:
+Payment tidak hilang walaupun API/database error.
+
+━━━━━━━━━━━━━━━━━━━━
+CONTOH KERJA: FITUR AI ERROR
+━━━━━━━━━━━━━━━━━━━━
+
+User memakai AI.
+
+Primary:
+ChatGPT
+
+Jika gagal:
+Backup:
+Gemini
+
+Jika gagal:
+Backup 2:
+Grok
+
+Jika semua gagal:
+Fallback:
+Bot memberi jawaban safe:
+“AI sedang overload. Pertanyaan kamu sudah masuk draft dan akan dicoba ulang.”
+
+Data masuk ke:
+data/core4x/recovery-queue.json
+
+━━━━━━━━━━━━━━━━━━━━
+FITUR WAJIB CORE4X
+━━━━━━━━━━━━━━━━━━━━
+
+1. Feature Health Score
+    Setiap fitur punya skor kesehatan 0-100.
+
+Contoh:
+menu: 92
+update: 88
+payment: 95
+ai: 76
+
+Jika skor turun:
+
+* fitur masuk watch mode
+* owner diberi rekomendasi
+* recovery queue aktif
+
+2. Feature Backup Snapshot
+    Setiap fitur penting punya backup config.
+
+Contoh:
+menu-backup.json
+payment-backup.json
+plugin-backup.json
+settings-backup.json
+
+3. Draft Error System
+    Error tidak dibuang. Error disimpan sebagai draft.
+
+Isi draft:
+
+* errorId
+* featureName
+* pluginId
+* command
+* userId
+* jid
+* message
+* stack
+* createdAt
+* severity
+* fallbackUsed
+* recoveryStatus
+
+4. Recovery Queue
+    Error diproses ulang.
+
+Status:
+pending
+processing
+fixed
+failed
+ignored
+
+5. Safe Fallback Mode
+    Jika fitur utama mati, fitur tetap berjalan versi minimal.
+
+Contoh:
+Menu premium error → text menu.
+Payment API error → draft payment.
+AI error → provider fallback.
+Update error → rollback.
+Plugin error → disable sementara.
+Dashboard error → maintenance page.
+
+6. Auto Rollback
+    Jika fitur baru menyebabkan error berulang, sistem rollback ke backup.
+7. Feature Memory
+    Core4X mengingat error lama.
+
+Jika error yang sama muncul:
+
+* langsung pakai fix lama
+* tidak perlu analisis ulang
+
+8. Owner Report
+    Owner mendapat laporan ringkas.
+
+Contoh:
+“Core4X Recovery Report:
+Fitur: menu
+Primary: failed
+Backup: success
+Fallback: not needed
+Draft Error: saved
+Status: running with backup”
+
+━━━━━━━━━━━━━━━━━━━━
+COMMAND CORE4X
+━━━━━━━━━━━━━━━━━━━━
+
+!core4x status
+Menampilkan status semua fitur.
+
+!core4x health
+Menampilkan health score.
+
+!core4x errors
+Menampilkan draft error.
+
+!core4x recover menu
+Memperbaiki fitur tertentu.
+
+!core4x backup menu
+Membuat backup fitur.
+
+!core4x restore menu
+Restore fitur dari backup.
+
+!core4x queue
+Melihat recovery queue.
+
+!core4x safe on
+Mengaktifkan safe mode global.
+
+!core4x safe off
+Menonaktifkan safe mode global.
+
+━━━━━━━━━━━━━━━━━━━━
+CONTOH OUTPUT
+━━━━━━━━━━━━━━━━━━━━
+
+DLavie Core4X Status
+
+Menu:
+Primary: OK
+Backup: Ready
+Fallback: Ready
+Health: 96/100
+
+Update:
+Primary: Warning
+Backup: Ready
+Fallback: Ready
+Health: 82/100
+
+AI:
+Primary: Failed
+Backup: Gemini Active
+Fallback: Ready
+Health: 71/100
+
+Payment:
+Primary: OK
+Backup: Ready
+Draft: 0
+Health: 94/100
+
+━━━━━━━━━━━━━━━━━━━━
+IMPLEMENTASI WAJIB UNTUK SEMUA FITUR
+━━━━━━━━━━━━━━━━━━━━
+
+Setiap fitur baru wajib punya:
+
+* primary handler
+* backup handler
+* fallback handler
+* health check
+* draft error writer
+* recovery queue integration
+* rollback plan
+* owner report
+* safe mode behavior
+
+Format fitur:
+
+features/menu/
+├── primary.js
+├── backup.js
+├── fallback.js
+├── health.js
+├── recovery.js
+└── config.json
+
+━━━━━━━━━━━━━━━━━━━━
+PSEUDO FLOW
+━━━━━━━━━━━━━━━━━━━━
+
+async function runFeature(featureName, context) {
+try {
+return await primary(featureName, context)
+} catch (primaryError) {
+saveDraftError(primaryError)
+
+try {
+  return await backup(featureName, context)
+} catch (backupError) {
+  saveDraftError(backupError)
+  try {
+    return await fallback(featureName, context)
+  } catch (fallbackError) {
+    saveDraftError(fallbackError)
+    notifyOwner(featureName)
+  }
+}
+
+}
+}
+
+━━━━━━━━━━━━━━━━━━━━
+PRINSIP UTAMA
+━━━━━━━━━━━━━━━━━━━━
+
+DLavie OS tidak boleh hanya berkata:
+“Fitur error.”
+
+DLavie OS harus:
+
+1. Menangkap error.
+2. Menyimpan error sebagai draft.
+3. Menjalankan backup.
+4. Jika backup gagal, menjalankan fallback.
+5. Memasukkan masalah ke recovery queue.
+6. Memperbaiki otomatis jika aman.
+7. Melapor ke owner.
+8. Memastikan fitur tetap bisa dipakai.
+
+━━━━━━━━━━━━━━━━━━━━
+HASIL AKHIR YANG DIINGINKAN
+━━━━━━━━━━━━━━━━━━━━
+
+DLavie OS menjadi bot dengan sistem:
+
+Self-healing
+Self-backup
+Self-fallback
+Self-recovery
+Self-diagnosis
+Feature memory
+Draft error system
+Safe runtime mode
+Rollback otomatis
+Multi-layer logic
+
+Dengan Core4X Engine, semua fitur DLavie OS tidak mudah mati. Jika satu jalur gagal, sistem otomatis pindah ke cadangan, menyimpan error, dan mencoba recovery.

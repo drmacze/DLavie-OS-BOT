@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bot Logs — DLavie OS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+.log-entry { display:flex; gap:10px; padding:8px 12px; border-radius:8px; font-size:0.82rem; border:1px solid transparent; margin-bottom:4px; transition:background 0.15s; }
+.log-entry:hover { background:rgba(255,255,255,0.03); }
+.log-entry.info { border-color:rgba(59,130,246,0.15); }
+.log-entry.warn { border-color:rgba(245,158,11,0.15); background:rgba(245,158,11,0.04); }
+.log-entry.error { border-color:rgba(239,68,68,0.15); background:rgba(239,68,68,0.04); }
+.log-entry.cmd  { border-color:rgba(99,102,241,0.15); }
+.log-time { font-family:'JetBrains Mono',monospace; color:var(--text-3); white-space:nowrap; flex-shrink:0; font-size:0.78rem; padding-top:1px; }
+.log-badge { flex-shrink:0; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:700; text-transform:uppercase; height:fit-content; }
+.log-badge.info  { background:rgba(59,130,246,0.15); color:#60a5fa; }
+.log-badge.warn  { background:rgba(245,158,11,0.15); color:#fbbf24; }
+.log-badge.error { background:rgba(239,68,68,0.15); color:#f87171; }
+.log-badge.cmd   { background:rgba(99,102,241,0.15); color:#818cf8; }
+.log-badge.msg   { background:rgba(16,185,129,0.15); color:#6ee7b7; }
+.log-badge.sys   { background:rgba(107,114,128,0.15); color:#9ca3af; }
+.log-msg { flex:1; color:var(--text-1); line-height:1.5; word-break:break-word; font-family:'JetBrains Mono',monospace; }
+.filter-chip { padding:5px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); cursor:pointer; font-size:0.8rem; transition:all 0.15s; }
+.filter-chip.active { background:rgba(99,102,241,0.15); border-color:rgba(99,102,241,0.4); color:var(--primary-l); }
+.live-dot { width:8px; height:8px; border-radius:50%; background:#10b981; animation:pulse-dot 1.5s infinite; display:inline-block; margin-right:4px; }
+@keyframes pulse-dot { 0%,100%{ opacity:1; } 50%{ opacity:0.3; } }
+</style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<nav class="navbar">
+  <button class="btn btn-ghost btn-icon mobile-menu-btn" onclick="toggleMobileSidebar()" style="flex-shrink:0">☰</button>
+  <a href="/" class="navbar-brand"><div class="brand-icon">⚡</div><span>DLavie<span class="gradient-text"> OS</span></span></a>
+  <div class="navbar-actions">
+    <button class="theme-toggle" title="Toggle theme">☀️</button>
+    <button class="btn btn-ghost btn-sm" onclick="Auth.clear();window.location.href='/login'" style="color:var(--text-3)">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">Menu Utama</div>
+    <a href="/dashboard" class="sidebar-item"><span class="icon">📊</span>Dashboard</a>
+    <a href="/bots"      class="sidebar-item"><span class="icon">🤖</span>Bot Manager</a>
+    <a href="/tokens"    class="sidebar-item"><span class="icon">🪙</span>Token & Topup</a>
+    <a href="/terminal"  class="sidebar-item"><span class="icon">💻</span>Terminal</a>
+    <div class="sidebar-section">Premium</div>
+    <a href="/files"     class="sidebar-item"><span class="icon">📁</span>File Manager</a>
+    <a href="/logs"      class="sidebar-item active"><span class="icon">📋</span>Bot Logs</a>
+    <a href="/analytics" class="sidebar-item"><span class="icon">📈</span>Analytics</a>
+    <div class="sidebar-section">Pengaturan</div>
+    <a href="/customize" class="sidebar-item"><span class="icon">🎨</span>Customize Bot</a>
+    <a href="/settings"  class="sidebar-item"><span class="icon">⚙️</span>Settings</a>
+    <a href="/pricing"   class="sidebar-item"><span class="icon">💳</span>Upgrade Plan</a>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="window.location.href='/settings'">
+        <div class="sidebar-avatar" id="sidebar-avatar">U</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">User</div>
+          <div class="sidebar-user-plan" id="sidebar-user-plan">FREE</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="mb-24" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h2>📋 Bot Logs</h2>
+        <p style="margin-top:4px;font-size:0.875rem;color:var(--text-2)">Monitor aktivitas dan pesan real-time bot Anda</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="live-indicator" style="display:none;font-size:0.8rem;color:var(--success)"><span class="live-dot"></span>Live</span>
+        <button class="btn btn-ghost btn-sm" onclick="loadLogs()">🔄 Refresh</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearLogView()">🗑 Clear</button>
+      </div>
+    </div>
+
+    <!-- Status cards -->
+    <div class="grid grid-4 mb-24" id="log-stats" style="display:none">
+      <div class="stat-card">
+        <div class="stat-label">Total Log</div>
+        <div class="stat-value" id="stat-total">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Error</div>
+        <div class="stat-value" id="stat-errors" style="color:var(--error)">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Command</div>
+        <div class="stat-value" id="stat-cmds">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pesan Masuk</div>
+        <div class="stat-value" id="stat-msgs">—</div>
+      </div>
+    </div>
+
+    <!-- Filter row -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="filter-row">
+      <button class="filter-chip active" data-type="all" onclick="setFilter('all',this)">Semua</button>
+      <button class="filter-chip" data-type="cmd" onclick="setFilter('cmd',this)">🟣 Command</button>
+      <button class="filter-chip" data-type="msg" onclick="setFilter('msg',this)">💬 Pesan</button>
+      <button class="filter-chip" data-type="error" onclick="setFilter('error',this)">❌ Error</button>
+      <button class="filter-chip" data-type="warn" onclick="setFilter('warn',this)">⚠️ Warning</button>
+      <button class="filter-chip" data-type="info" onclick="setFilter('info',this)">ℹ️ Info</button>
+    </div>
+
+    <!-- Search bar -->
+    <div style="position:relative;margin-bottom:16px">
+      <input type="text" id="log-search" placeholder="Cari log..." style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 14px 9px 36px;color:var(--text-1);font-size:0.875rem;outline:none" oninput="filterLogs()">
+      <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-3)">🔍</span>
+    </div>
+
+    <!-- Log viewer -->
+    <div class="card p-0">
+      <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:0.82rem;color:var(--text-2)" id="log-count-label">Memuat log...</div>
+        <div style="font-size:0.78rem;color:var(--text-3)" id="log-time-label"></div>
+      </div>
+      <div id="log-container" style="min-height:300px;max-height:60vh;overflow-y:auto;padding:10px">
+        <div class="empty-state"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- Load more -->
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn btn-ghost btn-sm" id="btn-load-more" style="display:none" onclick="loadMore()">Muat lebih banyak ↓</button>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+let allLogs = [];
+let currentFilter = 'all';
+let currentOffset = 0;
+const PAGE_SIZE = 100;
+let liveInterval = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.guardDashboard()) return;
+  const user = Auth.user;
+  document.getElementById('sidebar-user-name').textContent = user?.name || 'User';
+  document.getElementById('sidebar-user-plan').textContent = (user?.plan || 'free').toUpperCase();
+  const av = document.getElementById('sidebar-avatar'); if (av && user?.name) av.textContent = user.name[0].toUpperCase();
+  Theme.init();
+
+  document.getElementById('log-stats').style.display = 'grid';
+  document.getElementById('live-indicator').style.display = 'inline-flex';
+
+  await loadLogs();
+
+  // Auto-refresh every 30s for paid users
+  const tier = { free: 0, starter: 1, pro: 2, enterprise: 3 }[user?.plan || 'free'] || 0;
+  if (user?.role === 'owner' || tier >= 1) {
+    liveInterval = setInterval(loadLogs, 30000);
+  }
+});
+
+async function loadLogs(append = false) {
+  if (!append) currentOffset = 0;
+  try {
+    const type = currentFilter === 'all' ? '' : currentFilter;
+    const data = await API.get(`/api/logs/bot?limit=${PAGE_SIZE}&offset=${currentOffset}&type=${type}`);
+    const logs = data.logs || [];
+
+    if (!append) {
+      allLogs = logs;
+    } else {
+      allLogs = [...allLogs, ...logs];
+    }
+
+    currentOffset = allLogs.length;
+    document.getElementById('btn-load-more').style.display = logs.length >= PAGE_SIZE ? 'inline-flex' : 'none';
+
+    updateStats();
+    renderLogs();
+    document.getElementById('log-time-label').textContent = 'Updated: ' + new Date().toLocaleTimeString('id-ID');
+  } catch (err) {
+    document.getElementById('log-container').innerHTML = `<div class="empty-state" style="color:var(--error)">${err.message}</div>`;
+    document.getElementById('log-count-label').textContent = 'Gagal memuat log';
+  }
+}
+
+function updateStats() {
+  const total = allLogs.length;
+  const errors = allLogs.filter(l => l.event_type === 'error' || l.type === 'error').length;
+  const cmds = allLogs.filter(l => l.event_type === 'cmd' || l.type === 'cmd').length;
+  const msgs = allLogs.filter(l => l.event_type === 'msg' || l.type === 'msg').length;
+  document.getElementById('stat-total').textContent = total.toLocaleString('id-ID');
+  document.getElementById('stat-errors').textContent = errors.toLocaleString('id-ID');
+  document.getElementById('stat-cmds').textContent = cmds.toLocaleString('id-ID');
+  document.getElementById('stat-msgs').textContent = msgs.toLocaleString('id-ID');
+}
+
+function renderLogs() {
+  const search = document.getElementById('log-search').value.toLowerCase();
+  let filtered = allLogs;
+  if (currentFilter !== 'all') {
+    filtered = filtered.filter(l => (l.event_type || l.type || 'info') === currentFilter);
+  }
+  if (search) {
+    filtered = filtered.filter(l => {
+      const msg = l.message || l.raw || JSON.stringify(l);
+      return msg.toLowerCase().includes(search);
+    });
+  }
+
+  document.getElementById('log-count-label').textContent = `${filtered.length} log ditampilkan`;
+
+  if (!filtered.length) {
+    document.getElementById('log-container').innerHTML = `
+      <div class="empty-state" style="padding:40px">
+        <div style="font-size:2rem;margin-bottom:10px">📭</div>
+        <div>${allLogs.length === 0 ? 'Belum ada aktivitas log.' : 'Tidak ada log yang cocok dengan filter.'}</div>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('log-container').innerHTML = filtered.map(log => {
+    const type = log.event_type || log.type || 'info';
+    const time = log.created_at || log.timestamp || log.createdAt;
+    const timeStr = time ? new Date(time).toLocaleTimeString('id-ID') : '';
+    const msg = log.message || log.raw || JSON.stringify(log);
+    const user = log.user_jid || log.user || log.phone || '';
+    return `<div class="log-entry ${type}">
+      <span class="log-time">${timeStr}</span>
+      <span class="log-badge ${type}">${type}</span>
+      <span class="log-msg">${escHtml(msg)}${user ? ` <span style="color:var(--text-3);font-size:0.75rem"> — ${escHtml(user)}</span>` : ''}</span>
+    </div>`;
+  }).join('');
+}
+
+function setFilter(type, el) {
+  currentFilter = type;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  filterLogs();
+}
+
+function filterLogs() { renderLogs(); }
+function clearLogView() { allLogs = []; updateStats(); renderLogs(); }
+function loadMore() { loadLogs(true); }
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toggleMobileSidebar() {
+  document.querySelector('.sidebar')?.classList.toggle('mobile-open');
+  document.getElementById('sidebar-overlay')?.classList.toggle('active');
+}
+document.getElementById('sidebar-overlay')?.addEventListener('click', () => {
+  document.querySelector('.sidebar')?.classList.remove('mobile-open');
+  document.getElementById('sidebar-overlay')?.classList.remove('active');
+});
+document.querySelectorAll('.theme-toggle').forEach(b => b.addEventListener('click', () => Theme.toggle()));
+window.addEventListener('beforeunload', () => { if (liveInterval) clearInterval(liveInterval); });
+</script>
+</body>
+</html>
