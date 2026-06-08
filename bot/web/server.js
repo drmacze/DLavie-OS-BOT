@@ -1178,46 +1178,94 @@ app.put('/api/botmode', requireAuth, (req, res) => {
   }
 });
 
-// ─── Ping (ultra-light, no auth/middleware — for UptimeRobot / self-ping) ───
-app.get('/ping', (req, res) => res.status(200).send('pong'));
+// ─── Ping — ultra-ringan, tanpa auth/middleware, untuk UptimeRobot / self-ping ───
+app.get('/ping', (req, res) => {
+  const uptimeSec = Math.round(process.uptime());
+  res.set('Cache-Control', 'no-store');
+  res.status(200).json({
+    ok:      true,
+    uptime:  uptimeSec,
+    ts:      Date.now(),
+    service: 'DLavie OS',
+  });
+});
 
-// ─── Public status (health detail for monitoring) ───
+// ─── Health — ringkas, kompatibel UptimeRobot ───
+app.get('/health', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ status: 'ok', service: 'DLavie OS Web', time: new Date().toISOString() });
+});
+
+// ─── Public status — laporan lengkap untuk monitoring & dashboard ─────────
 app.get('/api/public/status', (req, res) => {
-  let wa = { connected: false, connecting: false };
-  let ka = { uptime: '0s', pingCount: 0 };
+  let wa = { connected: false, connecting: false, retryCount: 0, maxRetries: 10, botName: null };
+  let ka = {};
 
   try { wa = require('../src/bot').getConnectionState(); } catch (_) {}
   try { ka = require('../src/core/keepAlive').getStatus(); } catch (_) {}
 
   const mem = process.memoryUsage();
+  const os  = require('os');
+
+  // WA health label
+  const waScore = ka.waScore ?? 100;
+  const waHealth = waScore >= 80 ? 'healthy' : waScore >= 50 ? 'degraded' : 'critical';
+
+  // Overall system health
+  const heapMB    = Math.round(mem.heapUsed / 1024 / 1024);
+  const sysHealth = (wa.connected && waScore >= 80 && heapMB < 400) ? 'healthy'
+    : (wa.connected || waScore >= 50) ? 'degraded' : 'critical';
+
+  res.set('Cache-Control', 'no-store');
   res.json({
-    status:    'ok',
-    service:   'DLavie OS',
-    version:   '2.0.0',
-    time:      new Date().toISOString(),
-    wa: {
-      connected:  wa.connected,
-      connecting: wa.connecting,
-      retries:    `${wa.retryCount}/${wa.maxRetries}`,
-      bot:        wa.botName || null,
+    status:     sysHealth,
+    service:    'DLavie OS',
+    version:    '2.0.0',
+    time:       new Date().toISOString(),
+
+    whatsapp: {
+      connected:          wa.connected,
+      connecting:         wa.connecting,
+      retries:            `${wa.retryCount ?? 0}/${wa.maxRetries ?? 10}`,
+      bot:                wa.botName || null,
+      healthScore:        waScore,
+      health:             waHealth,
+      downSince:          ka.waDownSince || null,
     },
+
     keepAlive: {
-      uptime:    ka.uptime,
-      pingCount: ka.pingCount,
-      pingFails: ka.pingFails,
-      waStatus:  ka.waStatus,
+      uptime:             ka.uptime         || '0h 0m 0s',
+      uptimeSec:          ka.uptimeSec      || 0,
+      pingCount:          ka.pingCount      || 0,
+      pingFails:          ka.pingFails      || 0,
+      pingSuccessRate:    ka.pingSuccessRate || 'N/A',
+      pingMode:           ka.pingMode       || 'stable',
+      rescueCount:        ka.rescueCount    || 0,
+      recentRescues:      ka.recentRescues  || 0,
+      circuitBreakerOpen: ka.circuitBreakerOpen || false,
+      crashCount:         ka.crashCount     || 0,
+      startedAt:          ka.startedAt      || null,
+      milestonesDone:     ka.milestonesDone || [],
     },
+
     memory: {
-      heapUsedMB: Math.round(mem.heapUsed / 1024 / 1024),
+      heapUsedMB:  heapMB,
       heapTotalMB: Math.round(mem.heapTotal / 1024 / 1024),
-      rssMB:      Math.round(mem.rss / 1024 / 1024),
+      rssMB:       Math.round(mem.rss       / 1024 / 1024),
+      externalMB:  Math.round((mem.external || 0) / 1024 / 1024),
     },
-    node: process.version,
+
+    system: {
+      cpuPercent:    ka.cpuPercent  || 0,
+      loadAvg:       os.loadavg().map(v => Math.round(v * 100) / 100),
+      freeMem:       Math.round(os.freemem() / 1024 / 1024),
+      totalMem:      Math.round(os.totalmem() / 1024 / 1024),
+      platform:      process.platform,
+      nodeVersion:   process.version,
+      pid:           process.pid,
+    },
   });
 });
-
-// ─── Health ───
-app.get('/health', (req, res) => res.json({ status: 'ok', service: 'DLavie OS Web', time: new Date().toISOString() }));
 
 // ─── 404 fallback ───
 app.use((req, res) => {

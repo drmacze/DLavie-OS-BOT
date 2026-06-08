@@ -301,13 +301,38 @@ function broadcast(channel, data) {
   }
 }
 
-// Start server
-const PORT = config.api.port;
-const HOST = config.api.host;
+// Start server — auto-fallback port jika utama sudah dipakai
+const PREFERRED_PORT = config.api.port;
+const FALLBACK_PORTS = [8082, 8083, 8090, 9000];
+const HOST           = config.api.host;
 
-server.listen(PORT, HOST, () => {
-  console.log(`[DLAVIE][API] Server running on http://${HOST}:${PORT}`);
-  console.log(`[DLAVIE][WS] WebSocket available on ws://${HOST}:${PORT}/ws`);
-});
+function tryListen(port, remaining) {
+  server.listen(port, HOST, () => {
+    console.log(`[DLAVIE][API] Server running on http://${HOST}:${port}`);
+    console.log(`[DLAVIE][WS] WebSocket available on ws://${HOST}:${port}/ws`);
+    if (port !== PREFERRED_PORT) {
+      console.warn(`[DLAVIE][API] ⚠️ Port ${PREFERRED_PORT} sudah dipakai, menggunakan port ${port}`);
+    }
+    // Simpan port aktif agar modul lain bisa membaca
+    process.env.DLAVIE_API_ACTUAL_PORT = String(port);
+  });
+
+  server.once('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      server.removeAllListeners('error');
+      if (remaining.length === 0) {
+        console.error(`[DLAVIE][API] ❌ Semua port habis (${PREFERRED_PORT}, ${FALLBACK_PORTS.join(', ')}). API tidak jalan.`);
+        return;
+      }
+      const next = remaining.shift();
+      console.warn(`[DLAVIE][API] Port ${port} dipakai, mencoba ${next}...`);
+      tryListen(next, remaining);
+    } else {
+      console.error('[DLAVIE][API] Server error:', err.message);
+    }
+  });
+}
+
+tryListen(PREFERRED_PORT, [...FALLBACK_PORTS]);
 
 module.exports = { app, server, wss, broadcast };
