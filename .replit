@@ -1,4 +1,4 @@
-modules = ["nodejs-24"]
+modules = ["nodejs-20", "web"]
 
 [deployment]
 router = "application"
@@ -33,7 +33,7 @@ waitForPort = 5000
 outputType = "webview"
 
 [agent]
-stack = "PNPM_WORKSPACE"
+stack = "BEST_EFFORT_FALLBACK"
 expertMode = true
 
 [postMerge]
@@ -68,3 +68,6 @@ WEB_PORT = "5000"
 DLAVIE_STARTUP_REPAIR = "false"
 DLAVIE_AI_AUTOFIX = "false"
 DLAVIE_AUTOFIX_INSTALL_MISSING = "false"
+
+[nix]
+channel = "stable-25_05"
